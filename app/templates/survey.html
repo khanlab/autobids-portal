@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <form id="survey-form" action="" method="post">
+        {{ form.csrf_token }}
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="title-description">
+                    <h1 id="title">New study request: autobids-cfmm </h1>
+                    <h4 id="description">Please use this form to submit information for initiating a new autobids project</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="name-title">
+                    <p>{{ form.name.label }}</p>
+                </div>
+                <div class="name-input">
+                    <input id="name" name="name" placeholder="Please enter your name" required="" size="32" type="text" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="email-title">
+                    <p>{{ form.email.label }}</p>
+                </div>
+                <div class="name-input">  
+                    <input id="email" maxlength="254" minlength="3" name="email" placeholder="Please enter a valid email address" required="" size="32" type="email" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="general-description">
+                    <h4 id="general-title">General Information</h4>
+                    <p id="general-description">The following questions are used to better understand resource requirements and needs of users.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="status-title">
+                    <p>{{ form.status.label }}</p>
+                </div>
+                <div class="status-options">
+                    <ul>
+                        {% for status in form.status %}
+                        <li>
+                            {{ status }}
+                            {{ status.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+             <div class="wrapper">
+                <div class="scanner-title">
+                     <p>{{ form.scanner.label }}</p>
+                </div>
+                <div class="scanner-options">
+                     <ul>
+                        {% for scanner in form.scanner %}
+                        <li>
+                                {{ scanner }}
+                                {{ scanner.label }}
+                         </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+         </div>
+
+         <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="scan_number">
+                    <p>{{ form.scan_number.label }}</p>
+                </div>
+                <div class="scan-input">  
+                    <input id="scan_number" max="122" min="1" name="scan_number" placeholder="Insert number of scans" required="" size="16" type="number" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="study_type-title">
+                    <p>{{ form.study_type.label }}</p>
+                </div>
+                <div class="study_type-options">
+                    <ul>
+                        {% for study_type in form.study_type %}
+                        <li>
+                            {{ study_type }}
+                            {{ study_type.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="familiarity-title">
+                    <p>{{ form.familiarity.label }}</p>
+                </div>
+                <div class="familiarity-options">
+                    <ul>
+                        {% for familiarity in form.familiarity %}
+                        <li>
+                            {{ familiarity }}
+                            {{ familiarity.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="general-description">
+                    <h4 id="general-title">CFMM DICOM Server Project Information</h4>
+                    <p id="general-description">The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
+                </div>
+            </div>
+        </div>  
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="principal">
+                    <p>{{ form.principal.label }}</p>
+                </div>
+                <div class="principal_input">
+                    <input id="principal" name="principal" placeholder="Please enter the Principal/PI" required="" size="32" type="text" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="project_name">
+                    <p>{{ form.project_name.label }}</p>
+                </div>
+                <div class="project_input">
+                    <input id="project_name" name="project_name" placeholder="Please enter the Project Name" required="" size="32" type="text" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="dataset_name">
+                <p>{{ form.dataset_name.label }}</p>
+                </div>
+                <div class="dataset_input">
+                    <input id="dataset_name" name="dataset_name" placeholder="Please enter the Dataset Name" size="32" type="text" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="general-description">
+                    <h4 id="general-title">Retrospective BIDS Conversion</h4>
+                    <p id="general-description">Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="retrospective_data-title">
+                    <p>{{ form.retrospective_data.label }}</p>
+                </div>
+                <div class="retrospective_data-options">
+                    <ul>
+                        {% for retrospective_data in form.retrospective_data %}
+                        <li>
+                            {{ retrospective_data }}
+                            {{ retrospective_data.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="retrospective_start">
+                    <p>{{ form.retrospective_start.label }}</p>
+                </div>
+                <div class="start_input"></div>
+                    <input id="retrospective_start" name="retrospective_start" placeholder="Please enter the start date" size="32" type="date" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="retrospective_end">
+                    <p>{{ form.retrospective_end.label }}</p>
+                </div>
+                <div class="end_input"></div>
+                    <input id="retrospective_end" name="retrospective_end" placeholder="Please enter the start date" size="32" type="date" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="general-description">
+                    <h4 id="general-title">Consent & Feedback</h4>
+                    <p id="general-description">This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service.  By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="consent-title">
+                    <p>{{ form.consent.label }}</p>
+                </div>
+                <div class="consent-options">
+                    <ul>
+                        {% for consent in form.consent %}
+                        <li>
+                            {{ consent }}
+                            {{ consent.label }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div id="comments-box">
+                        <p>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</p>
+                        {{ form.text_area(cols=59, rows=5) }}
+                </div>
+            </div>
+        </div>
+
+        <div id="btn">
+            {{ form.submit() }}
+        </div>
+    </form>
+</div>
+{% endblock %}

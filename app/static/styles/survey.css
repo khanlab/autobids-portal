@@ -1,0 +1,129 @@
+body {
+    font-family: 'Merriweather Sans', sans-serif;
+    background-color: #c3cdbf;
+    color:#4d3f36;
+  }
+
+  .container {
+    align-items: center;
+    margin: auto;
+    border: 5px;
+    padding: 10px;
+  }
+
+  .survey-form {
+    padding: 30px
+  }
+  
+  .title-description {
+    text-align: center;
+  }
+
+  .flash-message {
+    color: rgba(178, 34, 34, 0.726);
+  }
+
+  #title {
+    font-weight: normal;
+    font-size: 32 px;
+  }
+  
+  #description {
+    font-size: 14px;
+  }
+
+  .padded_wrapper {
+    padding: 10px;
+  }
+
+  .wrapper {
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
+    margin: auto;
+    width: 60%;
+    padding: 20px
+  }
+
+  #general-title {
+    font-size: 16px;
+    margin: 14px 0px;
+  }
+
+  #general-description {
+    font-size: 14px;
+  }
+
+  .name_input {
+    padding: 0px 0px 10px 0px;
+  }
+
+  .email_input {
+    padding: 0px 0px 10px 0px;
+  }
+
+  .status_title {
+    font-size: 20px;
+  }
+
+  .status_options {
+    font-size: 10px;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0px;
+  }
+
+  li {
+    list-style: none;
+    padding: 0px 0px 10px 0px;
+  }
+
+  p {
+    list-style: none;
+    margin: 14px 0px 14px 0px;
+  }
+
+  .scan-input {
+    padding: 0px 0px 10px 0px;
+  }
+  
+  #btn {
+    grid-row: 9;
+    grid-column: 2 / 4;
+    text-align: center;
+    margin-bottom: 5%;
+    align-items: center;
+  }
+  
+  #button {
+    font-family: 'Merriweather Sans', sans-serif;
+    background-color: #c3cdbf;
+    color: #4d3f36;
+    transition: border-color .5s;
+  }
+  
+  #submit:hover {
+    background-color: #4a5a44;
+    color: #e4d6ce;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
