@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>BIDS</title>
+    <title>Autobids</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
     <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans"
     rel="stylesheet">
@@ -15,6 +15,7 @@
       {% else %}
       <a href="{{ url_for('logout') }}">Logout</a>
       {% endif %}
+      <a href="{{ url_for('results') }}">Results</a>
     </div>
     <hr>
         {% block content %} {% endblock %}

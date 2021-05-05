@@ -65,7 +65,7 @@ def login():
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
     
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     logout_user()
     return redirect(url_for('index'))
@@ -84,3 +84,11 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
+@app.route('/results', methods=['GET', 'POST'])
+def results():
+    return render_template('results.html', title='Results')
+
+# def check_for_admin(*args, **kw):
+    #if request.path.startswith('/admin/'):
+        #if not user.is_admin():
+            #return redirect(url_for('login_form'))
