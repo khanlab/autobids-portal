@@ -3,8 +3,9 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db 
+from app.models import Answer
 from app.forms import LoginForm, BidsForm, RegistrationForm
-from app.models import User
+from app.models import User, Answer
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
@@ -13,9 +14,13 @@ def index():
     form = BidsForm()
     if form.validate_on_submit():
 
-        user = User(name=form.name.data, email=form.email.data)
-        db.session.add(user)
-        db.session.commit()
+        potential_user = User.query.filter(User.username==form.name.data).all()
+        if len(potential_user) > 0:
+            user = potential_user[0]
+        else:
+            user = User(username=form.name.data, email=form.email.data)
+            db.session.add(user)
+            db.session.commit()
 
         answer = Answer(
             status=form.status.data,
@@ -30,21 +35,11 @@ def index():
             retrospective_start=form.retrospective_start.data,
             retrospective_end=form.retrospective_end.data,
             consent=form.consent.data,
-            user=user
-            )
-
-        db.session.add(answer)
-        db.session.commit()
-
-        comment = Comment(
             comment=form.text_area.data,
             user=user
-        )
-
-        db.session.add(comment)
+            )
+        db.session.add(answer)
         db.session.commit()
-
-        flash(f"Thanks, the survey has been submitted!")
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
 
@@ -86,7 +81,8 @@ def register():
 
 @app.route('/results', methods=['GET', 'POST'])
 def results():
-    return render_template('results.html', title='Results')
+    res = db.session.query(Answer).all()
+    return render_template('results.html', title='Results', res=res)
 
 # def check_for_admin(*args, **kw):
     #if request.path.startswith('/admin/'):

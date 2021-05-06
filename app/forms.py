@@ -37,7 +37,7 @@ class BidsForm(FlaskForm):
         ('undergraduate', 'Undergraduate Student'),
         ('graduate', 'Graduate Student'),
         ('staff', 'Staff'),
-        ('pos-doc', 'Post-Doc'),
+        ('post-doc', 'Post-Doc'),
         ('faculty', 'Faculty'),
         ('other', 'Other'),
     ], validators=[InputRequired()])

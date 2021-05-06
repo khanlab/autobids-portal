@@ -24,7 +24,7 @@ def load_user(id):
     return User.query.get(int(id))
 
 class Answer(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id= db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
     scanner = db.Column(db.String(20))
     scan_number = db.Column(db.Integer)
@@ -37,16 +37,9 @@ class Answer(db.Model):
     retrospective_start = db.Column(db.Integer)
     retrospective_end = db.Column(db.Integer)
     consent = db.Column(db.String(20))
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-
-    def __repr__(self):
-        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity, self.principal, self.project_name, self.dataset_name, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent}>'
-
-class Comment(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
     comment = db.Column(db.String(200))
+
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
     def __repr__(self):
-        return f'<Comment {self.comment}>'
+        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity, self.principal, self.project_name, self.dataset_name, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment}>'
