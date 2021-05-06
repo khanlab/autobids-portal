@@ -24,7 +24,7 @@ def load_user(id):
     return User.query.get(int(id))
 
 class Answer(db.Model):
-    id= db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
     scanner = db.Column(db.String(20))
     scan_number = db.Column(db.Integer)
@@ -34,7 +34,7 @@ class Answer(db.Model):
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
     retrospective_data = db.Column(db.String(20))
-    retrospective_start = db.Column(db.Integer)
+    retrospective_start = db.Column(db.Integer) # issue with it being integer??
     retrospective_end = db.Column(db.Integer)
     consent = db.Column(db.String(20))
     comment = db.Column(db.String(200))

@@ -20,10 +20,22 @@
     {% for r in res %}
     <tr>
         <td>{{ r.status.capitalize() }}</td>
-        <td>{{ r.scanner }}</td>
+        <td>
+            {% if r.scanner == 'type1' %}
+                <p>3T</p>
+            {% else %}
+                <p>7T</p>
+            {% endif %} 
+        </td>
         <td>{{ r.scan_number }}</td>
         <td>{{ r.study_type.capitalize() }}</td>
-        <td>{{ r.familiarity.capitalize() }}</td>
+        <td>
+            {% if r.familiarity != None %}
+                {{ r.familiarity.capitalize() }}
+            {% else %}
+                {{ r.familiarity }}
+            {% endif %}
+        </td>
         <td>{{ r.principal }}</td>
         <td>{{ r.project_name }}</td>
         <td>{{ r.dataset_name }}</td>
