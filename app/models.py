@@ -5,13 +5,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    answers = db.relationship('Answer', backref='user', lazy='dynamic')
 
     def __repr__(self):
-        return f'<User {self.username}>'
+        return f'<User {self.email}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -21,7 +19,16 @@ class User(UserMixin, db.Model):
 
 @login.user_loader
 def load_user(id):
-    return User.query.get(int(id))
+     return User.query.get(int(id))
+
+class Submitter(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    email = db.Column(db.String(20))
+    answers = db.relationship('Answer', backref='submitter', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Submitter {self.name, self.email}>'
 
 class Answer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,6 +37,14 @@ class Answer(db.Model):
     scan_number = db.Column(db.Integer)
     study_type = db.Column(db.String(20))
     familiarity = db.Column(db.String(20))
+    familiarity_bids = db.Column(db.String(20))
+    familiarity_bidsapp = db.Column(db.String(20))
+    familiarity_python = db.Column(db.String(20))
+    familiarity_linux = db.Column(db.String(20))
+    familiarity_bash = db.Column(db.String(20))
+    familiarity_hpc = db.Column(db.String(20))
+    familiarity_openneuro = db.Column(db.String(20))
+    familiarity_cbrain = db.Column(db.String(20))
     principal = db.Column(db.String(20))
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
@@ -38,8 +53,8 @@ class Answer(db.Model):
     retrospective_end = db.Column(db.Integer)
     consent = db.Column(db.String(20))
     comment = db.Column(db.String(200))
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    submission_date = db.Column(db.DateTime)
+    submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
 
     def __repr__(self):
-        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity, self.principal, self.project_name, self.dataset_name, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment}>'
+        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.project_name, self.dataset_name, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'

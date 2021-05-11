@@ -1,4 +1,4 @@
-body {
+  body {
     font-family: 'Merriweather Sans', sans-serif;
     background-color: #c3cdbf;
     color:#4d3f36;
@@ -57,6 +57,16 @@ body {
   .name_input {
     padding: 0px 0px 10px 0px;
   }
+  
+  #name{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  #email-address{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
 
   .email_input {
     padding: 0px 0px 10px 0px;
@@ -98,7 +108,28 @@ body {
   .scan-input {
     padding: 0px 0px 10px 0px;
   }
-  
+
+  #scan_number{
+    width: 25%;
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  #retrospective_start{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  #retrospective_end{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  #comment{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
   #btn {
     grid-row: 9;
     grid-column: 2 / 4;
@@ -120,7 +151,7 @@ body {
     box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
   }
 
-  #username {
+  #email {
     width: 25%;
     font-size: 14px;
   }
@@ -130,14 +161,49 @@ body {
     font-size: 14px;
   }
 
-  table {
+  .results_table {
     font-size: 14px;
     text-align: center;
-    border-spacing: 15px;
+    background-color: #eeedec;
+  }
+
+  .familiarity {
+    border-color: #ffffff;
+  }
+
+  .familiarity-table {
+    padding: 0px 10px 10px 0px;
+    border-style: none;
+  }
+
+  .familiarity-table-opt {
+    padding: 0px 10px 10px 40px;
+    border-style: none;
+  }
+
+  .familiarity-result-opt {
+    border-style: none;
+    padding: 0px 10px 10px 10px;
+  }
+
+  .opt {
+  margin: 0px;
+  }
+
+  th {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
+    padding: 10px;
   }
 
   td {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
     font-size: 12px;
+    padding: 10px;
+    vertical-align: top;
   }
 
 

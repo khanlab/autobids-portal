@@ -30,7 +30,7 @@
                     <p>{{ form.email.label }}</p>
                 </div>
                 <div class="name-input">  
-                    <input id="email" maxlength="254" minlength="3" name="email" placeholder="Please enter a valid email address" required="" size="32" type="email" value="">
+                    <input id="email-address" maxlength="254" minlength="3" name="email" placeholder="Please enter a valid email address" required="" size="32" type="email" value="">
                 </div>
             </div>
         </div>
@@ -111,19 +111,44 @@
 
         <div class="padded_wrapper">
             <div class="wrapper">
-                <div class="familiarity-title">
-                    <p>{{ form.familiarity.label }}</p>
+                <div class="general-description">
+                        <h4 id="general-title">How familiar are you with the following?</h4>
                 </div>
-                <div class="familiarity-options">
-                    <ul>
-                        {% for familiarity in form.familiarity %}
-                        <li>
-                            {{ familiarity }}
-                            {{ familiarity.label }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+
+                <table class="familiarity-options">
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_bids.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_bids }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_bidsapp.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_bidsapp }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_python.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_python }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_linux.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_linux }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_bash.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_bash }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_hpc.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_hpc }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_openneuro.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_openneuro }}</td>
+                    </tr>
+                    <tr>
+                        <td class="familiarity-table">{{ form.familiarity_cbrain.label }}</td>
+                        <td class="familiarity-table-opt">{{ form.familiarity_cbrain }}</td>
+                    </tr>
+                </table>
             </div>
         </div>
 
@@ -249,7 +274,7 @@
             <div class="wrapper">
                 <div id="comments-box">
                         <p>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</p>
-                        {{ form.text_area(cols=59, rows=5) }}
+                        {{ form.comment(cols=59, rows=5) }}
                 </div>
             </div>
         </div>

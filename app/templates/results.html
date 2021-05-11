@@ -2,7 +2,9 @@
 
 {% block content %}
 <h1>Results</h1>
-<table>
+<table class="results_table">
+    <th>Name</th>
+    <th>Email</th>
     <th>Current Status</th>
     <th>Which Scanner</th>
     <th>Number of Expected Scans</th>
@@ -19,22 +21,142 @@
 
     {% for r in res %}
     <tr>
+        <td>{{ r.submitter.name }}</td>
+        <td>{{ r.submitter.email }}</td>
         <td>{{ r.status.capitalize() }}</td>
         <td>
             {% if r.scanner == 'type1' %}
-                <p>3T</p>
+                <p class="opt">3T</p>
             {% else %}
-                <p>7T</p>
+                <p class="opt">7T</p>
             {% endif %} 
         </td>
         <td>{{ r.scan_number }}</td>
         <td>{{ r.study_type.capitalize() }}</td>
         <td>
-            {% if r.familiarity != None %}
-                {{ r.familiarity.capitalize() }}
-            {% else %}
-                {{ r.familiarity }}
-            {% endif %}
+            <table class="familiarity-results">
+                <tr>
+                    <td class="familiarity-result-opt">Bids:</td>
+                    <td class="familiarity-result-opt">
+                        {% if r.familiarity_bids == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_bids == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_bids == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_bids == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_bids == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">Bids App:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_bidsapp == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_bidsapp == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_bidsapp == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_bidsapp == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_bidsapp == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">Python:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_python == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_python == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_python == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_python == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_python == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">Linux:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_linux == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_linux == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_linux == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_linux == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_linux == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">Bash:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_bash == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_bash == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_bash == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_bash == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_bash == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">HPC:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_hpc == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_hpc == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_hpc == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_hpc == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_hpc == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">Open Neuro:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_openneuro == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_openneuro == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_openneuro == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_openneuro == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_openneuro == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+                <tr>
+                    <td class="familiarity-result-opt">CBRAIN:</td>
+                    <td class="familiarity-result-opt">{% if r.familiarity_cbrain == '1' %}
+                            <p class="opt">Not familiar at all</p>
+                        {% elif r.familiarity_cbrain == '2' %}
+                            <p class="opt">Have heard of it</p>
+                        {% elif r.familiarity_cbrain == '3' %}
+                            <p class="opt">Have used of it</p>
+                        {% elif r.familiarity_cbrain == '4' %}
+                            <p class="opt">Used it regularly</p>
+                        {% elif r.familiarity_cbrain == '5' %}
+                            <p class="opt">I consider myself an expert</p>
+                        {% endif %} 
+                    </td>
+                </tr>
+            </table>
         </td>
         <td>{{ r.principal }}</td>
         <td>{{ r.project_name }}</td>
@@ -43,7 +165,7 @@
         <td>{{ r.retrospective_start }}</td>
         <td>{{ r.retrospective_end }}</td>
         <td>{{ r.consent.capitalize() }}</td>
-        <td>{{ r.comment }}</td>
+        <td>{{ r.comment.capitalize() }}</td>
     {% endfor %}
     </tr>
 </table>

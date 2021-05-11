@@ -2,35 +2,18 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, RadioField, SelectField, DateField, TextAreaField
 from wtforms.fields.html5 import EmailField, IntegerField, DateField
 from wtforms.validators import ValidationError, DataRequired, Length, Optional, InputRequired, Email, EqualTo
-from app.models import User 
+from app.models import Submitter 
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
+    email = StringField('Email', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember_me = BooleanField('Remember Me')
     submit = SubmitField('Sign In')
 
-class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    password2 = PasswordField(
-        'Repeat Password', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('Register')
-
-    def validate_username(self, username):
-        user = User.query.filter_by(username=username.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different username.')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different email address.')
-
 class BidsForm(FlaskForm):
+
     name = StringField('Name:', validators=[DataRequired()])
-    
+
     email = EmailField('Email:', validators=[DataRequired()])
     
     status = RadioField('Current status:', choices=[
@@ -54,10 +37,69 @@ class BidsForm(FlaskForm):
         ('no', 'No'),
     ], validators=[InputRequired()])
 
-    familiarity = RadioField('Are you familiar with?:', choices=[
-        ('yes', 'Yes'),
-        ('no', 'No'),
-    ], validators=[Optional()])
+    familiarity_bids = SelectField('BIDS:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_bidsapp = SelectField('BIDS Apps:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_python = SelectField('Python:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_linux = SelectField('Linux:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_bash = SelectField('BASH:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_hpc = SelectField('HPC Systems:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_openneuro = SelectField('Open Neuro:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
+
+    familiarity_cbrain = SelectField('CBRAIN:', choices=[
+        ('1', 'Not familiar at all'),
+        ('2', 'Have heard of it'),
+        ('3', 'Have used of it'),
+        ('4', 'Used it regularly'),
+        ('5', 'I consider myself an expert'),
+    ], validators=[InputRequired()])
 
     principal = StringField('What is the "Principal" or "PI" identifier for this study?:', validators=[DataRequired()])
 
@@ -78,6 +120,6 @@ class BidsForm(FlaskForm):
         ('yes', 'Yes'),
     ], validators=[InputRequired()])
 
-    text_area = TextAreaField('Comments')
+    comment = TextAreaField('Comments')
 
     submit = SubmitField('Submit')
