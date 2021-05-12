@@ -1,10 +1,10 @@
-
 from flask import render_template, flash, redirect, url_for, request 
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db 
 from app.models import User, Submitter, Answer
-from app.forms import LoginForm, BidsForm
+from app.forms import LoginForm, BidsForm, RegistrationForm
+from datetime import datetime
 
 @app.route('/', methods=['GET', 'POST'])
 
@@ -13,7 +13,10 @@ def index():
     form = BidsForm()
     if form.validate_on_submit():
 
-        submitter = Submitter(name=form.name.data,email=form.email.data)
+        submitter = Submitter(
+            name=form.name.data, 
+            email=form.email.data
+            )
         db.session.add(submitter)
         db.session.commit()
 
@@ -43,6 +46,7 @@ def index():
 
         db.session.add(answer)
         db.session.commit()
+
         flash(f"Thanks, the survey has been submitted!")
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
@@ -63,14 +67,32 @@ def login():
             next_page = url_for('index')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
-    
-@app.route('/logout', methods=['GET', 'POST'])
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('Congratulations, you are now a registered user!')
+        return redirect(url_for('index'))
+    return render_template('register.html', title='Register', form=form)
 
 @app.route('/results', methods=['GET', 'POST'])
 @login_required
 def results():
-    res = db.session.query(Answer).all()
-    return render_template('results.html', title='Results', res=res)
+    last = db.session.query(User).filter(User.id==1)[0]
+    res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
+    return render_template('results.html', title='Results', res=res, last=last)
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+    logout_user()
+    return redirect(url_for('index'))

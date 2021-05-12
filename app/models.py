@@ -7,9 +7,10 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
+    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<User {self.email}>'
+        return f'<User {self.email, self.last_seen}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -53,7 +54,9 @@ class Answer(db.Model):
     retrospective_end = db.Column(db.Integer)
     consent = db.Column(db.String(20))
     comment = db.Column(db.String(200))
-    submission_date = db.Column(db.DateTime)
+    submission_date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    # submitter = db.relationship('Submitter', backref='answer', lazy=True)
+    
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
 
     def __repr__(self):
