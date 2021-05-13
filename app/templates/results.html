@@ -3,6 +3,7 @@
 {% block content %}
 <h1>Results</h1>
 <table class="results_table">
+    <th>Config</th>
     <th>Name</th>
     <th>Email</th>
     <th>Current Status</th>
@@ -22,6 +23,7 @@
     {% for r in res %}
         {% if r.submission_date > last.last_seen %}
         <tr class="new">
+            <td><button class="config-btn" type="button"></button></td>
             <td>{{ r.submitter.name }}</td>
             <td>{{ r.submitter.email }}</td>
             <td>{{ r.status.capitalize() }}</td>
@@ -163,13 +165,26 @@
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
             <td>{{ r.retrospective_data.capitalize() }}</td>
-            <td>{{ r.retrospective_start }}</td>
-            <td>{{ r.retrospective_end }}</td>
+            <td>
+                {% if r.retrospective_start != None %}
+                    {{ r.retrospective_start.date() }}
+                {% else %}
+                    {{ r.retrospective_start }}
+                {% endif %} 
+            </td>
+            <td>
+                {% if r.retrospective_start != None %}
+                    {{ r.retrospective_end.date() }}
+                {% else %}
+                    {{ r.retrospective_end }}
+                {% endif %} 
+             </td>
             <td>{{ r.consent.capitalize() }}</td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>
         {% else %}
         <tr>
+            <td><button class="config-btn" type="button"></button></td>
             <td>{{ r.submitter.name }}</td>
             <td>{{ r.submitter.email }}</td>
             <td>{{ r.status.capitalize() }}</td>
@@ -311,8 +326,20 @@
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
             <td>{{ r.retrospective_data.capitalize() }}</td>
-            <td>{{ r.retrospective_start }}</td>
-            <td>{{ r.retrospective_end }}</td>
+            <td>
+                {% if r.retrospective_start != None %}
+                    {{ r.retrospective_start.date() }}
+                {% else %}
+                    {{ r.retrospective_start }}
+                {% endif %} 
+            </td>
+            <td>
+                {% if r.retrospective_start != None %}
+                    {{ r.retrospective_end.date() }}
+                {% else %}
+                    {{ r.retrospective_end }}
+                {% endif %} 
+            </td>
             <td>{{ r.consent.capitalize() }}</td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>

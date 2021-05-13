@@ -37,7 +37,6 @@ class Answer(db.Model):
     scanner = db.Column(db.String(20))
     scan_number = db.Column(db.Integer)
     study_type = db.Column(db.String(20))
-    familiarity = db.Column(db.String(20))
     familiarity_bids = db.Column(db.String(20))
     familiarity_bidsapp = db.Column(db.String(20))
     familiarity_python = db.Column(db.String(20))
@@ -50,12 +49,11 @@ class Answer(db.Model):
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
     retrospective_data = db.Column(db.String(20))
-    retrospective_start = db.Column(db.Integer) # issue with it being integer??
-    retrospective_end = db.Column(db.Integer)
+    retrospective_start = db.Column(db.DateTime) 
+    retrospective_end = db.Column(db.DateTime)
     consent = db.Column(db.String(20))
     comment = db.Column(db.String(200))
     submission_date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    # submitter = db.relationship('Submitter', backref='answer', lazy=True)
     
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
 

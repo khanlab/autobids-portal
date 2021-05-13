@@ -161,10 +161,20 @@
     font-size: 14px;
   }
 
+  #password2 {
+    width: 25%;
+    font-size: 14px;
+  }
+  
   .results_table {
     font-size: 14px;
     text-align: center;
     background-color: #eeedec;
+  }
+
+  .config-btn {
+    width: 20px;
+    height: 20px;
   }
 
   .familiarity {
@@ -211,21 +221,3 @@
     padding: 10px;
     vertical-align: top;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  

@@ -20,12 +20,7 @@ class RegistrationForm(FlaskForm):
     def validate_email(self, email):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
-            raise ValidationError('Please use a different email.')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError('Please use a different email address.')
+            raise ValidationError('There is already an account using this email address. Please use a different email address.')
 
 class BidsForm(FlaskForm):
 
@@ -129,9 +124,9 @@ class BidsForm(FlaskForm):
         ('no', 'No'),
     ], validators=[InputRequired()])
     
-    retrospective_start = DateField('If so, please enter start date of retrospective conversion:', format='%m/%d/%Y', validators=[Optional()])
+    retrospective_start = DateField('If so, please enter start date of retrospective conversion:', format='%Y-%m-%d', validators=[Optional()])
 
-    retrospective_end = DateField('Please enter end date of retrospective conversion (or leave blank if ongoing):', format='%m/%d/%Y', validators=[Optional()])
+    retrospective_end = DateField('Please enter end date of retrospective conversion (or leave blank if ongoing):', format='%Y-%m-%d', validators=[Optional()])
 
     consent = RadioField('By clicking yes below, you agree with these general terms.', choices=[
         ('yes', 'Yes'),
