@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
-{% block content %}
+{% block app_content %}
 <div class="container">
     <form id="survey-form" action="" method="post">
         {{ form.csrf_token }}
@@ -226,7 +227,7 @@
                 <div class="retrospective_start">
                     <p>{{ form.retrospective_start.label }}</p>
                 </div>
-                <div class="start_input"></div>
+                <div class="start_input">
                     <input id="retrospective_start" name="retrospective_start" placeholder="Please enter the start date" size="32" type="date" value="">
                 </div>
             </div>
@@ -237,7 +238,7 @@
                 <div class="retrospective_end">
                     <p>{{ form.retrospective_end.label }}</p>
                 </div>
-                <div class="end_input"></div>
+                <div class="end_input">
                     <input id="retrospective_end" name="retrospective_end" placeholder="Please enter the start date" size="32" type="date" value="">
                 </div>
             </div>
@@ -274,7 +275,7 @@
             <div class="wrapper">
                 <div id="comments-box">
                         <p>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</p>
-                        {{ form.comment(cols=59, rows=5) }}
+                        {{ form.comment(cols=77, rows=5) }}
                 </div>
             </div>
         </div>

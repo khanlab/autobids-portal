@@ -98,6 +98,7 @@
 
   label {
     font-size: 16px;
+    font-weight: 400;
   }
 
   a {
@@ -128,6 +129,7 @@
   #comment{
     font-family: 'Merriweather Sans', sans-serif;
     color: #4d3f36;
+    resize: none
   }
 
   #btn {

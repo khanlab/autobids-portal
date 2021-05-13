@@ -135,3 +135,6 @@ class BidsForm(FlaskForm):
     comment = TextAreaField('Comments')
 
     submit = SubmitField('Submit')
+
+class EmptyForm(FlaskForm):
+    print("test")

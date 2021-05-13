@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db 
 from app.models import User, Submitter, Answer
-from app.forms import LoginForm, BidsForm, RegistrationForm
+from app.forms import LoginForm, BidsForm, RegistrationForm, EmptyForm
 from datetime import datetime
 
 @app.route('/', methods=['GET', 'POST'])
@@ -88,6 +88,12 @@ def results():
     last = db.session.query(User).filter(User.id==1)[0]
     res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
     return render_template('results.html', title='Results', res=res, last=last)
+
+@app.route('/results/config', methods=['GET', 'POST'])
+@login_required
+def config():
+    form = EmptyForm()
+    return render_template('config.html', form=form)
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
