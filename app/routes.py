@@ -36,6 +36,7 @@ def index():
             principal=form.principal.data,
             project_name=form.project_name.data,
             dataset_name=form.dataset_name.data,
+            sample = form.sample.data,
             retrospective_data=form.retrospective_data.data,
             retrospective_start=form.retrospective_start.data,
             retrospective_end=form.retrospective_end.data,

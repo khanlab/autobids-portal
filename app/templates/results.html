@@ -15,6 +15,7 @@
     <th>Principal or "PI" Identifier</th>
     <th>Project Name Identifier</th>
     <th>Overide</th>
+    <th>Sample Date</th>
     <th>Retrospective Data</th>
     <th>Retrospective Data Start Date</th>
     <th>Retrospective Data End Date</th>
@@ -26,7 +27,7 @@
         <tr class="new">
             <td>
                 <a href="{{ url_for('config') }}">
-                    <button class="config-btn"></button>
+                    <button class="config-btn" id = r.submitter.id></button>
                 </a>
             </td>
             <td>{{ r.submitter.name }}</td>
@@ -169,7 +170,14 @@
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
-            <td>{{ r.retrospective_data.capitalize() }}</td>
+            <td>
+                {% if r.sample != None %}
+                    {{ r.sample.date() }}
+                {% else %}
+                    {{ r.sample }}
+                {% endif %} 
+            </td>
+            <td>{{ r.retrospective_data }}</td>
             <td>
                 {% if r.retrospective_start != None %}
                     {{ r.retrospective_start.date() }}
@@ -178,13 +186,13 @@
                 {% endif %} 
             </td>
             <td>
-                {% if r.retrospective_start != None %}
+                {% if r.retrospective_end != None %}
                     {{ r.retrospective_end.date() }}
                 {% else %}
                     {{ r.retrospective_end }}
                 {% endif %} 
              </td>
-            <td>{{ r.consent.capitalize() }}</td>
+            <td>{{ r.consent }}</td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>
         {% else %}
@@ -334,7 +342,14 @@
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
-            <td>{{ r.retrospective_data.capitalize() }}</td>
+            <td>
+                {% if r.sample != None %}
+                    {{ r.sample.date() }}
+                {% else %}
+                    {{ r.sample }}
+                {% endif %} 
+            </td>
+            <td>{{ r.retrospective_data }}</td>
             <td>
                 {% if r.retrospective_start != None %}
                     {{ r.retrospective_start.date() }}
@@ -349,7 +364,7 @@
                     {{ r.retrospective_end }}
                 {% endif %} 
             </td>
-            <td>{{ r.consent.capitalize() }}</td>
+            <td>{{ r.consent }}</td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>
         {% endif %}

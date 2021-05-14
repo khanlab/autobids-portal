@@ -119,6 +119,8 @@ class BidsForm(FlaskForm):
 
     dataset_name = StringField('The name for your BIDS dataset will by default be the "Project Name". If you wish to override this, please enter a new name below (optional):', validators=[Optional()])
 
+    sample = DateField('Please enter the scan date for this example session:', format='%Y-%m-%d', validators=[Optional()])
+
     retrospective_data = RadioField('Does this study have retrospective (previously acquired) data to convert?:', choices=[
         ('yes', 'Yes'),
         ('no', 'No'),

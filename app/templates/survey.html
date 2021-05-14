@@ -198,6 +198,26 @@
         <div class="padded_wrapper">
             <div class="wrapper">
                 <div class="general-description">
+                    <h4 id="general-title">Test BIDS Conversion</h4>
+                    <p id="general-description">We require an example session to optimize and test BIDS conversion.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="sample">
+                    <p>{{ form.sample.label }}</p>
+                </div>
+                <div class="start_input">
+                    <input id="sample" name="sample" size="32" type="date" value="">
+                </div>
+            </div>
+        </div>
+
+        <div class="padded_wrapper">
+            <div class="wrapper">
+                <div class="general-description">
                     <h4 id="general-title">Retrospective BIDS Conversion</h4>
                     <p id="general-description">Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
                 </div>
@@ -228,7 +248,7 @@
                     <p>{{ form.retrospective_start.label }}</p>
                 </div>
                 <div class="start_input">
-                    <input id="retrospective_start" name="retrospective_start" placeholder="Please enter the start date" size="32" type="date" value="">
+                    <input id="retrospective_start" name="retrospective_start" size="32" type="date" value="">
                 </div>
             </div>
         </div>
@@ -239,7 +259,7 @@
                     <p>{{ form.retrospective_end.label }}</p>
                 </div>
                 <div class="end_input">
-                    <input id="retrospective_end" name="retrospective_end" placeholder="Please enter the start date" size="32" type="date" value="">
+                    <input id="retrospective_end" name="retrospective_end" size="32" type="date" value="">
                 </div>
             </div>
         </div>
@@ -274,7 +294,7 @@
         <div class="padded_wrapper">
             <div class="wrapper">
                 <div id="comments-box">
-                        <p>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</p>
+                        <h4 id="general-title">Optional: Please feel free to leave any feedback regarding this form or autobids in general.</h4>
                         {{ form.comment(cols=77, rows=5) }}
                 </div>
             </div>
