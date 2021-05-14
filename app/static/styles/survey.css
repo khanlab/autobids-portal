@@ -4,6 +4,15 @@
     color:#4d3f36;
   }
 
+  .navbar-brand {
+    font-size: 15px;
+    padding: 15px 0px;
+  }
+
+  .contain {
+    padding: 0px 15px;
+  }
+
   .container {
     align-items: center;
     margin: auto;
@@ -172,11 +181,12 @@
     font-size: 14px;
     text-align: center;
     background-color: #eeedec;
+    table-layout: fixed;
   }
 
   .config-btn {
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
   }
 
   .familiarity {
@@ -195,7 +205,7 @@
 
   .familiarity-result-opt {
     border-style: none;
-    padding: 0px 10px 10px 10px;
+    padding: 0px;
   }
 
   .opt {
@@ -212,7 +222,8 @@
     border-style: solid;
     border-width: 2px;
     border-color: #708661;
-    padding: 10px;
+    font-size: 14px;
+    text-align: center;
   }
 
   td {
@@ -220,6 +231,7 @@
     border-width: 2px;
     border-color: #708661;
     font-size: 12px;
-    padding: 10px;
     vertical-align: top;
+    width:1px;
+    padding: 5px;
   }

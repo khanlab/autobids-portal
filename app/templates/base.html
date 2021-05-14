@@ -8,7 +8,7 @@
   <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
   <nav class="navbar navbar-default">
-    <div class="container">
+    <div class="contain">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
           <span class="sr-only">Toggle navigation</span>
@@ -38,7 +38,7 @@
 {% block content %}
   <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
-  <div class="container">
+  <div class="contain">
     {% with messages = get_flashed_messages() %}
     {% if messages %}
       {% for message in messages %}
