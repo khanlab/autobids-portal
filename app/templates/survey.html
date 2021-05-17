@@ -113,7 +113,9 @@
         <div class="padded_wrapper">
             <div class="wrapper">
                 <div class="general-description">
-                        <h4 id="general-title">How familiar are you with the following?</h4>
+                    <p>
+                        <label for="familiarity">How familiar are you with the following?</label>
+                    </p>
                 </div>
 
                 <table class="familiarity-options">
@@ -231,12 +233,9 @@
                 </div>
                 <div class="retrospective_data-options">
                     <ul>
-                        {% for retrospective_data in form.retrospective_data %}
                         <li>
-                            {{ retrospective_data }}
-                            {{ retrospective_data.label }}
+                            {{ form.retrospective_data }}
                         </li>
-                        {% endfor %}
                     </ul>
                 </div>
             </div>
@@ -280,12 +279,9 @@
                 </div>
                 <div class="consent-options">
                     <ul>
-                        {% for consent in form.consent %}
                         <li>
-                            {{ consent }}
-                            {{ consent.label }}
+                            {{ form.consent }}
                         </li>
-                        {% endfor %}
                     </ul>
                 </div>
             </div>

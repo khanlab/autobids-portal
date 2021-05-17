@@ -5,6 +5,7 @@ from app import app, db
 from app.models import User, Submitter, Answer
 from app.forms import LoginForm, BidsForm, RegistrationForm, EmptyForm
 from datetime import datetime
+import pyexcel.ext.xls
 
 @app.route('/', methods=['GET', 'POST'])
 
@@ -95,6 +96,10 @@ def results():
 def config():
     form = EmptyForm()
     return render_template('config.html', form=form)
+
+@app.route("/results/download", methods=['GET'])
+def download_file():
+    return excel.make_response_from_tables([[Submitter], [Answer]], "xls")
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():

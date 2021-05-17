@@ -121,18 +121,13 @@ class BidsForm(FlaskForm):
 
     sample = DateField('Please enter the scan date for this example session:', format='%Y-%m-%d', validators=[Optional()])
 
-    retrospective_data = RadioField('Does this study have retrospective (previously acquired) data to convert?:', choices=[
-        ('yes', 'Yes'),
-        ('no', 'No'),
-    ], validators=[InputRequired()])
+    retrospective_data = BooleanField('Does this study have retrospective (previously acquired) data to convert?:')
     
     retrospective_start = DateField('If so, please enter start date of retrospective conversion:', format='%Y-%m-%d', validators=[Optional()])
 
     retrospective_end = DateField('Please enter end date of retrospective conversion (or leave blank if ongoing):', format='%Y-%m-%d', validators=[Optional()])
 
-    consent = RadioField('By clicking yes below, you agree with these general terms.', choices=[
-        ('yes', 'Yes'),
-    ], validators=[InputRequired()])
+    consent = BooleanField('By clicking yes below, you agree with these general terms.', validators=[DataRequired()])
 
     comment = TextAreaField('Comments')
 

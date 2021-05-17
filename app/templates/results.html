@@ -3,7 +3,7 @@
 
 {% block content %}
 <h1>Results</h1>
-<table class="results_table">
+<table class="results_table"></p>
     <th></th>
     <th>Name</th>
     <th>Email</th>
@@ -177,7 +177,12 @@
                     {{ r.sample }}
                 {% endif %} 
             </td>
-            <td>{{ r.retrospective_data }}</td>
+            <td>
+                {% if r.retrospective_data == '1' %}
+                    <p class="opt">Yes</p>
+                {% else %}
+                    <p class="opt">None</p>
+                {% endif %} </td>
             <td>
                 {% if r.retrospective_start != None %}
                     {{ r.retrospective_start.date() }}
@@ -192,7 +197,11 @@
                     {{ r.retrospective_end }}
                 {% endif %} 
              </td>
-            <td>{{ r.consent }}</td>
+             <td>
+                {% if r.consent == '1' %}
+                    <p class="opt">Yes</p>
+                {% endif %} 
+            </td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>
         {% else %}
@@ -349,7 +358,12 @@
                     {{ r.sample }}
                 {% endif %} 
             </td>
-            <td>{{ r.retrospective_data }}</td>
+            <td>
+                {% if r.retrospective_data == '1' %}
+                    <p class="opt">Yes</p>
+                {% else %}
+                    <p class="opt">None</p>
+                {% endif %}
             <td>
                 {% if r.retrospective_start != None %}
                     {{ r.retrospective_start.date() }}
@@ -364,7 +378,11 @@
                     {{ r.retrospective_end }}
                 {% endif %} 
             </td>
-            <td>{{ r.consent }}</td>
+            <td>
+                {% if r.consent == '1' %}
+                    <p class="opt">Yes</p>
+                {% endif %} 
+            </td>
             <td>{{ r.comment.capitalize() }}</td>
         </tr>
         {% endif %}
