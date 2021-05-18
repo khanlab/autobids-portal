@@ -1,11 +1,11 @@
-from flask import render_template, flash, redirect, url_for, request 
+from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db 
 from app.models import User, Submitter, Answer
 from app.forms import LoginForm, BidsForm, RegistrationForm, EmptyForm
 from datetime import datetime
-import pyexcel.ext.xls
+import flask_excel as excel
 
 @app.route('/', methods=['GET', 'POST'])
 
@@ -89,6 +89,7 @@ def register():
 def results():
     last = db.session.query(User).filter(User.id==1)[0]
     res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
+
     return render_template('results.html', title='Results', res=res, last=last)
 
 @app.route('/results/config', methods=['GET', 'POST'])
@@ -98,8 +99,100 @@ def config():
     return render_template('config.html', form=form)
 
 @app.route("/results/download", methods=['GET'])
-def download_file():
-    return excel.make_response_from_tables([[Submitter], [Answer]], "xls")
+@login_required
+
+def download():
+    response_list = db.session.query(Answer).all()
+    file_name='Response_report'
+
+    csv_list = [[file_name], ['Name',
+        'Email',
+        'Status',
+        'Scanner',
+        'Number of Scans',
+        'Study Type',
+        'Bids Familiarity',
+        'Bids App Familiarity',
+        'Python Familiarity',
+        'Linux Familiarity',
+        'Bash Familiarity',
+        'HPC Familiarity',
+        'OPENNEURO Familiarity',
+        'CBRAIN Familiarity',
+        'Principal',
+        'Project Name',
+        'Override',
+        'Sample Date',
+        'Retrospective Data',
+        'Retrospective Data Start Date',
+        'Retrospective Data End Date',
+        'Consent',
+        'Comment',
+        ]]
+
+    def update_scanner(scanner):
+        if scanner == 'type1':
+            new_scanner = '3T'
+        else: 
+            new_scanner = '7T'
+        return new_scanner
+ 
+    def update_familiarity(familiarity):
+        if familiarity == '1':
+            new_familiarity = 'Not familiar at all'
+        elif familiarity == '2':
+            new_familiarity = 'Have heard of it'
+        elif familiarity == '3':
+            new_familiarity = 'Have used it before'
+        elif familiarity == '4':
+            new_familiarity = 'Used it regularly'
+        elif familiarity == '5':
+            new_familiarity = 'I consider myself an expert'
+        return new_familiarity
+    
+    def update_date(date):
+        if date != None:
+            new_date = date.date()
+        else:
+            new_date = date
+        return new_date
+    
+    def update_bool(consent):
+        if consent == '1':
+            new_consent = 'Yes'
+        elif consent == 'yes': 
+            new_consent = 'Yes'
+        else:
+            new_consent = 'No'
+        return new_consent
+
+    for r in response_list:
+
+        csv_list.append([r.submitter.name,
+            r.submitter.email,
+            r.status.capitalize(),
+            update_scanner(r.scanner),
+            r.scan_number,
+            r.study_type.capitalize(),
+            update_familiarity(r.familiarity_bids),
+            update_familiarity(r.familiarity_bidsapp),
+            update_familiarity(r.familiarity_python),
+            update_familiarity(r.familiarity_linux),
+            update_familiarity(r.familiarity_bash),
+            update_familiarity(r.familiarity_hpc),
+            update_familiarity(r.familiarity_openneuro),
+            update_familiarity(r.familiarity_cbrain),
+            r.principal,
+            r.project_name,
+            r.dataset_name,
+            update_date(r.sample),
+            update_bool(r.retrospective_data),
+            update_date(r.retrospective_start),
+            update_date(r.retrospective_end),
+            update_bool(r.consent),
+            r.comment,
+            ])
+    return excel.make_response_from_array(csv_list, 'csv', file_name=file_name)
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():

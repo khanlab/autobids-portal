@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
@@ -23,6 +24,7 @@ def load_user(id):
      return User.query.get(int(id))
 
 class Submitter(db.Model):
+    __tablename__ = 'submitter'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
     email = db.Column(db.String(20))
@@ -32,6 +34,7 @@ class Submitter(db.Model):
         return f'<Submitter {self.name, self.email}>'
 
 class Answer(db.Model):
+    __tablename__ = 'answer'
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
     scanner = db.Column(db.String(20))
