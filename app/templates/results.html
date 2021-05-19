@@ -23,7 +23,7 @@
         <tr class="new">
             <td>
                 <form method="POST" action="{{ url_for('answer_info') }}">
-                    <input name="more" id="{{r.submitter_id}}" type="submit" value="View more"></input>
+                    <input name={{r.submitter.id}} type="submit" value="View more"></input>
                 </form> 
             </td>
             <td>{{ r.submitter.name }}</td>
