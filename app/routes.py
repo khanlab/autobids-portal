@@ -89,8 +89,17 @@ def register():
 def results():
     last = db.session.query(User).filter(User.id==1)[0]
     res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
+    return render_template('results.html', title='Responses', res=res, last=last)
 
-    return render_template('results.html', title='Results', res=res, last=last)
+@app.route('/results/user', methods=['GET', 'POST'])
+@login_required
+def answer_info():
+    if request.method == 'POST':
+        button_id = list(request.form.keys())[0]
+        print(button_id)
+        submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
 @app.route('/results/config', methods=['GET', 'POST'])
 @login_required
