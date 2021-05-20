@@ -9,7 +9,6 @@ import flask_excel as excel
 
 app = Flask(__name__)
 excel.init_excel(app)
-excel.init_excel(app)
 app.config.from_object(Config)
 convention = {
     "ix": 'ix_%(column_0_label)s',
