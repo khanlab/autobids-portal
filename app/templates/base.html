@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>BIDS</title>
+    <title>Autobids</title>
     <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
     <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans"
     rel="stylesheet">
@@ -13,10 +13,20 @@
       {% if current_user.is_anonymous %}
       <a href="{{ url_for('login') }}">Login</a>
       {% else %}
+      <a href="{{ url_for('results') }}">Results</a>
       <a href="{{ url_for('logout') }}">Logout</a>
       {% endif %}
     </div>
     <hr>
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+      <ul>
+        {% for message in messages %}
+        <li style="text-align: center;">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% endwith %}
         {% block content %} {% endblock %}
   </body>
 </html>
