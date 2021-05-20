@@ -35,7 +35,13 @@
                     <p class="opt">7T</p>
                 {% endif %} 
             </td>
-            <td>{{ r.study_type.capitalize() }}</td>
+            <td>
+                {% if r.study_type == '1' or r.study_type == 'yes' %}
+                    <p class="opt">Yes</p>
+                {% else %}
+                    <p class="opt">No</p>
+                {% endif %} 
+            </td>
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
@@ -83,7 +89,13 @@
                     <p class="opt">7T</p>
                 {% endif %} 
             </td>
-            <td>{{ r.study_type.capitalize() }}</td>
+            <td>
+                {% if r.study_type == '1' or r.study_type == 'yes' %}
+                    <p class="opt">Yes</p>
+                {% else %}
+                    <p class="opt">No</p>
+                {% endif %} 
+            </td>
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>

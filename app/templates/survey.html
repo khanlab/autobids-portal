@@ -99,12 +99,9 @@
                 </div>
                 <div class="study_type-options">
                     <ul>
-                        {% for study_type in form.study_type %}
                         <li>
-                            {{ study_type }}
-                            {{ study_type.label }}
+                            {{ form.study_type }}
                         </li>
-                        {% endfor %}
                     </ul>
                 </div>
             </div>

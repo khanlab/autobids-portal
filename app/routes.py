@@ -98,7 +98,6 @@ def answer_info():
         button_id = list(request.form.keys())[0]
         print(button_id)
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
 @app.route('/results/config', methods=['GET', 'POST'])
@@ -182,7 +181,7 @@ def download():
             r.status.capitalize(),
             update_scanner(r.scanner),
             r.scan_number,
-            r.study_type.capitalize(),
+            update_bool(r.study_type),
             update_familiarity(r.familiarity_bids),
             update_familiarity(r.familiarity_bidsapp),
             update_familiarity(r.familiarity_python),

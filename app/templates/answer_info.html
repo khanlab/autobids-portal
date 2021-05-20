@@ -32,7 +32,13 @@
             {% endif %} 
         </td>
         <td>{{ submitter_answer.scan_number }}</td>
-        <td>{{ submitter_answer.study_type.capitalize() }}</td>
+        <td>
+            {% if submitter_answer.study_type == '1' or submitter_answer.study_type == 'yes' %}
+                <p class="opt">Yes</p>
+            {% else %}
+                <p class="opt">No</p>
+            {% endif %} 
+        </td>
         <td>
             <table class="familiarity-results">
                 <tr>
@@ -197,6 +203,8 @@
          <td>
             {% if submitter_answer.consent == '1' %}
                 <p class="opt">Yes</p>
+            {% else %}
+                <p class="opt">None</p>
             {% endif %} 
         </td>
         <td>{{ submitter_answer.comment.capitalize() }}</td>
