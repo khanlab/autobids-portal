@@ -9,14 +9,6 @@
     padding: 15px 0px;
   }
 
-  .download{
-    font-size: 14px;
-  }
-
-  .contain {
-    padding: 0px 15px;
-  }
-
   .container {
     align-items: center;
     margin: auto;
@@ -24,84 +16,17 @@
     padding: 10px;
   }
 
-  .survey-form {
-    padding: 30px
-  }
-  
-  .title-description {
-    text-align: center;
-  }
-
   .flash-message {
     color: rgba(178, 34, 34, 0.726);
   }
 
-  #title {
-    font-weight: normal;
-    font-size: 32 px;
-  }
-  
-  #description {
-    font-size: 14px;
-  }
-
-  .padded_wrapper {
-    padding: 10px;
-  }
-
-  .wrapper {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
-    margin: auto;
-    width: 60%;
-    padding: 20px
-  }
-
-  #general-title {
+  a {
     font-size: 16px;
-    margin: 14px 0px;
+    color: #4d3f36
   }
 
-  #general-description {
-    font-size: 14px;
-  }
-
-  .name_input {
-    padding: 0px 0px 10px 0px;
-  }
-  
-  #name{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #email-address{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  .email_input {
-    padding: 0px 0px 10px 0px;
-  }
-
-  .status_title {
-    font-size: 20px;
-  }
-
-  .status_options {
-    font-size: 10px;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0px;
-  }
-
-  li {
-    list-style: none;
-    padding: 0px 0px 10px 0px;
+  h4 {
+    font-size: 16px;
   }
 
   p {
@@ -114,19 +39,27 @@
     font-weight: 400;
   }
 
-  a {
+/* for Survey page */
+  .survey-form {
+    padding: 30px
+  }
+
+  #title {
+    font-weight: normal;
+    font-size: 32 px;
+  }
+  
+  #description {
+    font-size: 14px;
+  }
+
+  #general-title {
     font-size: 16px;
-    color: #4d3f36
+    margin: 14px 0px;
   }
 
-  .scan-input {
-    padding: 0px 0px 10px 0px;
-  }
-
-  #scan_number{
-    width: 25%;
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
+  #general-description {
+    font-size: 14px;
   }
 
   #retrospective_start{
@@ -145,6 +78,7 @@
     resize: none
   }
 
+/* smth for button */
   #btn {
     grid-row: 9;
     grid-column: 2 / 4;
@@ -158,6 +92,7 @@
     background-color: #c3cdbf;
     color: #4d3f36;
     transition: border-color .5s;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1)
   }
   
   #submit:hover {
@@ -166,61 +101,25 @@
     box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
   }
 
-  #email {
-    width: 25%;
+/* for results and detailed results page */
+  .download{
     font-size: 14px;
   }
 
-  #password {
-    width: 25%;
-    font-size: 14px;
-  }
-
-  #password2 {
-    width: 25%;
-    font-size: 14px;
-  }
-  
-  .results_table {
+  .table {
     font-size: 14px;
     text-align: center;
-    background-color: #eeedec;
-    table-layout: fixed;
-  }
-
-  .config-btn {
-    width: 15px;
-    height: 15px;
-  }
-
-  .familiarity {
-    border-color: #ffffff;
-  }
-
-  .familiarity-table {
-    padding: 0px 10px 10px 0px;
-    border-style: none;
-  }
-
-  .familiarity-table-opt {
-    padding: 0px 10px 10px 40px;
-    border-style: none;
-  }
-
-  .familiarity-result-opt {
-    border-style: none;
-    padding: 0px;
-  }
-
-  .opt {
-  margin: 0px;
+    background-color: #ffffff;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
   }
 
   .new {
     font-size: 14px;
     text-align: center;
     background-color: #97a78c;
-    }
+  }
 
   th {
     border-style: solid;
@@ -238,4 +137,41 @@
     vertical-align: top;
     width:1px;
     padding: 5px;
+  }
+
+  .familiarity-result-opt {
+    border-style: none;
+    padding: 0px;
+  }
+
+/* for Login page */
+  .name_input {
+    padding: 0px 0px 10px 0px;
+  }
+  
+  #name{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  #email-address{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+  }
+
+  .email_input {
+    padding: 0px 0px 10px 0px;
+  }
+
+/* for Register page */
+  #email {
+    font-size: 14px;
+  }
+
+  #password {
+    font-size: 14px;
+  }
+
+  #password2 {
+    font-size: 14px;
   }

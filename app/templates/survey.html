@@ -1,301 +1,237 @@
 {% extends "base.html" %}
 {% import 'bootstrap/wtf.html' as wtf %}
-
+​
 {% block app_content %}
-<div class="container">
-    <form id="survey-form" action="" method="post">
-        {{ form.csrf_token }}
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="title-description">
-                    <h1 id="title">New study request: autobids-cfmm </h1>
-                    <h4 id="description">Please use this form to submit information for initiating a new autobids project</h3>
+<form id="survey-form" action="" method="post">
+    {{ form.csrf_token }}
+    <div class="panel panel-default">
+        <div class="panel-body" style="text-align: center">
+            <h1 id="title">New study request: autobids-cfmm </h1>
+            <h4 id="description">Please use this form to submit information for initiating a new autobids project</h3>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.name.label }}
+            {{ form.name(class="form-control", style="width: 400px", placeholder="Please enter your name") }} 
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.email.label }}
+            {{ form.email(class="form-control", style="width: 400px", placeholder="Please enter a valid email address") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h4>General Information</h4>
+            <p>The following questions are used to better understand resource requirements and needs of users.</p>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.status.label }}
+            {% for status in form.status %}
+                <div class="radio">
+                    <label>
+                        {{ status }}
+                        {{ status.label }}
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+            <div class="panel-body">
+            {{ form.scanner.label }}
+            {% for scanner in form.scanner %}
+            <div class="radio">
+                <label>
+                    {{ scanner }}
+                    {{ scanner.label }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+​
+        <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.scan_number.label }}
+            {{ form.scan_number(class="form-control", style="width: 200px", placeholder="Insert number of scans") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.study_type.label }}
+            <div class="checkbox">
+                <label>
+                    {{ form.study_type }}Yes
+                </label>
+            </div>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body container">
+            <div class="row">
+                <label for="familiarity" class="col-xs-12">How familiar are you with the following?</label>
+            </div>
+            <div class="row">
+                {{ form.familiarity_bids.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_bids(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_bidsapp.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_bidsapp(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_python.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_python(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_linux.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_linux(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_bash.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_bash(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_hpc.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_hpc(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_openneuro.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_openneuro(class="form-control") }}
+                </div>
+            </div>
+            <div class="row">
+                {{ form.familiarity_cbrain.label(class="col-xs-2 control-label") }}
+                <div class="col-xs-5">
+                    {{ form.familiarity_cbrain(class="form-control") }}
                 </div>
             </div>
         </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="name-title">
-                    <p>{{ form.name.label }}</p>
-                </div>
-                <div class="name-input">
-                    <input id="name" name="name" placeholder="Please enter your name" required="" size="32" type="text" value="">
-                </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h4 id="general-title">CFMM DICOM Server Project Information</h4>
+            <p id="general-description">The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
+        </div>
+    </div>  
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.principal.label }}
+            {{ form.principal(class="form-control", style="width: 400px", placeholder="Please enter the Principal/PI") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.project_name.label }}
+            {{ form.project_name(class="form-control", style="width: 400px", placeholder="Please enter the Project Name") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.dataset_name.label }}
+            {{ form.dataset_name(class="form-control", style="width: 400px", placeholder="Please enter the Dataset Name") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h4>Test BIDS Conversion</h4>
+            <p>We require an example session to optimize and test BIDS conversion.</p>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.sample.label }}
+            {{ form.sample(class="form-control", style="width: 175px") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+                <h4>Retrospective BIDS Conversion</h4>
+                <p>Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.retrospective_data.label }}
+            <div class="checkbox">
+                <label>
+                    {{ form.retrospective_data }}Yes
+                </label>
             </div>
         </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="email-title">
-                    <p>{{ form.email.label }}</p>
-                </div>
-                <div class="name-input">  
-                    <input id="email-address" maxlength="254" minlength="3" name="email" placeholder="Please enter a valid email address" required="" size="32" type="email" value="">
-                </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.retrospective_start.label }}
+            {{ form.retrospective_start(class="form-control", style="width: 175px") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.retrospective_end.label }}
+            {{ form.retrospective_end(class="form-control", style="width: 175px") }}
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+                <h4>Consent & Feedback</h4>
+                <p>This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service. By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.</p>
+        </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            {{ form.consent.label }}
+            <div class="checkbox">
+                <label>
+                    {{ form.consent }}Yes
+                </label>
             </div>
         </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <h4 id="general-title">General Information</h4>
-                    <p id="general-description">The following questions are used to better understand resource requirements and needs of users.</p>
-                </div>
-            </div>
+    </div>
+​
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h4>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</h4>
+            {{ form.comment(cols=77, rows=5) }}
         </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="status-title">
-                    <p>{{ form.status.label }}</p>
-                </div>
-                <div class="status-options">
-                    <ul>
-                        {% for status in form.status %}
-                        <li>
-                            {{ status }}
-                            {{ status.label }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-             <div class="wrapper">
-                <div class="scanner-title">
-                     <p>{{ form.scanner.label }}</p>
-                </div>
-                <div class="scanner-options">
-                     <ul>
-                        {% for scanner in form.scanner %}
-                        <li>
-                                {{ scanner }}
-                                {{ scanner.label }}
-                         </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-         </div>
-
-         <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="scan_number">
-                    <p>{{ form.scan_number.label }}</p>
-                </div>
-                <div class="scan-input">  
-                    <input id="scan_number" max="122" min="1" name="scan_number" placeholder="Insert number of scans" required="" size="16" type="number" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="study_type-title">
-                    <p>{{ form.study_type.label }}</p>
-                </div>
-                <div class="study_type-options">
-                    <ul>
-                        <li>
-                            {{ form.study_type }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <p>
-                        <label for="familiarity">How familiar are you with the following?</label>
-                    </p>
-                </div>
-
-                <table class="familiarity-options">
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_bids.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_bids }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_bidsapp.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_bidsapp }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_python.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_python }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_linux.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_linux }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_bash.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_bash }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_hpc.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_hpc }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_openneuro.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_openneuro }}</td>
-                    </tr>
-                    <tr>
-                        <td class="familiarity-table">{{ form.familiarity_cbrain.label }}</td>
-                        <td class="familiarity-table-opt">{{ form.familiarity_cbrain }}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <h4 id="general-title">CFMM DICOM Server Project Information</h4>
-                    <p id="general-description">The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
-                </div>
-            </div>
-        </div>  
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="principal">
-                    <p>{{ form.principal.label }}</p>
-                </div>
-                <div class="principal_input">
-                    <input id="principal" name="principal" placeholder="Please enter the Principal/PI" required="" size="32" type="text" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="project_name">
-                    <p>{{ form.project_name.label }}</p>
-                </div>
-                <div class="project_input">
-                    <input id="project_name" name="project_name" placeholder="Please enter the Project Name" required="" size="32" type="text" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="dataset_name">
-                <p>{{ form.dataset_name.label }}</p>
-                </div>
-                <div class="dataset_input">
-                    <input id="dataset_name" name="dataset_name" placeholder="Please enter the Dataset Name" size="32" type="text" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <h4 id="general-title">Test BIDS Conversion</h4>
-                    <p id="general-description">We require an example session to optimize and test BIDS conversion.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="sample">
-                    <p>{{ form.sample.label }}</p>
-                </div>
-                <div class="start_input">
-                    <input id="sample" name="sample" size="32" type="date" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <h4 id="general-title">Retrospective BIDS Conversion</h4>
-                    <p id="general-description">Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="retrospective_data-title">
-                    <p>{{ form.retrospective_data.label }}</p>
-                </div>
-                <div class="retrospective_data-options">
-                    <ul>
-                        <li>
-                            {{ form.retrospective_data }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="retrospective_start">
-                    <p>{{ form.retrospective_start.label }}</p>
-                </div>
-                <div class="start_input">
-                    <input id="retrospective_start" name="retrospective_start" size="32" type="date" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="retrospective_end">
-                    <p>{{ form.retrospective_end.label }}</p>
-                </div>
-                <div class="end_input">
-                    <input id="retrospective_end" name="retrospective_end" size="32" type="date" value="">
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="general-description">
-                    <h4 id="general-title">Consent & Feedback</h4>
-                    <p id="general-description">This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service.  By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div class="consent-title">
-                    <p>{{ form.consent.label }}</p>
-                </div>
-                <div class="consent-options">
-                    <ul>
-                        <li>
-                            {{ form.consent }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="padded_wrapper">
-            <div class="wrapper">
-                <div id="comments-box">
-                        <h4 id="general-title">Optional: Please feel free to leave any feedback regarding this form or autobids in general.</h4>
-                        {{ form.comment(cols=77, rows=5) }}
-                </div>
-            </div>
-        </div>
-
-        <div id="btn">
-            {{ form.submit() }}
-        </div>
-    </form>
-</div>
+    </div>
+    {{ form.submit() }}
+</form>
 {% endblock %}

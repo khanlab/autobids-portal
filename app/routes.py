@@ -113,7 +113,8 @@ def download():
     response_list = db.session.query(Answer).all()
     file_name='Response_report'
 
-    csv_list = [[file_name], ['Name',
+    csv_list = [[file_name], [
+        'Name',
         'Email',
         'Status',
         'Scanner',
@@ -134,16 +135,12 @@ def download():
         'Retrospective Data',
         'Retrospective Data Start Date',
         'Retrospective Data End Date',
-        'Consent',
+        'Consent'
         'Comment',
         ]]
 
     def update_scanner(scanner):
-        if scanner == 'type1':
-            new_scanner = '3T'
-        else: 
-            new_scanner = '7T'
-        return new_scanner
+        return '3T' if scanner == 'type1' else '7T'
  
     def update_familiarity(familiarity):
         if familiarity == '1':
@@ -159,24 +156,15 @@ def download():
         return new_familiarity
     
     def update_date(date):
-        if date != None:
-            new_date = date.date()
-        else:
-            new_date = date
-        return new_date
+        return date.date() if date is not None else date
     
-    def update_bool(consent):
-        if consent == '1':
-            new_consent = 'Yes'
-        elif consent == 'yes': 
-            new_consent = 'Yes'
-        else:
-            new_consent = 'No'
-        return new_consent
+    def update_bool(bool):
+        return 'Yes' if bool == '1' else 'No'
 
     for r in response_list:
 
-        csv_list.append([r.submitter.name,
+        csv_list.append([
+            r.submitter.name,
             r.submitter.email,
             r.status.capitalize(),
             update_scanner(r.scanner),

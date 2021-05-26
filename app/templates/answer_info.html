@@ -2,42 +2,37 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block content %}
-<table class="results_table"></p>
-    <th>Name</th>
-    <th>Email</th>
-    <th>Current Status</th>
-    <th>Which Scanner</th>
-    <th>Number of Expected Scans</th>
-    <th>Is this Study Longitudinal or Multi-Session</th>
-    <th>Familiarity</th>
-    <th>Principal or "PI" Identifier</th>
-    <th>Project Name Identifier</th>
-    <th>Overide</th>
-    <th>Sample Date</th>
-    <th>Retrospective Data</th>
-    <th>Retrospective Data Start Date</th>
-    <th>Retrospective Data End Date</th>
-    <th>Consent</th>
-    <th>Comment</th>
+<table class="table"></p>
+    <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Email</th>
+        <th scope="col">Current Status</th>
+        <th scope="col">Which Scanner</th>
+        <th scope="col">Number of Expected Scans</th>
+        <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+        <th scope="col">Familiarity</th>
+        <th scope="col">Principal or "PI" Identifier</th>
+        <th scope="col">Project Name Identifier</th>
+        <th scope="col">Overide</th>
+        <th scope="col">Sample Date</th>
+        {% if submitter_answer.retrospective_data == '1' %}
+            <th scope="col">Retrospective Data</th>
+            <th scope="col">Retrospective Data Start Date</th>
+            <th scope="col">Retrospective Data End Date</th>
+        {% endif %}
+        <th scope="col">Comment</th>
+    </tr>
 
     <tr>
         <td>{{ submitter_answer.submitter.name }}</td>
         <td>{{ submitter_answer.submitter.email }}</td>
         <td>{{ submitter_answer.status.capitalize() }}</td>
         <td>
-            {% if submitter_answer.scanner == 'type1' %}
-                <p class="opt">3T</p>
-            {% else %}
-                <p class="opt">7T</p>
-            {% endif %} 
+            {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
         </td>
         <td>{{ submitter_answer.scan_number }}</td>
         <td>
-            {% if submitter_answer.study_type == '1' or submitter_answer.study_type == 'yes' %}
-                <p class="opt">Yes</p>
-            {% else %}
-                <p class="opt">No</p>
-            {% endif %} 
+            {% if submitter_answer.study_type == '1' or submitter_answer.study_type == 'yes' %} Yes {% else %} No {% endif %} 
         </td>
         <td>
             <table class="familiarity-results">
@@ -180,34 +175,26 @@
                 {{ submitter_answer.sample }}
             {% endif %} 
         </td>
-        <td>
-            {% if submitter_answer.retrospective_data == '1' %}
-                <p class="opt">Yes</p>
-            {% else %}
-                <p class="opt">None</p>
-            {% endif %} </td>
-        <td>
-            {% if submitter_answer.retrospective_start != None %}
-                {{ submitter_answer.retrospective_start.date() }}
-            {% else %}
-                {{ submitter_answer.retrospective_start }}
-            {% endif %} 
-        </td>
-        <td>
-            {% if submitter_answer.retrospective_end != None %}
-                {{ submitter_answer.retrospective_end.date() }}
-            {% else %}
-                {{ submitter_answer.retrospective_end }}
-            {% endif %} 
-         </td>
-         <td>
-            {% if submitter_answer.consent == '1' %}
-                <p class="opt">Yes</p>
-            {% else %}
-                <p class="opt">None</p>
-            {% endif %} 
-        </td>
+        {% if submitter_answer.retrospective_data == '1' %}
+            <td>
+                {% if submitter_answer.retrospective_data == '1' %} Yes {% else %} None {% endif %} 
+            </td>
+            <td>
+                {% if submitter_answer.retrospective_start != None %}
+                    {{ submitter_answer.retrospective_start.date() }}
+                {% else %}
+                    {{ submitter_answer.retrospective_start }}
+                {% endif %} 
+            </td>
+            <td>
+                {% if submitter_answer.retrospective_end != None %}
+                    {{ submitter_answer.retrospective_end.date() }}
+                {% else %}
+                    {{ submitter_answer.retrospective_end }}
+                {% endif %} 
+            </td>
+        {% endif %} 
         <td>{{ submitter_answer.comment.capitalize() }}</td>
     </tr>
-
+</table>
 {% endblock %}
