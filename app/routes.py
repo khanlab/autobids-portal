@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from app import app, db 
 from app.models import User, Submitter, Answer
-from app.forms import LoginForm, BidsForm, RegistrationForm, EmptyForm
+from app.forms import LoginForm, BidsForm, RegistrationForm
 from datetime import datetime
 import flask_excel as excel
 
@@ -11,6 +11,9 @@ import flask_excel as excel
 
 @app.route('/index', methods=['GET', 'POST'])
 def index():
+    """ Adds submitter information and their answer to the database
+
+    """
     form = BidsForm()
     if form.validate_on_submit():
 
@@ -55,6 +58,9 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """ Validates that user inputed correct email and password. If so, user is redirected to index.
+
+    """
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = LoginForm()
@@ -72,6 +78,9 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """ Validates that user is using a valid email and password when registering. After the user is registered, they are redirected to index.
+
+    """
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = RegistrationForm()
@@ -87,6 +96,9 @@ def register():
 @app.route('/results', methods=['GET', 'POST'])
 @login_required
 def results():
+    """ Obtains all the responses from the database as well as the date and time the current user last logged in
+
+    """
     last = db.session.query(User).filter(User.id==1)[0]
     res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
     return render_template('results.html', title='Responses', res=res, last=last)
@@ -94,22 +106,22 @@ def results():
 @app.route('/results/user', methods=['GET', 'POST'])
 @login_required
 def answer_info():
+    """ Obtains complete survey response based on the submission id
+
+    """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         print(button_id)
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
-@app.route('/results/config', methods=['GET', 'POST'])
-@login_required
-def config():
-    form = EmptyForm()
-    return render_template('config.html', form=form)
-
 @app.route("/results/download", methods=['GET'])
 @login_required
 
 def download():
+    """ Downloads csv containing all the survey response
+
+    """
     response_list = db.session.query(Answer).all()
     file_name='Response_report'
 
@@ -192,6 +204,9 @@ def download():
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
+     """ Logs out current user
+
+    """
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
