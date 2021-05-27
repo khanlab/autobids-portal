@@ -6,7 +6,7 @@
 
   .navbar-brand {
     font-size: 16px;
-    padding: 15px 0px;
+    padding: 15px;
   }
 
   .container {
@@ -31,12 +31,12 @@
 
   p {
     list-style: none;
-    margin: 14px 0px 14px 0px;
   }
 
   label {
     font-size: 16px;
     font-weight: 400;
+    margin: 10px 0px 10px 0px
   }
 
 /* for Survey page */
@@ -53,29 +53,14 @@
     font-size: 14px;
   }
 
-  #general-title {
-    font-size: 16px;
-    margin: 14px 0px;
-  }
-
-  #general-description {
-    font-size: 14px;
-  }
-
-  #retrospective_start{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #retrospective_end{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
   #comment{
     font-family: 'Merriweather Sans', sans-serif;
     color: #4d3f36;
     resize: none
+  }
+
+  .checkbox{
+    margin: 0;
   }
 
 /* smth for button */
@@ -147,6 +132,7 @@
 /* for Login page */
   .name_input {
     padding: 0px 0px 10px 0px;
+    width: 400px;
   }
   
   #name{
@@ -161,17 +147,21 @@
 
   .email_input {
     padding: 0px 0px 10px 0px;
+    width: 400px;
   }
 
 /* for Register page */
   #email {
     font-size: 14px;
+    width: 400px;
   }
 
   #password {
     font-size: 14px;
+    width: 400px;
   }
 
   #password2 {
     font-size: 14px;
+    width: 400px;
   }

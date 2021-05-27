@@ -2,12 +2,16 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <h1>Sign In</h1>
-    <div class="row">
-        <div class="col-md-12">
-            {{ wtf.quick_form(form) }}
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <h1>Sign In</h1>
+            <div class="row">
+                <div class="col-md-8">
+                    {{ wtf.quick_form(form) }}
+                </div>
+            </div>
+            <br>
+            <p>New User? <a class="download" href="{{ url_for('register') }}">Click to Register!</a></p>
         </div>
     </div>
-    <br>
-    <p>New User? <a class="download" href="{{ url_for('register') }}">Click to Register!</a></p>
 {% endblock %}

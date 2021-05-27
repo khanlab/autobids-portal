@@ -37,9 +37,9 @@
             {{ form.status.label }}
             {% for status in form.status %}
                 <div class="radio">
-                    <label>
-                        {{ status }}
-                        {{ status.label }}
+                    <label style="padding: 0px">
+                        {{ status(style="margin-left: 0") }}
+                        {{ status.label(style="margin: 0") }}
                     </label>
                 </div>
             {% endfor %}
@@ -47,13 +47,13 @@
     </div>
 ​
     <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="panel-body">
             {{ form.scanner.label }}
             {% for scanner in form.scanner %}
             <div class="radio">
-                <label>
-                    {{ scanner }}
-                    {{ scanner.label }}
+                <label style="padding: 0px">
+                    {{ scanner(style="margin-left: 0") }}
+                    {{ scanner.label(style="margin: 0") }}
                 </label>
             </div>
             {% endfor %}
@@ -136,8 +136,8 @@
 ​
     <div class="panel panel-default">
         <div class="panel-body">
-            <h4 id="general-title">CFMM DICOM Server Project Information</h4>
-            <p id="general-description">The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
+            <h4>CFMM DICOM Server Project Information</h4>
+            <p>The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
         </div>
     </div>  
 ​
