@@ -12,13 +12,13 @@ import flask_excel as excel
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     """ Adds submitter information and their answer to the database
-
+    
     """
     form = BidsForm()
     if form.validate_on_submit():
-
+        
         submitter = Submitter(
-            name=form.name.data, 
+            name=form.name.data,
             email=form.email.data
             )
         db.session.add(submitter)
@@ -48,10 +48,10 @@ def index():
             comment=form.comment.data,
             submitter=submitter
             )
-
+        
         db.session.add(answer)
         db.session.commit()
-
+        
         flash(f"Thanks, the survey has been submitted!")
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
@@ -61,6 +61,7 @@ def login():
     """ Validates that user inputed correct email and password. If so, user is redirected to index.
 
     """
+    print(current_user)
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     form = LoginForm()
@@ -68,7 +69,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid email or password')
-            return redirect(url_for('login'))
+        return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
@@ -204,7 +205,7 @@ def download():
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
-     """ Logs out current user
+    """ Logs out current user
 
     """
     if current_user.is_authenticated:
