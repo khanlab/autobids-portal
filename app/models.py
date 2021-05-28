@@ -26,8 +26,8 @@ def load_user(id):
 class Submitter(db.Model):
     __tablename__ = 'submitter'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(20))
-    email = db.Column(db.String(20))
+    name = db.Column(db.String(40))
+    email = db.Column(db.String(40))
     answers = db.relationship('Answer', backref='submitter', lazy='dynamic')
 
     def __repr__(self):
