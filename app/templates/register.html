@@ -2,14 +2,21 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-    <div class="panel panel-default">
-        <div class="panel-body">
-            <h1>Register</h1>
-            <div class="row">
-                <div class="col-md-8">
-                    {{ wtf.quick_form(form) }}
-                </div>
+<div class="col-md-5">
+    <form id="register-form" action="" method="post">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <h1>Register</h1>
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {{ form.password.label }}
+                {{ form.password(class="form-control")  }}
+                {{ form.password2.label }}
+                {{ form.password2(class="form-control")  }}
+                <br>
+                {{ form.submit(class="btn btn-default") }}
             </div>
         </div>
-    </div>
+    </form>
+</div>
 {% endblock %}
