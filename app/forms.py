@@ -44,7 +44,7 @@ class BidsForm(FlaskForm):
     
     scan_number = IntegerField('How many scans are expected in this study (approximate)?:', validators=[DataRequired()])
     
-    study_type = BooleanField('Is this study longitudinal or multi-session (i.e. same subject scanned multiple times)? If so, check the box below.:', validators=[InputRequired()])
+    study_type = BooleanField('Is this study longitudinal or multi-session (i.e. same subject scanned multiple times)? If so, check the box below.:', validators=[Optional()])
 
     familiarity_bids = SelectField('BIDS:', choices=[
         ('1', 'Not familiar at all'),

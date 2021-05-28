@@ -142,7 +142,7 @@ def download():
         'CBRAIN Familiarity',
         'Principal',
         'Project Name',
-        'Override',
+        'Overridden Dataset Name',
         'Sample Date',
         'Retrospective Data',
         'Retrospective Data Start Date',

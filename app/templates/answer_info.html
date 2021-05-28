@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block content %}
 <table class="table"></p>
@@ -13,7 +12,7 @@
         <th scope="col">Familiarity</th>
         <th scope="col">Principal or "PI" Identifier</th>
         <th scope="col">Project Name Identifier</th>
-        <th scope="col">Overide</th>
+        <th scope="col">Overridden Dataset Name</th>
         <th scope="col">Sample Date</th>
         {% if submitter_answer.retrospective_data == '1' %}
             <th scope="col">Retrospective Data</th>
