@@ -44,10 +44,7 @@ class BidsForm(FlaskForm):
     
     scan_number = IntegerField('How many scans are expected in this study (approximate)?:', validators=[DataRequired()])
     
-    study_type = RadioField('Is this study longitudinal or multi-session (i.e. same subject scanned multiple times)?:', choices=[
-        ('yes', 'Yes'),
-        ('no', 'No'),
-    ], validators=[InputRequired()])
+    study_type = BooleanField('Is this study longitudinal or multi-session (i.e. same subject scanned multiple times)? If so, check the box below.:', validators=[Optional()])
 
     familiarity_bids = SelectField('BIDS:', choices=[
         ('1', 'Not familiar at all'),
@@ -119,18 +116,15 @@ class BidsForm(FlaskForm):
 
     dataset_name = StringField('The name for your BIDS dataset will by default be the "Project Name". If you wish to override this, please enter a new name below (optional):', validators=[Optional()])
 
-    retrospective_data = RadioField('Does this study have retrospective (previously acquired) data to convert?:', choices=[
-        ('yes', 'Yes'),
-        ('no', 'No'),
-    ], validators=[InputRequired()])
+    sample = DateField('Please enter the scan date for this example session:', format='%Y-%m-%d', validators=[Optional()])
+
+    retrospective_data = BooleanField('Does this study have retrospective (previously acquired) data to convert? If so, check the box below.:')
     
-    retrospective_start = DateField('If so, please enter start date of retrospective conversion:', format='%Y-%m-%d', validators=[Optional()])
+    retrospective_start = DateField('Please enter start date of retrospective conversion.:', format='%Y-%m-%d', validators=[Optional()])
 
-    retrospective_end = DateField('Please enter end date of retrospective conversion (or leave blank if ongoing):', format='%Y-%m-%d', validators=[Optional()])
+    retrospective_end = DateField('Please enter end date of retrospective conversion (or leave blank if ongoing).:', format='%Y-%m-%d', validators=[Optional()])
 
-    consent = RadioField('By clicking yes below, you agree with these general terms.', choices=[
-        ('yes', 'Yes'),
-    ], validators=[InputRequired()])
+    consent = BooleanField('By checking the box below, you are agreeing with these general terms.', validators=[DataRequired()])
 
     comment = TextAreaField('Comments')
 

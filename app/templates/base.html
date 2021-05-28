@@ -1,33 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Autobids</title>
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
-    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans"
-    rel="stylesheet">
-  </head>
-  <body>
-    <div>
-      Autobids:
-      <a href="{{ url_for('index') }}">Home</a>
-      {% if current_user.is_anonymous %}
-      <a href="{{ url_for('login') }}">Login</a>
-      {% else %}
-      <a href="{{ url_for('results') }}">Results</a>
-      <a href="{{ url_for('logout') }}">Logout</a>
-      {% endif %}
+{% extends 'bootstrap/base.html' %}
+
+{% block styles %}
+{{super()}}
+<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
+<link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
+{% endblock %}
+
+{% block title %}
+  New study request: autobids-cfmm
+{% endblock %}
+
+{% block navbar %}
+  <nav class="navbar navbar-default">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="{{ url_for('index') }}">Home</a>
     </div>
-    <hr>
-      {% with messages = get_flashed_messages() %}
-      {% if messages %}
-      <ul>
-        {% for message in messages %}
-        <li style="text-align: center;">{{ message }}</li>
-        {% endfor %}
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav navbar-right">
+        {% if current_user.is_anonymous %}
+          <li><a href="{{ url_for('login') }}">Login</a></li>
+        {% else %}
+          <li><a href="{{ url_for('results') }}">Results</a></li>
+          <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        {% endif %}
       </ul>
-      {% endif %}
-      {% endwith %}
-        {% block content %} {% endblock %}
-  </body>
-</html>
-  
+    </div>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-info" role="alert">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {% block app_content %}{% endblock %}
+  </div>
+{% endblock %}

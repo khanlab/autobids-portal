@@ -4,6 +4,7 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(UserMixin, db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
@@ -20,23 +21,25 @@ class User(UserMixin, db.Model):
 
 @login.user_loader
 def load_user(id):
-     return User.query.get(int(id))
+    return User.query.get(int(id))
 
 class Submitter(db.Model):
+    __tablename__ = 'submitter'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(20))
-    email = db.Column(db.String(20))
+    name = db.Column(db.String(40))
+    email = db.Column(db.String(40))
     answers = db.relationship('Answer', backref='submitter', lazy='dynamic')
 
     def __repr__(self):
         return f'<Submitter {self.name, self.email}>'
 
 class Answer(db.Model):
+    __tablename__ = 'answer'
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
     scanner = db.Column(db.String(20))
     scan_number = db.Column(db.Integer)
-    study_type = db.Column(db.String(20))
+    study_type = db.Column(db.Boolean)
     familiarity_bids = db.Column(db.String(20))
     familiarity_bidsapp = db.Column(db.String(20))
     familiarity_python = db.Column(db.String(20))
@@ -48,14 +51,15 @@ class Answer(db.Model):
     principal = db.Column(db.String(20))
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
-    retrospective_data = db.Column(db.String(20))
-    retrospective_start = db.Column(db.DateTime) 
+    sample = db.Column(db.DateTime)
+    retrospective_data = db.Column(db.Boolean)
+    retrospective_start = db.Column(db.DateTime)
     retrospective_end = db.Column(db.DateTime)
-    consent = db.Column(db.String(20))
+    consent = db.Column(db.Boolean)
     comment = db.Column(db.String(200))
     submission_date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
 
     def __repr__(self):
-        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.project_name, self.dataset_name, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
+        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'

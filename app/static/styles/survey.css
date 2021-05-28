@@ -4,6 +4,11 @@
     color:#4d3f36;
   }
 
+  .navbar-brand {
+    font-size: 16px;
+    padding: 15px;
+  }
+
   .container {
     align-items: center;
     margin: auto;
@@ -11,16 +16,32 @@
     padding: 10px;
   }
 
-  .survey-form {
-    padding: 30px
-  }
-  
-  .title-description {
-    text-align: center;
-  }
-
   .flash-message {
     color: rgba(178, 34, 34, 0.726);
+  }
+
+  a {
+    font-size: 16px;
+    color: #4d3f36
+  }
+
+  h4 {
+    font-size: 16px;
+  }
+
+  p {
+    list-style: none;
+  }
+
+  label {
+    font-size: 16px;
+    font-weight: 400;
+    margin: 10px 0px 10px 0px
+  }
+
+/* for Survey page */
+  .survey-form {
+    padding: 30px
   }
 
   #title {
@@ -32,30 +53,86 @@
     font-size: 14px;
   }
 
-  .padded_wrapper {
-    padding: 10px;
+  #comment{
+    font-family: 'Merriweather Sans', sans-serif;
+    color: #4d3f36;
+    resize: none
   }
 
-  .wrapper {
-    background-color: #ffffff;
-    border-radius: 8px;
+  .checkbox{
+    margin: 0;
+  }
+
+/* smth for button */
+  #btn {
+    grid-row: 9;
+    grid-column: 2 / 4;
+    text-align: center;
+    margin-bottom: 5%;
+    align-items: center;
+  }
+  
+  #button {
+    font-family: 'Merriweather Sans', sans-serif;
+    background-color: #c3cdbf;
+    color: #4d3f36;
+    transition: border-color .5s;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1)
+  }
+  
+  #submit:hover {
+    background-color: #4a5a44;
+    color: #e4d6ce;
     box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
-    margin: auto;
-    width: 60%;
-    padding: 20px
   }
 
-  #general-title {
-    font-size: 16px;
-    margin: 14px 0px;
-  }
-
-  #general-description {
+/* for results and detailed results page */
+  .download{
     font-size: 14px;
   }
 
+  .table {
+    font-size: 14px;
+    text-align: center;
+    background-color: #ffffff;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
+  }
+
+  .new {
+    font-size: 14px;
+    text-align: center;
+    background-color: #97a78c;
+  }
+
+  th {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  td {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #708661;
+    font-size: 12px;
+    vertical-align: top;
+    width:1px;
+    padding: 5px;
+  }
+
+  .familiarity-result-opt {
+    border-style: none;
+    padding: 0px;
+  }
+
+/* for Login page */
   .name_input {
     padding: 0px 0px 10px 0px;
+    width: 400px;
   }
   
   #name{
@@ -70,154 +147,21 @@
 
   .email_input {
     padding: 0px 0px 10px 0px;
+    width: 400px;
   }
 
-  .status_title {
-    font-size: 20px;
-  }
-
-  .status_options {
-    font-size: 10px;
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0px;
-  }
-
-  li {
-    list-style: none;
-    padding: 0px 0px 10px 0px;
-  }
-
-  p {
-    list-style: none;
-    margin: 14px 0px 14px 0px;
-  }
-
-  label {
-    font-size: 16px;
-  }
-
-  a {
-    font-size: 16px;
-    color: #4d3f36
-  }
-
-  .scan-input {
-    padding: 0px 0px 10px 0px;
-  }
-
-  #scan_number{
-    width: 25%;
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #retrospective_start{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #retrospective_end{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #comment{
-    font-family: 'Merriweather Sans', sans-serif;
-    color: #4d3f36;
-  }
-
-  #btn {
-    grid-row: 9;
-    grid-column: 2 / 4;
-    text-align: center;
-    margin-bottom: 5%;
-    align-items: center;
-  }
-  
-  #button {
-    font-family: 'Merriweather Sans', sans-serif;
-    background-color: #c3cdbf;
-    color: #4d3f36;
-    transition: border-color .5s;
-  }
-  
-  #submit:hover {
-    background-color: #4a5a44;
-    color: #e4d6ce;
-    box-shadow: 3px 3px 3px rgba(0, 0, 0, .1);
-  }
-
+/* for Register page */
   #email {
-    width: 25%;
     font-size: 14px;
+    width: 400px;
   }
 
   #password {
-    width: 25%;
     font-size: 14px;
+    width: 400px;
   }
 
   #password2 {
-    width: 25%;
     font-size: 14px;
-  }
-  
-  .results_table {
-    font-size: 14px;
-    text-align: center;
-    background-color: #eeedec;
-  }
-
-  .config-btn {
-    width: 20px;
-    height: 20px;
-  }
-
-  .familiarity {
-    border-color: #ffffff;
-  }
-
-  .familiarity-table {
-    padding: 0px 10px 10px 0px;
-    border-style: none;
-  }
-
-  .familiarity-table-opt {
-    padding: 0px 10px 10px 40px;
-    border-style: none;
-  }
-
-  .familiarity-result-opt {
-    border-style: none;
-    padding: 0px 10px 10px 10px;
-  }
-
-  .opt {
-  margin: 0px;
-  }
-
-  .new {
-    font-size: 14px;
-    text-align: center;
-    background-color: #97a78c;
-    }
-
-  th {
-    border-style: solid;
-    border-width: 2px;
-    border-color: #708661;
-    padding: 10px;
-  }
-
-  td {
-    border-style: solid;
-    border-width: 2px;
-    border-color: #708661;
-    font-size: 12px;
-    padding: 10px;
-    vertical-align: top;
+    width: 400px;
   }

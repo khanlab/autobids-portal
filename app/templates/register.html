@@ -1,30 +1,22 @@
 {% extends "base.html" %}
 
-{% block content %}
-    <h1>Register</h1>
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.email.label }}<br>
-            {{ form.email(size=64) }}<br>
-            {% for error in form.email.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.password.label }}<br>
-            {{ form.password(size=32) }}<br>
-            {% for error in form.password.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.password2.label }}<br>
-            {{ form.password2(size=32) }}<br>
-            {% for error in form.password2.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
+{% block app_content %}
+<div class="col-md-5">
+    <form id="register-form" action="" method="post">
+        {{ form.csrf_token }}
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <h1>Register</h1>
+                {{ form.email.label }}
+                {{ form.email(class="form-control") }}
+                {{ form.password.label }}
+                {{ form.password(class="form-control")  }}
+                {{ form.password2.label }}
+                {{ form.password2(class="form-control")  }}
+                <br>
+                {{ form.submit(class="btn btn-default") }}
+            </div>
+        </div>
     </form>
+</div>
 {% endblock %}
