@@ -4,6 +4,7 @@
 {% block app_content %}
 <div class="col-md-5">
     <form id="login-form" action="" method="post">
+        {{ form.csrf_token }}
         <div class="panel panel-default">
             <div class="panel-body">
                 <h1>Sign In</h1>
@@ -13,11 +14,11 @@
                 {{ form.password(class="form-control")  }}
                 <div class="checkbox">
                     <label>
-                        {{ form.remember_me }}Remember me
+                        {{ form.remember_me }} Remember Me
                     </label>
                 </div>
                 <br>
-                {{ form.submit(class="btn btn-default", id="submit") }}
+                {{ form.submit(class="btn btn-default") }}
                 <br> </br>
                 <p>New User? <a class="download" href="{{ url_for('register') }}">Click to Register!</a></p>
             </div>

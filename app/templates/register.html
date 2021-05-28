@@ -4,6 +4,7 @@
 {% block app_content %}
 <div class="col-md-5">
     <form id="register-form" action="" method="post">
+        {{ form.csrf_token }}
         <div class="panel panel-default">
             <div class="panel-body">
                 <h1>Register</h1>
