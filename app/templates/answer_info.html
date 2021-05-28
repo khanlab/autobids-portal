@@ -14,7 +14,7 @@
         <th scope="col">Project Name Identifier</th>
         <th scope="col">Overridden Dataset Name</th>
         <th scope="col">Sample Date</th>
-        {% if submitter_answer.retrospective_data == '1' %}
+        {% if submitter_answer.retrospective_data == True %}
             <th scope="col">Retrospective Data</th>
             <th scope="col">Retrospective Data Start Date</th>
             <th scope="col">Retrospective Data End Date</th>
@@ -31,7 +31,7 @@
         </td>
         <td>{{ submitter_answer.scan_number }}</td>
         <td>
-            {% if submitter_answer.study_type == '1' or submitter_answer.study_type == 'yes' %} Yes {% else %} No {% endif %} 
+            {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
         </td>
         <td>
             <table class="familiarity-results">
@@ -174,9 +174,9 @@
                 {{ submitter_answer.sample }}
             {% endif %} 
         </td>
-        {% if submitter_answer.retrospective_data == '1' %}
+        {% if submitter_answer.retrospective_data == True %}
             <td>
-                {% if submitter_answer.retrospective_data == '1' %} Yes {% else %} None {% endif %} 
+                {% if submitter_answer.retrospective_data == True %} Yes {% else %} None {% endif %} 
             </td>
             <td>
                 {% if submitter_answer.retrospective_start != None %}

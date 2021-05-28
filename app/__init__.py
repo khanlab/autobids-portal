@@ -19,7 +19,7 @@ convention = {
 }
 metadata = MetaData(naming_convention=convention)
 db = SQLAlchemy(app, metadata=metadata)
-migrate = Migrate(app, db, render_as_batch=True) 
+migrate = Migrate(app, db, render_as_batch=True, compare_type=True) 
 login = LoginManager(app)
 login.login_view = 'login'
 bootstrap = Bootstrap(app)

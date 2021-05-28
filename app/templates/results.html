@@ -29,7 +29,7 @@
         <tr class="new">
             <td>
                 <form method="POST" action="{{ url_for('answer_info') }}">
-                    <input name={{r.submitter.id}} type="submit" value="View more"></input>
+                    <input name={{r.submitter.id}} class="btn btn-sm" type="submit" value="View more"></input>
                 </form> 
             </td>
             <td>{{ r.submitter.name }}</td>
@@ -38,7 +38,7 @@
                 {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
             </td>
             <td>
-                {% if r.study_type == '1' or r.study_type == 'yes' %} Yes {% else %} No {% endif %} 
+                {% if r.study_type == True %} Yes {% else %} No {% endif %} 
             </td>
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
@@ -47,7 +47,7 @@
                 {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
             </td>
             <td>
-                {% if r.retrospective_data == '1' %} Yes {% else %} None {% endif %} 
+                {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
             </td>
             <td>
                 {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
@@ -69,7 +69,7 @@
                 {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
             </td>
             <td>
-                {% if r.study_type == '1' or r.study_type == 'yes' %} Yes {% else %} No {% endif %} 
+                {% if r.study_type == True %} Yes {% else %} No {% endif %} 
             </td>
             <td>{{ r.principal }}</td>
             <td>{{ r.project_name }}</td>
@@ -78,7 +78,7 @@
                 {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
             </td>
             <td>
-                {% if r.retrospective_data == '1' %} Yes {% else %} None {% endif %} 
+                {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
             </td>
             <td>
                 {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
