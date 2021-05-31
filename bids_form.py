@@ -1,5 +1,5 @@
-from app import app, db
-from app.models import User, Answer, Submitter
+from autobidsportal import app, db
+from autobidsportal.models import User, Answer, Submitter
 
 
 @app.shell_context_processor

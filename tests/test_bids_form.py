@@ -3,8 +3,8 @@ import tempfile
 
 import pytest
 
-from app import app.models, app.routes, ap.forms
-from app import db, login
+from autobidsportal import models, routes, forms
+from autobidsportal import db, login
 
 
 # @pytest.fixture
