@@ -3,3 +3,6 @@ venv/
 .DS_Store
 app.db
 *.DS_Store
+build/
+dist/
+*.egg-info

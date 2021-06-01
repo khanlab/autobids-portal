@@ -1,9 +1,9 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
-from app import app, db 
-from app.models import User, Submitter, Answer
-from app.forms import LoginForm, BidsForm, RegistrationForm
+from autobidsportal import app, db
+from autobidsportal.models import User, Submitter, Answer
+from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from datetime import datetime
 import flask_excel as excel
 
