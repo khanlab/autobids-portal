@@ -11,13 +11,11 @@ def test_valid_login_logout(test_client, init_database):
     assert response.status_code == 200
     assert b'Logout' in response.data
     assert b'Login' not in response.data
-    assert b'Register' not in response.data
 
     response = test_client.get('/logout', follow_redirects=True)
     assert response.status_code == 200
     assert b'Logout' not in response.data
     assert b'Login' in response.data
-    assert b'Register' in response.data
 
 def test_invalid_login(test_client, init_database):
     response = test_client.post('/login',
@@ -26,7 +24,7 @@ def test_invalid_login(test_client, init_database):
     assert response.status_code == 200
     assert b'Logout' not in response.data
     assert b'Login' in response.data
-    assert b'Register' in response.data
+    assert b'Click to Register!' in response.data
 
 
 def test_login_already_logged_in(test_client, init_database, login_default_user):
@@ -36,7 +34,7 @@ def test_login_already_logged_in(test_client, init_database, login_default_user)
     assert response.status_code == 200
     assert b'Logout' in response.data
     assert b'Login' not in response.data
-    assert b'Register' not in response.data
+    assert b'Click to Register!' not in response.data
 
 def test_valid_registration(test_client, init_database):
     response = test_client.post('/register',
@@ -45,15 +43,9 @@ def test_valid_registration(test_client, init_database):
                                           confirm='Password123'),
                                 follow_redirects=True)
     assert response.status_code == 200
-    assert b'Logout' in response.data
-    assert b'Login' not in response.data
-    assert b'Register' not in response.data
-
-    response = test_client.get('/logout', follow_redirects=True)
-    assert response.status_code == 200
+    print(response.data)
     assert b'Logout' not in response.data
     assert b'Login' in response.data
-    assert b'Register' in response.data
 
 def test_invalid_registration(test_client, init_database):
     response = test_client.post('/register',
@@ -80,8 +72,6 @@ def test_duplicate_registration(test_client, init_database):
                                           confirm='Password12345'),
                                 follow_redirects=True)
     assert response.status_code == 200
-    assert b'Logout' in response.data
-    assert b'Login' not in response.data
-    assert b'Register' not in response.data
-
-
+    assert b'Logout' not in response.data
+    assert b'Login' in response.data
+    assert b'Register' in response.data

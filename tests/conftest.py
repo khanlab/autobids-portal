@@ -16,14 +16,9 @@ def new_user():
 
 @pytest.fixture(scope='module')
 def test_client():
-    flask_app = Flask(__name__)
-    flask_app.config.from_object(Config_test)
-    db = SQLAlchemy(flask_app)
-    login = LoginManager(flask_app)
-    login.login_view = 'login'
-    bootstrap = Bootstrap(flask_app)
-    with flask_app.test_client() as testing_client:
-        with flask_app.app_context():
+    app.config.from_object("config.Config_test")
+    with app.test_client() as testing_client:
+        with app.app_context():
             yield testing_client 
 
 @pytest.fixture(scope='module')
