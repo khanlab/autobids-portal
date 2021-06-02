@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
@@ -8,7 +10,7 @@ import flask_excel as excel
 
 app = Flask(__name__)
 excel.init_excel(app)
-app.config.from_object('config.Config')
+app.config.from_object(os.environ["AUTOBIDSPORTAL_CONFIG"])
 convention = {
     "ix": 'ix_%(column_0_label)s',
     "uq": "uq_%(table_name)s_%(column_0_name)s",
