@@ -15,10 +15,12 @@ import os
 import subprocess
 import logging
 import time
+import re
 
 # for quote python strings for safe use in posix shells
 import pipes
 
+from autobidsportal import app
 
 class Dcm4cheUtils():
     '''
@@ -52,12 +54,9 @@ class Dcm4cheUtils():
         """
         Execute the external command and get its stdout, stderr and return code
         """
-        proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-        out, err = proc.communicate()
-        return_code = proc.returncode
+        proc = subprocess.run(cmd, capture_output=True, check=False, shell=True)
 
-        return out, err, return_code
+        return proc.stdout, proc.stderr, proc.returncode
 
     def _get_NumberOfStudyRelatedInstances(self, matching_key):
         '''
@@ -82,7 +81,7 @@ class Dcm4cheUtils():
             ' |grep -i NumberOfStudyRelatedInstances ' +\
             ' |cut -d[ -f 2|cut -d] -f 1 |sed "/^$/d"'
 
-        out, err, return_code = self._get_stdout_stderr_returncode(cmd)
+        out, err, _ = self._get_stdout_stderr_returncode(cmd)
 
         # local dcm4che
         if err:
@@ -160,23 +159,59 @@ class Dcm4cheUtils():
 
         Specifically, find all StudyDescriptions, take the portion before
         the caret, and return each unique value."""
-        cmd = self._findscu_str +\
-            " -r StudyDescription " +\
-            "| grep StudyDescription " +\
-            "| cut -d[ -f 2 | cut -d] -f 1 " +\
-            "| grep . " +\
-            "| cut -d^ -f 1 " +\
-            "| sort -u"
+        cmd = self._findscu_str + " -r StudyDescription "
 
         out, err, return_code = self._get_stdout_stderr_returncode(cmd)
 
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
+            self.logger.error(return_code)
 
         if return_code != 0:
-            raise Dcm4CheError("Non-zero exit code from findscu.", err)
+            raise Dcm4cheError("Non-zero exit code from findscu.", err)
 
-        return out.splitlines()
+        dcm4che_out = str(out, encoding="utf-8").splitlines()
+        study_descriptions = [
+            line for line in dcm4che_out if "StudyDescription" in line
+        ]
+        pi_matches = [
+            re.match(r".*\[([\w ]+)\^[\w ]+\].*", line)
+            for line in study_descriptions
+        ]
+        pis = [match.group(1) for match in pi_matches if match is not None]
+
+        all_pis = list(
+            set(pis) - set(app.config["DICOM_PI_BLACKLIST"])
+        )
+
+        if len(all_pis) < 1:
+            raise Dcm4cheError("No PIs accessible.", "")
+
+        return all_pis
+
+    def get_custom_info(self, study_description, output_fields):
+        cmd = "{} -m StudyDescription=\"{}\"".format(
+            self._findscu_str,
+            study_description
+        )
+        cmd = " ".join(
+            [cmd] + ["-r {}".format(field) for field in output_fields]
+        )
+
+        out, err, return_code = self._get_stdout_stderr_returncode(cmd)
+
+        if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
+            self.logger.error(err)
+            self.logger.error(return_code)
+
+        if return_code != 0:
+            raise Dcm4cheError("Non-zero exit code from findscu.", err)
+
+        return [
+            line for line in str(out, encoding="utf-8").splitlines() if any(
+                field in line for field in output_fields
+            )
+        ]
 
 
     def retrieve_by_StudyInstanceUID(self, StudyInstanceUID, output_dir, timeout_sec=1800):
@@ -322,7 +357,15 @@ class Dcm4cheUtils():
 
         return output_sub_dirs, StudyInstanceUID_list
 
-class Dcm4CheError(Exception):
+def gen_utils():
+    return Dcm4cheUtils(
+        app.config["DICOM_SERVER_URL"],
+        app.config["DICOM_SERVER_USERNAME"],
+        app.config["DICOM_SERVER_PASSWORD"],
+        app.config["DCM4CHE_PREFIX"]
+    )
+
+class Dcm4cheError(Exception):
     def __init__(self, message, stderr):
         self.message = message
         self.stderr = stderr
