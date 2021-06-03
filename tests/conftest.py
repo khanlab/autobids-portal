@@ -1,5 +1,5 @@
 import pytest
-from flask import Flask
+from flask import Flask, flash
 from config import Config_test
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
