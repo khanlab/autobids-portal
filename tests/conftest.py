@@ -4,6 +4,7 @@ from config import Config_test
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
+import flask_excel as excel
 
 from app import app, db
 from app.models import User, Answer, Submitter

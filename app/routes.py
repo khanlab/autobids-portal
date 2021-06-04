@@ -111,8 +111,9 @@ def answer_info():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        print(button_id)
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+        print(submitter_answer.submitter_id)
+        print(submitter_answer)
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
 @app.route("/results/download", methods=['GET'])
