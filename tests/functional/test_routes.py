@@ -323,35 +323,10 @@ def test_valid_login_complete_survey_access_results_view_more(test_client, init_
     assert b'Name' in response.data
     assert b'Results' in response.data
 
-    # response = test_client.post('/results/user', data=dict(button_id = '1',
-    #                                                 submitter_id = '1',
-    #                                                 name = 'John',
-    #                                                 email = 'johnsmith@gmail.com',
-    #                                                 status = 'undergraduate',
-    #                                                 scanner = 'type2',
-    #                                                 scan_number = '4',
-    #                                                 study_type = 'y',
-    #                                                 familiarity_bids = '1',
-    #                                                 familiarity_bidsapp = '1',
-    #                                                 familiarity_python = '1',
-    #                                                 familiarity_linux = '1',
-    #                                                 familiarity_bash = '1',
-    #                                                 familiarity_hpc = '1',
-    #                                                 familiarity_openneuro = '1',
-    #                                                 familiarity_cbrain = '1',
-    #                                                 principal = 'Khan',
-    #                                                 project_name = 'Autobids',
-    #                                                 dataset_name = '',
-    #                                                 sample = '2021-01-10',
-    #                                                 retrospective_data = True,
-    #                                                 retrospective_start = '2021-01-01',
-    #                                                 retrospective_end = '2021-01-05',
-    #                                                 comment = ''),
-    #                                                 follow_redirects=True)
-    # print(response.data)
-    # assert response.status_code == 100
-    # assert b'Logout' in response.data
-    # assert b'Login' not in response.data
-    # assert b'Name' in response.data
-    # assert b'Familiarity' in response.data
-    # assert b'Results' in response.data
+    response = test_client.post('/results/user', data={"1": 'View+more'}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Logout' in response.data
+    assert b'Login' not in response.data
+    assert b'Name' in response.data
+    assert b'Familiarity' in response.data
+    assert b'Results' in response.data
