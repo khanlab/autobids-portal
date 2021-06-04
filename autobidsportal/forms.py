@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, RadioField, SelectField, DateField, TextAreaField
 from wtforms.fields.html5 import EmailField, IntegerField, DateField
 from wtforms.validators import ValidationError, DataRequired, Length, Optional, InputRequired, Email, EqualTo
-from app.models import Submitter, User, Answer
+from autobidsportal.models import Submitter, User, Answer
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])

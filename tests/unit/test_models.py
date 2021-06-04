@@ -1,4 +1,4 @@
-from app.models import User, Submitter, Answer
+from autobidsportal.models import User, Submitter, Answer
 import datetime
 
 def test_new_user():

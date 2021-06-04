@@ -6,8 +6,8 @@ from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 import flask_excel as excel
 
-from app import app, db
-from app.models import User, Answer, Submitter
+from autobidsportal import app, db
+from autobidsportal.models import User, Answer, Submitter
 
 @pytest.fixture(scope='module')
 def new_user():
@@ -17,9 +17,9 @@ def new_user():
 
 @pytest.fixture(scope='module')
 def test_client():
-    app.config.from_object("config.Config_test")
-    with app.test_client() as testing_client:
-        with app.app_context():
+    autobidsportal.config.from_object("config.Config_test")
+    with autobidsportal.test_client() as testing_client:
+        with autobidsportal.app_context():
             yield testing_client 
 
 @pytest.fixture(scope='module')
