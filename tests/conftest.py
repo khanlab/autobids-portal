@@ -17,9 +17,9 @@ def new_user():
 
 @pytest.fixture(scope='module')
 def test_client():
-    autobidsportal.config.from_object("config.Config_test")
-    with autobidsportal.test_client() as testing_client:
-        with autobidsportal.app_context():
+    app.config.from_object("config.Config_test")
+    with app.test_client() as testing_client:
+        with app.app_context():
             yield testing_client 
 
 @pytest.fixture(scope='module')
