@@ -3,6 +3,7 @@
 {% block content %}
 <table class="table"></p>
     <tr>
+        <th scope="col"></th>
         <th scope="col">Name</th>
         <th scope="col">Email</th>
         <th scope="col">Current Status</th>
@@ -23,6 +24,11 @@
     </tr>
 
     <tr>
+        <td>
+            <form method="POST" action="{{ url_for('dicom_verify') }}">
+                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-sm" ></input>
+            </form> 
+        </td>
         <td>{{ submitter_answer.submitter.name }}</td>
         <td>{{ submitter_answer.submitter.email }}</td>
         <td>{{ submitter_answer.status.capitalize() }}</td>

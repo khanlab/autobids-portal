@@ -4,6 +4,7 @@ from werkzeug.urls import url_parse
 from autobidsportal import app, db
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
+from autobidsportal.dcm4cheutils import Dcm4cheUtils
 from datetime import datetime
 import flask_excel as excel
 
@@ -211,3 +212,12 @@ def logout():
         db.session.commit()
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/results/user/dicom', methods=['GET', 'POST'])
+@login_required
+def dicom_verify():
+
+    dicom_response = Dcm4cheUtils()
+    print(dicom_response)
+
+    return redirect()
