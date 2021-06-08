@@ -7,3 +7,4 @@ app_test.db
 build/
 dist/
 *.egg-info
+.env

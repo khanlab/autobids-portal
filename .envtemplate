@@ -1,0 +1,2 @@
+AUTOBIDSPORTAL_CONFIG=defaultconfig.Config
+FLASK_APP=autobidsportal
