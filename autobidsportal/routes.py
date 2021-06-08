@@ -90,7 +90,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash('Congratulations, you are now a registered user!')
-        return redirect(url_for('index'))
+        return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
 
 @app.route('/results', methods=['GET', 'POST'])
@@ -111,7 +111,6 @@ def answer_info():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        print(button_id)
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
