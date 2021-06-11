@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <table class="table">
+        <tr>
+            <th scope="col"></th>
+        </tr>
+    
+        {% for d in dicom_response %}
+            <tr>
+                <td>{{ d }}</td>
+            </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+{% endblock %}

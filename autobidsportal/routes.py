@@ -4,7 +4,7 @@ from werkzeug.urls import url_parse
 from autobidsportal import app, db
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
-from autobidsportal.dcm4cheutils import Dcm4cheUtils
+from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
 import flask_excel as excel
 
@@ -216,8 +216,23 @@ def logout():
 @app.route('/results/user/dicom', methods=['GET', 'POST'])
 @login_required
 def dicom_verify():
-
-    dicom_response = Dcm4cheUtils()
-    print(dicom_response)
-
-    return redirect()
+    button_id = list(request.form.keys())[0]
+    submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+    study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
+    try:
+        dicom_pi_list = gen_utils().get_all_pi_names()
+    except Dcm4cheError as err:
+        print(err.__cause__.stderr)
+        raise err
+    finally:
+        for pi in dicom_pi_list:
+            if pi == submitter_answer.principal:
+                dicom_response = gen_utils().get_info_by_description(study_description=study_info, output_fields=['StudyDate', 'PatientName'])
+                if not dicom_response:
+                    print("No such study exits. Please check the study description.")
+                else:
+                    print("Found a study")
+                break
+            else:
+                print("No such study exits. Please check the PI.")
+    return render_template('dicom.html', title='Dicom', dicom_response=dicom_response, submitter_answer=submitter_answer)
