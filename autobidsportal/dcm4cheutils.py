@@ -95,7 +95,12 @@ class Dcm4cheUtils():
 
         return all_pis
 
-    def get_info_by_description(self, study_description, output_fields):
+    def get_info_by_description(
+        self,
+        study_description,
+        output_fields,
+        retrieve_level="STUDY"
+    ):
         """Queries a given StudyDescription for given fields.
 
         Parameters
@@ -105,6 +110,15 @@ class Dcm4cheUtils():
         output_fields : list of str
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
+        retrieve_level : str
+            Level at which to retrieve records. Defaults to "STUDY", but can
+            also be "PATIENT", "SERIES", or "IMAGE".
+
+        Returns
+        -------
+        list of str
+            Every line describing a requested field from a record with a
+            matching Study Description tag.
         """
         cmd = "{} -m StudyDescription=\"{}\"".format(
             self._findscu_str,
@@ -113,6 +127,7 @@ class Dcm4cheUtils():
         cmd = " ".join(
             [cmd] + ["-r {}".format(field) for field in output_fields]
         )
+        cmd = cmd + " -L {}".format(retrieve_level)
 
         try:
             out, err, _ = _get_stdout_stderr_returncode(cmd)
@@ -123,6 +138,14 @@ class Dcm4cheUtils():
 
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
+
+        output_fields = [
+           "{},{}".format(field[0:4], field[4:8]).upper()
+           if re.fullmatch(r"[\dabcdef]{8}", field)
+           else field for field in output_fields
+        ]
+
+        print(output_fields)
 
         return [
             line for line in str(out, encoding="utf-8").splitlines() if any(
