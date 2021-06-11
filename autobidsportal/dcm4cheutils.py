@@ -116,9 +116,10 @@ class Dcm4cheUtils():
 
         Returns
         -------
-        list of str
-            Every line describing a requested field from a record with a
-            matching Study Description tag.
+        list of list of dict
+            A list containing one value for each result, where each result
+            contains a list of dicts, where each dict contains the code, name,
+            and value of each requested tag.
         """
         cmd = "{} -m StudyDescription=\"{}\"".format(
             self._findscu_str,
@@ -145,13 +146,37 @@ class Dcm4cheUtils():
            else field for field in output_fields
         ]
 
-        print(output_fields)
+        output_re = (
+            r"(\([\dabcdef]{4},[\dabcdef]{4}\)) [A-Z]{2} \[([\w ]*)\] (\w+)"
+        )
 
-        return [
-            line for line in str(out, encoding="utf-8").splitlines() if any(
-                field in line for field in output_fields
+        out_dicts = []
+        for line in str(out, encoding="utf-8").splitlines():
+            if not any(field in line for field in output_fields):
+                continue
+            match = re.match(output_re, line)
+            if match is None:
+                continue
+            out_dicts.append(
+                {
+                    "tag_code": match.group(1),
+                    "tag_name": match.group(3),
+                    "tag_value": match.group(2)
+                }
             )
-        ]
+
+        grouped_dicts = []
+        if len(out_dicts) % len(output_fields) != 0:
+            print("Logic is wrong")
+        else:
+            for i in range(len(out_dicts) // len(output_fields)):
+                grouped_dicts.append(
+                    out_dicts[
+                        i * len(output_fields):(i + 1) * len(output_fields)
+                    ]
+                )
+
+        return grouped_dicts
 
 
 def gen_utils():
