@@ -147,7 +147,7 @@ class Dcm4cheUtils():
         ]
 
         output_re = (
-            r"(\([\dabcdef]{4},[\dabcdef]{4}\)) [A-Z]{2} \[([\w ]*)\] (\w+)"
+            r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
         )
 
         out_dicts = []
