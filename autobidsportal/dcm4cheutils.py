@@ -95,18 +95,22 @@ class Dcm4cheUtils():
 
         return all_pis
 
-    def get_info_by_description(
+    def query_single_study(
         self,
         study_description,
+        study_date,
         output_fields,
         retrieve_level="STUDY"
     ):
-        """Queries a given StudyDescription for given fields.
+        """Queries a DICOM server for specified tags from one study.
 
         Parameters
         ----------
         study_description : str
             The StudyDescription to query. Passed to `findscu -m {}`.
+        study_date : date
+            The date of the study to query. Converted to "YYYYMMDD" format and
+            queries the "StudyDate" tag.
         output_fields : list of str
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
@@ -121,9 +125,10 @@ class Dcm4cheUtils():
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
         """
-        cmd = "{} -m StudyDescription=\"{}\"".format(
+        cmd = "{} -m StudyDescription=\"{}\" -m StudyDate=\"{}\"".format(
             self._findscu_str,
-            study_description
+            study_description,
+            study_date.strftime("%Y%m%d")
         )
         cmd = " ".join(
             [cmd] + ["-r {}".format(field) for field in output_fields]
@@ -142,7 +147,7 @@ class Dcm4cheUtils():
 
         output_fields = [
            "{},{}".format(field[0:4], field[4:8]).upper()
-           if re.fullmatch(r"[\dabcdef]{8}", field)
+           if re.fullmatch(r"[\dabcdefABCDEF]{8}", field)
            else field for field in output_fields
         ]
 
