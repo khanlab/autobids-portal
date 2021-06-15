@@ -228,7 +228,7 @@ def dicom_verify():
         for pi in dicom_pi_list:
             if pi == submitter_answer.principal:
                 # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientMotionCorrected','PatientID','ReferringPhysicianName','SequenceName','ImageType','AccessionNumber','PatientAge','PatientSex'
-                dicom_response = gen_utils().get_info_by_description(study_description=study_info, output_fields=['00100010', '00200011','00180080','00180081','00181030','00189763','00100020','00080090','00180024','00080008','00080050','00101010','00100040'], retrieve_level='STUDY')
+                dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00189763','00100020','00080090','00180024','00080008','00080050','00101010','00100040'], retrieve_level='STUDY')
                 if not dicom_response:
                     print("No such study exits. Please check the study description.")
                 else:

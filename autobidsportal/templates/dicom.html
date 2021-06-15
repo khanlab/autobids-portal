@@ -2,19 +2,19 @@
 
 {% block app_content %}
     <table class="table">
-        <th scope="col">ImageType</th>
-        <th scope="col">AccessionNumber</th>
-        <th scope="col">ReferringPhysicianName</th>
-        <th scope="col">PatientName</th>
-        <th scope="col">PatientID</th>
-        <th scope="col">PatientSex</th>
-        <th scope="col">PatientAge</th>
-        <th scope="col">SequenceName</th>
-        <th scope="col">RepetitionTime</th>
-        <th scope="col">EchoTime</th>
-        <th scope="col">ProtocolName</th>
-        <th scope="col">PatientMotionCorrected</th>
-        <th scope="col">SeriesNumber</th>
+        <th scope="col">Image Type</th>
+        <th scope="col">Accession Number</th>
+        <th scope="col">Referring Physician Name</th>
+        <th scope="col">Patient Name</th>
+        <th scope="col">Patient ID</th>
+        <th scope="col">Patient Sex</th>
+        <th scope="col">Patient Age</th>
+        <th scope="col">Sequence Name</th>
+        <th scope="col">Repetition Time</th>
+        <th scope="col">Echo Time</th>
+        <th scope="col">Protocol Name</th>
+        <th scope="col">Patient Motion Corrected</th>
+        <th scope="col">Series Number</th>
         
         {% for response in dicom_response %}
             <tr>
