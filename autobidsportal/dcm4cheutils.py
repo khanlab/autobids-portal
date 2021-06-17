@@ -178,6 +178,10 @@ class Dcm4cheUtils():
                         "tag_value": match.group(2)
                     }
                 )
+            if len(out_dicts) != len(output_fields):
+                raise Dcm4cheError(
+                    "Missing output fields in dataset {}".format(out_dicts)
+                )
             grouped_dicts.append(out_dicts)
 
         return grouped_dicts
