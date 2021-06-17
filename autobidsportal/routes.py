@@ -219,21 +219,8 @@ def dicom_verify():
     button_id = list(request.form.keys())[0]
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
-    try:
-        dicom_pi_list = gen_utils().get_all_pi_names()
-    except Dcm4cheError as err:
-        print(err.__cause__.stderr)
-        raise err
-    finally:
-        for pi in dicom_pi_list:
-            if pi == submitter_answer.principal:
-                # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientMotionCorrected','PatientID','ReferringPhysicianName','SequenceName','ImageType','AccessionNumber','PatientAge','PatientSex'
-                dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00189763','00100020','00080090','00180024','00080008','00080050','00101010','00100040'], retrieve_level='STUDY')
-                if not dicom_response:
-                    print("No such study exits. Please check the study description.")
-                else:
-                    print("Found a study")
-                break
-            else:
-                print("No such study exits. Please check the PI.")
-    return render_template('dicom.html', title='Dicom', dicom_response=dicom_response, submitter_answer=submitter_answer)
+    # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientMotionCorrected','PatientID','ReferringPhysicianName','SequenceName','ImageType','AccessionNumber','PatientAge','PatientSex'
+    dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00189763','00100020','00080090','00180024','00080008','00080050','00101010','00100040'], retrieve_level='STUDY')
+    if not dicom_response:
+        return render_template('dicom_error.html',  title='DICOM Result Not Found')
+    return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
