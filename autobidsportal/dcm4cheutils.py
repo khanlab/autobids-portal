@@ -155,31 +155,34 @@ class Dcm4cheUtils():
             r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
         )
 
-        out_dicts = []
-        for line in str(out, encoding="utf-8").splitlines():
-            if not any(field in line for field in output_fields):
-                continue
-            match = re.match(output_re, line)
-            if match is None:
-                continue
-            out_dicts.append(
-                {
-                    "tag_code": match.group(1),
-                    "tag_name": match.group(3),
-                    "tag_value": match.group(2)
-                }
-            )
+        # Idea: Discard everything before:
+        # C-FIND Request done in
+
+        out = str(out, encoding="utf-8")
+        out = out[out.find("C-FIND Request done in"):]
+        out = out.split("DEBUG - Dataset")[1:]
 
         grouped_dicts = []
-        if len(out_dicts) % len(output_fields) != 0:
-            print("Logic is wrong")
-        else:
-            for i in range(len(out_dicts) // len(output_fields)):
-                grouped_dicts.append(
-                    out_dicts[
-                        i * len(output_fields):(i + 1) * len(output_fields)
-                    ]
+        for dataset in out:
+            out_dicts = []
+            for line in dataset.splitlines():
+                if not any(field in line for field in output_fields):
+                    continue
+                match = re.match(output_re, line)
+                if match is None:
+                    continue
+                out_dicts.append(
+                    {
+                        "tag_code": match.group(1),
+                        "tag_name": match.group(3),
+                        "tag_value": match.group(2)
+                    }
                 )
+            if len(out_dicts) != len(output_fields):
+                raise Dcm4cheError(
+                    "Missing output fields in dataset {}".format(out_dicts)
+                )
+            grouped_dicts.append(out_dicts)
 
         return grouped_dicts
 
