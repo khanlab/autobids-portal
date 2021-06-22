@@ -49,6 +49,7 @@ class Answer(db.Model):
     familiarity_openneuro = db.Column(db.String(20))
     familiarity_cbrain = db.Column(db.String(20))
     principal = db.Column(db.String(20))
+    prinicpal_other = db.Column(db.String(20))
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
     sample = db.Column(db.DateTime)
@@ -62,4 +63,4 @@ class Answer(db.Model):
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
 
     def __repr__(self):
-        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
+        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'

@@ -3,6 +3,7 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField, Radio
 from wtforms.fields.html5 import EmailField, IntegerField, DateField
 from wtforms.validators import ValidationError, DataRequired, Length, Optional, InputRequired, Email, EqualTo
 from autobidsportal.models import Submitter, User, Answer
+from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
@@ -110,7 +111,9 @@ class BidsForm(FlaskForm):
         ('5', 'I consider myself an expert'),
     ], validators=[InputRequired()])
 
-    principal = StringField('What is the "Principal" or "PI" identifier for this study?:', validators=[DataRequired()])
+    principal = SelectField('What is the "Principal" or "PI" identifier for this study?:', choices=[], coerce=int)
+
+    prinicpal_other = StringField('If you selected "Other" for the question above please enter the "Principal" or "PI" identifier for this study below:', validators=[DataRequired()])
 
     project_name = StringField('What is the "Project Name" identifier for this study?:', validators=[DataRequired()])
 

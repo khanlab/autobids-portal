@@ -16,6 +16,11 @@ def index():
     
     """
     form = BidsForm()
+    
+    principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+    form.principal.choices = principal_names
+    form.principal.choices.insert(0, ('Other', 'Other'))
+
     if form.validate_on_submit():
         
         submitter = Submitter(
@@ -39,6 +44,7 @@ def index():
             familiarity_openneuro=form.familiarity_openneuro.data,
             familiarity_cbrain=form.familiarity_cbrain.data,
             principal=form.principal.data,
+            prinicpal_other=form.prinicpal_other.data,
             project_name=form.project_name.data,
             dataset_name=form.dataset_name.data,
             sample = form.sample.data,
@@ -220,6 +226,7 @@ def dicom_verify():
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
     # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientMotionCorrected','PatientID','ReferringPhysicianName','SequenceName','ImageType','AccessionNumber','PatientAge','PatientSex'
+    # add try 
     dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00189763','00100020','00080090','00180024','00080008','00080050','00101010','00100040'], retrieve_level='STUDY')
     if not dicom_response:
         return render_template('dicom_error.html',  title='DICOM Result Not Found')
