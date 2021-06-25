@@ -49,7 +49,7 @@ class Answer(db.Model):
     familiarity_openneuro = db.Column(db.String(20))
     familiarity_cbrain = db.Column(db.String(20))
     principal = db.Column(db.String(20))
-    prinicpal_other = db.Column(db.String(20))
+    principal_other = db.Column(db.String(20))
     project_name = db.Column(db.String(20))
     dataset_name = db.Column(db.String(20))
     sample = db.Column(db.DateTime)
