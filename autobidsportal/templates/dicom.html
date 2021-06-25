@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <table class="table">
-        <th scope="col">Image Type</th>
-        <th scope="col">Accession Number</th>
-        <th scope="col">Referring Physician Name</th>
-        <th scope="col">Patient Name</th>
-        <th scope="col">Patient ID</th>
-        <th scope="col">Patient Sex</th>
-        <th scope="col">Patient Age</th>
-        <th scope="col">Sequence Name</th>
-        <th scope="col">Repetition Time</th>
-        <th scope="col">Echo Time</th>
-        <th scope="col">Protocol Name</th>
-        <th scope="col">Patient Motion Corrected</th>
-        <th scope="col">Series Number</th>
-        
-        {% for response in dicom_response %}
-            <tr>
-                <td>{{ response[0].get('tag_value') }}</td>
-                <td>{{ response[1].get('tag_value') }}</td>
-                <td>{{ response[2].get('tag_value') }}</td>
-                <td>{{ response[3].get('tag_value') }}</td>
-                <td>{{ response[4].get('tag_value') }}</td>
-                <td>{{ response[5].get('tag_value') }}</td>
-                <td>{{ response[6].get('tag_value') }}</td>
-                <td>{{ response[7].get('tag_value') }}</td>
-                <td>{{ response[8].get('tag_value') }}</td>
-                <td>{{ response[9].get('tag_value') }}</td>
-                <td>{{ response[10].get('tag_value') }}</td>
-                <td>{{ response[11].get('tag_value') }}</td>
-                <td>{{ response[12].get('tag_value') }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+<table class="table">
+    <th scope="col">Image Type</th>
+    <th scope="col">Accession Number</th>
+    <th scope="col">Referring Physician Name</th>
+    <th scope="col">Patient Name</th>
+    <th scope="col">Patient ID</th>
+    <th scope="col">Patient Sex</th>
+    <th scope="col">Patient Age</th>
+    <th scope="col">Sequence Name</th>
+    <th scope="col">Repetition Time</th>
+    <th scope="col">Echo Time</th>
+    <th scope="col">Protocol Name</th>
+    <th scope="col">Patient Motion Corrected</th>
+    <th scope="col">Series Number</th>
+    
+    {% for response in dicom_response %}
+        <tr>
+            <td>{{ response[0].get('tag_value') }}</td>
+            <td>{{ response[1].get('tag_value') }}</td>
+            <td>{{ response[2].get('tag_value') }}</td>
+            <td>{{ response[3].get('tag_value') }}</td>
+            <td>{{ response[4].get('tag_value') }}</td>
+            <td>{{ response[5].get('tag_value') }}</td>
+            <td>{{ response[6].get('tag_value') }}</td>
+            <td>{{ response[7].get('tag_value') }}</td>
+            <td>{{ response[8].get('tag_value') }}</td>
+            <td>{{ response[9].get('tag_value') }}</td>
+            <td>{{ response[10].get('tag_value') }}</td>
+            <td>{{ response[11].get('tag_value') }}</td>
+            <td>{{ response[12].get('tag_value') }}</td>
+        </tr>
+    {% endfor %}
+</table>
 {% endblock %}
