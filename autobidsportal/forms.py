@@ -111,9 +111,9 @@ class BidsForm(FlaskForm):
         ('5', 'I consider myself an expert'),
     ], validators=[InputRequired()])
 
-    principal = SelectField('What is the "Principal" or "PI" identifier for this study?:', choices=[], coerce=int)
+    principal = SelectField('What is the "Principal" or "PI" identifier for this study?:', choices=[])
 
-    prinicpal_other = StringField('If you selected "Other" for the question above please enter the "Principal" or "PI" identifier for this study below:', validators=[DataRequired()])
+    prinicpal_other = StringField('If you selected "Other" for the question above please enter the "Principal" or "PI" identifier for this study below:', validators=[Optional()])
 
     project_name = StringField('What is the "Project Name" identifier for this study?:', validators=[DataRequired()])
 

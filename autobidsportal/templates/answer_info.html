@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+<form method="POST" action="{{ url_for('results') }}">
+    <input type="submit" class="btn btn-default" value="Back" style="margin-left:10px"></input>
+</form> 
+
 <table class="table"></p>
     <tr>
         <th scope="col"></th>
@@ -26,7 +30,7 @@
     <tr>
         <td>
             <form method="POST" action="{{ url_for('dicom_verify') }}">
-                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-sm" ></input>
+                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default" ></input>
             </form> 
         </td>
         <td>{{ submitter_answer.submitter.name }}</td>
@@ -170,7 +174,7 @@
                 </tr>
             </table>
         </td>
-        <td>{{ submitter_answer.principal }}</td>
+        <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
         <td>{{ submitter_answer.project_name }}</td>
         <td>{{ submitter_answer.dataset_name }}</td>
         <td>
