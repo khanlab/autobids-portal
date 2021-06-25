@@ -174,7 +174,7 @@
                 </tr>
             </table>
         </td>
-        <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
+        <td>{% if submitter_answer.principal == 'Other' %} {{ submitter_answer.principal_other }} {% else %} {{ submitter_answer.principal }} {% endif %} </td>
         <td>{{ submitter_answer.project_name }}</td>
         <td>{{ submitter_answer.dataset_name }}</td>
         <td>
