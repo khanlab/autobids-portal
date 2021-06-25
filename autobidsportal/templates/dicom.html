@@ -1,27 +1,27 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <table class="table">
-        <th scope="col">Patient Name</th>
-        <th scope="col">Patient ID</th>
-        <th scope="col">Patient Sex</th>
-        <th scope="col">Sequence Name</th>
-        <th scope="col">Repetition Time</th>
-        <th scope="col">Echo Time</th>
-        <th scope="col">Protocol Name</th>
-        <th scope="col">Series Number</th>
-        
-        {% for response in dicom_response %}
-            <tr>
-                <td>{{ response[0].get('tag_value') }}</td>
-                <td>{{ response[1].get('tag_value') }}</td>
-                <td>{{ response[2].get('tag_value') }}</td>
-                <td>{{ response[3].get('tag_value') }}</td>
-                <td>{{ response[4].get('tag_value') }}</td>
-                <td>{{ response[5].get('tag_value') }}</td>
-                <td>{{ response[6].get('tag_value') }}</td>
-                <td>{{ response[7].get('tag_value') }}</td>
-            </tr>
-        {% endfor %}
-    </table>
+<table class="table">
+    <th scope="col">Patient Name</th>
+    <th scope="col">Patient ID</th>
+    <th scope="col">Patient Sex</th>
+    <th scope="col">Sequence Name</th>
+    <th scope="col">Repetition Time</th>
+    <th scope="col">Echo Time</th>
+    <th scope="col">Protocol Name</th>
+    <th scope="col">Series Number</th>
+    
+    {% for response in dicom_response %}
+        <tr>
+            <td>{{ response[0].get('tag_value') }}</td>
+            <td>{{ response[1].get('tag_value') }}</td>
+            <td>{{ response[2].get('tag_value') }}</td>
+            <td>{{ response[3].get('tag_value') }}</td>
+            <td>{{ response[4].get('tag_value') }}</td>
+            <td>{{ response[5].get('tag_value') }}</td>
+            <td>{{ response[6].get('tag_value') }}</td>
+            <td>{{ response[7].get('tag_value') }}</td>
+        </tr>
+    {% endfor %}
+</table>
 {% endblock %}

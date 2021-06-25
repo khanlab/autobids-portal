@@ -229,8 +229,7 @@ def dicom_verify():
     # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
     try:
         dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+        return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
         return render_template('dicom_error.html', err=err, err_cause=err_cause, title='DICOM Result Not Found')
-    finally:
-        return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
