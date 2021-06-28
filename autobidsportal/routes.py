@@ -17,7 +17,10 @@ def index():
     """
     form = BidsForm()
     
-    principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+    try:
+        principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+    except Dcm4cheError as err:
+        principal_names = []
     form.principal.choices = principal_names
     form.principal.choices.insert(0, ('Other', 'Other'))
 
@@ -226,7 +229,10 @@ def logout():
 def dicom_verify():
     button_id = list(request.form.keys())[0]
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-    study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
+    if submitter_answer.principal_other is not None:
+        study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
+    else:
+        study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
     # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
     try:
         dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
