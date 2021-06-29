@@ -97,23 +97,23 @@ class Dcm4cheUtils():
 
     def query_single_study(
         self,
-        study_description,
-        study_date,
         output_fields,
+        study_description=None,
+        study_date=None,
         retrieve_level="STUDY"
     ):
         """Queries a DICOM server for specified tags from one study.
 
         Parameters
         ----------
-        study_description : str
-            The StudyDescription to query. Passed to `findscu -m {}`.
-        study_date : date
-            The date of the study to query. Converted to "YYYYMMDD" format and
-            queries the "StudyDate" tag.
         output_fields : list of str
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
+        study_description : str, optional
+            The StudyDescription to query. Passed to `findscu -m {}`.
+        study_date : date, optional
+            The date of the study to query. Converted to "YYYYMMDD" format and
+            queries the "StudyDate" tag.
         retrieve_level : str
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
@@ -125,15 +125,29 @@ class Dcm4cheUtils():
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
         """
-        cmd = "{} -m StudyDescription=\"{}\" -m StudyDate=\"{}\"".format(
-            self._findscu_str,
-            study_description,
-            study_date.strftime("%Y%m%d")
-        )
+        if study_description is None and study_date is None:
+            raise Dcm4cheError(
+                "You must specify at least one of study_description and "
+                "study_date"
+            )
+
+        cmd = self._findscu_str
+
+        if study_description is not None:
+            cmd = "{} -m StudyDescription=\"{}\"".format(
+                cmd,
+                study_description
+            )
+        if study_date is not None:
+            cmd = "{} -m StudyDate=\"{}\"".format(
+                cmd,
+                study_date.strftime("%Y%m%d")
+            )
+
         cmd = " ".join(
             [cmd] + ["-r {}".format(field) for field in output_fields]
         )
-        cmd = cmd + " -L {}".format(retrieve_level)
+        cmd = "{} -L {}".format(cmd, retrieve_level)
 
         try:
             out, err, _ = _get_stdout_stderr_returncode(cmd)
@@ -155,31 +169,34 @@ class Dcm4cheUtils():
             r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
         )
 
-        out_dicts = []
-        for line in str(out, encoding="utf-8").splitlines():
-            if not any(field in line for field in output_fields):
-                continue
-            match = re.match(output_re, line)
-            if match is None:
-                continue
-            out_dicts.append(
-                {
-                    "tag_code": match.group(1),
-                    "tag_name": match.group(3),
-                    "tag_value": match.group(2)
-                }
-            )
+        # Idea: Discard everything before:
+        # C-FIND Request done in
+
+        out = str(out, encoding="utf-8")
+        out = out[out.find("C-FIND Request done in"):]
+        out = out.split("DEBUG - Dataset")[1:]
 
         grouped_dicts = []
-        if len(out_dicts) % len(output_fields) != 0:
-            print("Logic is wrong")
-        else:
-            for i in range(len(out_dicts) // len(output_fields)):
-                grouped_dicts.append(
-                    out_dicts[
-                        i * len(output_fields):(i + 1) * len(output_fields)
-                    ]
+        for dataset in out:
+            out_dicts = []
+            for line in dataset.splitlines():
+                if not any(field in line for field in output_fields):
+                    continue
+                match = re.match(output_re, line)
+                if match is None:
+                    continue
+                out_dicts.append(
+                    {
+                        "tag_code": match.group(1),
+                        "tag_name": match.group(3),
+                        "tag_value": match.group(2)
+                    }
                 )
+            if len(out_dicts) != len(output_fields):
+                raise Dcm4cheError(
+                    "Missing output fields in dataset {}".format(out_dicts)
+                )
+            grouped_dicts.append(out_dicts)
 
         return grouped_dicts
 
