@@ -30,7 +30,15 @@
     <tr>
         <td>
             <form method="POST" action="{{ url_for('dicom_verify') }}">
-                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default" ></input>
+                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default"></input>
+            </form> 
+            <br>
+            <form method="POST" action="{{ url_for('dicom_verify') }}">
+                <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Date" class="btn btn-default"></input>
+            </form> 
+            <br>
+            <form method="POST" action="{{ url_for('dicom_verify') }}">
+                <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Description" class="btn btn-default"></input>
             </form> 
         </td>
         <td>{{ submitter_answer.submitter.name }}</td>
