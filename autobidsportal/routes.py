@@ -4,6 +4,7 @@ from werkzeug.urls import url_parse
 from autobidsportal import app, db
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
+from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
 import flask_excel as excel
 
@@ -15,6 +16,14 @@ def index():
     
     """
     form = BidsForm()
+    
+    try:
+        principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+    except Dcm4cheError as err:
+        principal_names = []
+    form.principal.choices = principal_names
+    form.principal.choices.insert(0, ('Other', 'Other'))
+
     if form.validate_on_submit():
         
         submitter = Submitter(
@@ -38,6 +47,7 @@ def index():
             familiarity_openneuro=form.familiarity_openneuro.data,
             familiarity_cbrain=form.familiarity_cbrain.data,
             principal=form.principal.data,
+            principal_other=form.principal_other.data,
             project_name=form.project_name.data,
             dataset_name=form.dataset_name.data,
             sample = form.sample.data,
@@ -140,6 +150,7 @@ def download():
         'OPENNEURO Familiarity',
         'CBRAIN Familiarity',
         'Principal',
+        'Principal (Other)',
         'Project Name',
         'Overridden Dataset Name',
         'Sample Date',
@@ -190,6 +201,7 @@ def download():
             update_familiarity(r.familiarity_openneuro),
             update_familiarity(r.familiarity_cbrain),
             r.principal,
+            r.principal_other,
             r.project_name,
             r.dataset_name,
             update_date(r.sample),
@@ -211,3 +223,25 @@ def logout():
         db.session.commit()
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/results/user/dicom', methods=['GET', 'POST'])
+@login_required
+def dicom_verify():
+    button_id = list(request.form.keys())[0]
+    submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+    if submitter_answer.principal_other is not None:
+        study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
+    else:
+        study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
+    # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
+    try:
+        if list(request.form.values())[0] == 'Config':
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+        elif list(request.form.values())[0] == 'Config-Study Date':
+            dicom_response = gen_utils().query_single_study(study_description=None, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+        else:
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=None, output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+        return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
+    except Dcm4cheError as err:
+        err_cause = err.__cause__.stderr
+        return render_template('dicom_error.html', err=err, err_cause=err_cause, title='DICOM Result Not Found')

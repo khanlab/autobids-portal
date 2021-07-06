@@ -29,7 +29,7 @@
         <tr class="new">
             <td>
                 <form method="POST" action="{{ url_for('answer_info') }}">
-                    <input name={{r.submitter.id}} class="btn btn-sm" type="submit" value="View more"></input>
+                    <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
                 </form> 
             </td>
             <td>{{ r.submitter.name }}</td>
@@ -40,7 +40,7 @@
             <td>
                 {% if r.study_type == True %} Yes {% else %} No {% endif %} 
             </td>
-            <td>{{ r.principal }}</td>
+            <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
             <td>
@@ -60,7 +60,7 @@
         <tr>
             <td>
                 <form method="POST" action="{{ url_for('answer_info') }}">
-                    <input name={{r.submitter.id}} type="submit" value="View more"></input>
+                    <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
                 </form> 
             </td>
             <td>{{ r.submitter.name }}</td>
@@ -71,7 +71,7 @@
             <td>
                 {% if r.study_type == True %} Yes {% else %} No {% endif %} 
             </td>
-            <td>{{ r.principal }}</td>
+            <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
             <td>{{ r.project_name }}</td>
             <td>{{ r.dataset_name }}</td>
             <td>
