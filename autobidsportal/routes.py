@@ -1,11 +1,12 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
-from autobidsportal import app, db
+from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
+from flask_mail import Message
 import flask_excel as excel
 
 @app.route('/', methods=['GET', 'POST'])
@@ -63,6 +64,16 @@ def index():
         db.session.commit()
         
         flash(f"Thanks, the survey has been submitted!")
+
+        subject = "A new request has been submitted by %s" % (answer.submitter.name)
+        msg = Message(
+            subject = subject,
+            body = "A new request has been submitted. Please login to see the submitter's response",
+            sender = app.config.get("MAIL_USERNAME"),
+            recipients = app.config.get("MAIL_RECIPIENTS")
+        )
+        mail.send(msg)
+
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
 
