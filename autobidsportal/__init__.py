@@ -6,6 +6,7 @@ from sqlalchemy import MetaData
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
+from flask_mail import Mail
 import flask_excel as excel
 
 app = Flask(__name__)
@@ -23,6 +24,7 @@ db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db, render_as_batch=True, compare_type=True)
 login = LoginManager(app)
 login.login_view = 'login'
+mail = Mail(app)
 bootstrap = Bootstrap(app)
 
 from autobidsportal import routes, models, errors
