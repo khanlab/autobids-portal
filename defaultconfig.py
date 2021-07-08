@@ -20,6 +20,13 @@ class Config(object):
     # as options in the study form.
     DICOM_PI_BLACKLIST = []
 
+    MAIL_SERVER = "smtp.gmail.com"
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_RECIPIENTS = "email_recipients"
+    MAIL_USERNAME = "email"
+    MAIL_PASSWORD = "password"
 
 class Config_test(object):
     TESTING = True
@@ -41,3 +48,11 @@ class Config_test(object):
     # List of PIs accessible on the DICOM server that shouldn't be presented
     # as options in the study form.
     DICOM_PI_BLACKLIST = []
+
+    MAIL_SERVER = "smtp.gmail.com"
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_RECIPIENTS = "email_recipients"
+    MAIL_USERNAME = "email"
+    MAIL_PASSWORD = "password"
