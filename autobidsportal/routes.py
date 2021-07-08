@@ -244,14 +244,14 @@ def dicom_verify():
         study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
     else:
         study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
-    # 'PatientName', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
+    # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex' 
     try:
         if list(request.form.values())[0] == 'Config':
-            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010','SeriesDescription','00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         elif list(request.form.values())[0] == 'Config-Study Date':
-            dicom_response = gen_utils().query_single_study(study_description=None, study_date=submitter_answer.sample.date(), output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+            dicom_response = gen_utils().query_single_study(study_description=None, study_date=submitter_answer.sample.date(), output_fields=['00100010','SeriesDescription','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         else:
-            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=None, output_fields=['00100010', '00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='STUDY')
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=None, output_fields=['00100010','SeriesDescription','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
