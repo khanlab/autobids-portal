@@ -66,12 +66,15 @@ def index():
         flash(f"Thanks, the survey has been submitted!")
 
         subject = "A new request has been submitted by %s" % (answer.submitter.name)
+        sender = app.config["MAIL_USERNAME"]
+        recipients = app.config["MAIL_RECIPIENTS"]
+
         msg = Message(
             subject = subject,
             body = "A new request has been submitted. Please login to see the submitter's response",
-            sender = app.config.get("MAIL_USERNAME"),
-            recipients = app.config.get("MAIL_RECIPIENTS")
-        )
+            sender = sender,
+            recipients = recipients.split()
+            )
         mail.send(msg)
 
         return redirect(url_for('index'))
