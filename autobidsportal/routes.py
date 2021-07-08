@@ -1,12 +1,11 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
-from autobidsportal import app, db, mail
+from autobidsportal import app, db
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
-from flask_mail import Message
 import flask_excel as excel
 
 @app.route('/', methods=['GET', 'POST'])
@@ -64,15 +63,6 @@ def index():
         db.session.commit()
         
         flash(f"Thanks, the survey has been submitted!")
-
-        subject = "A new request has been submitted by %s" % (answer.submitter.name)
-        msg = Message(
-            subject = subject,
-            body = "A new request has been submitted. Please login to see the submitter's response",
-            sender = app.config.get("MAIL_USERNAME"),
-            recipients = app.config.get("MAIL_RECIPIENTS")
-        )
-        mail.send(msg)
 
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
@@ -247,11 +237,11 @@ def dicom_verify():
     # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex' 
     try:
         if list(request.form.values())[0] == 'Config':
-            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010','SeriesDescription','00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=submitter_answer.sample.date(), output_fields=['00100010','0008103E','00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         elif list(request.form.values())[0] == 'Config-Study Date':
-            dicom_response = gen_utils().query_single_study(study_description=None, study_date=submitter_answer.sample.date(), output_fields=['00100010','SeriesDescription','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
+            dicom_response = gen_utils().query_single_study(study_description=None, study_date=submitter_answer.sample.date(), output_fields=['00100010','0008103E','00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         else:
-            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=None, output_fields=['00100010','SeriesDescription','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
+            dicom_response = gen_utils().query_single_study(study_description=study_info, study_date=None, output_fields=['00100010','0008103E','00200011','00180080','00180081','00181030','00100020','00180024','00100040'], retrieve_level='SERIES')
         return render_template('dicom.html', title='Dicom Result', dicom_response=dicom_response, submitter_answer=submitter_answer)
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
