@@ -2,6 +2,7 @@
 
 {% block app_content %}
 <table class="table">
+    <th scope="col">Series Desciption</th>
     <th scope="col">Patient Name</th>
     <th scope="col">Patient ID</th>
     <th scope="col">Patient Sex</th>
@@ -21,6 +22,7 @@
             <td>{{ response[5].get('tag_value') }}</td>
             <td>{{ response[6].get('tag_value') }}</td>
             <td>{{ response[7].get('tag_value') }}</td>
+            <td>{{ response[8].get('tag_value') }}</td>
         </tr>
     {% endfor %}
 </table>
