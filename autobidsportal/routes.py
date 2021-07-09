@@ -76,7 +76,7 @@ def index():
             recipients = recipients.split()
             )
         mail.send(msg)
-
+        
         return redirect(url_for('index'))
     return render_template('survey.html', form=form)
 
