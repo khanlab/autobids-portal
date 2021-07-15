@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
+from bids_form import scheduled
 from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
@@ -18,10 +19,6 @@ def index():
     """
     form = BidsForm()
     
-    try:
-        principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
-    except Dcm4cheError as err:
-        principal_names = []
     form.principal.choices = principal_names
     form.principal.choices.insert(0, ('Other', 'Other'))
 
