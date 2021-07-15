@@ -64,3 +64,11 @@ class Answer(db.Model):
 
     def __repr__(self):
         return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
+
+class Principal(db.Model):
+    __tablename__ = 'principal'
+    id = db.Column(db.Integer, primary_key=True)
+    principal_name = db.Column(db.String(200))
+
+    def __repr__(self):
+        return f'<Answer {self.principal_name}>'
