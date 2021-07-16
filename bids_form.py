@@ -13,8 +13,8 @@ def make_shell_context():
 def check_pis():
     """Run scheduled job that gets the list of pi names from dicom and appends them to the Principal table in the database"""
     try:
-        db.session.query(Principal).delete()
         principal_names = gen_utils().get_all_pi_names()
+        db.session.query(Principal).delete()
         for p in principal_names:
             principal = Principal(principal_name=p)
             db.session.add(principal)
