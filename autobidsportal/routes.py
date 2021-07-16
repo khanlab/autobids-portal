@@ -17,7 +17,7 @@ def index():
     
     """
     form = BidsForm()
-    principal_names=db.session.query(Principal).all()
+    principal_names = [(p.principal_name, p.principal_name) for p in db.session.query(Principal).all()]
     form.principal.choices = principal_names
     form.principal.choices.insert(0, ('Other', 'Other'))
 

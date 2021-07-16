@@ -12,11 +12,15 @@ def make_shell_context():
 @app.cli.command()
 def scheduled():
     """Run scheduled job."""
+    db.session.query(Principal).delete()
     try:
-        principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+        principal_names = gen_utils().get_all_pi_names()
+        for p in principal_names:
+            principal = Principal(principal_name=p)
+            db.session.add(principal)
+            db.session.commit()
     except Dcm4cheError as err:
-        principal_names = []
-        principal = Principal(principal_name=principal_names)
+        principal = Principal(principal_name='')
         db.session.add(principal)
         db.session.commit()
-    return principal_names
+    return "Success"

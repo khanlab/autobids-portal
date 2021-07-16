@@ -71,4 +71,4 @@ class Principal(db.Model):
     principal_name = db.Column(db.String(200))
 
     def __repr__(self):
-        return f'<Answer {self.principal_name}>'
+        return f'<Prinicpal {self.principal_name}>'
