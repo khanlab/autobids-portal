@@ -10,17 +10,16 @@ def make_shell_context():
     return {'db': db, 'User': User, 'Answer': Answer, 'Submitter': Submitter, 'Principal': Principal}
 
 @app.cli.command()
-def scheduled():
-    """Run scheduled job."""
-    db.session.query(Principal).delete()
+def check_pis():
+    """Run scheduled job that gets the list of pi names from dicom and appends them to the Principal table in the database"""
     try:
+        db.session.query(Principal).delete()
         principal_names = gen_utils().get_all_pi_names()
         for p in principal_names:
             principal = Principal(principal_name=p)
             db.session.add(principal)
             db.session.commit()
     except Dcm4cheError as err:
-        principal = Principal(principal_name='')
-        db.session.add(principal)
-        db.session.commit()
+        err_cause = err.__cause__.stderr
+        print(err_cause)
     return "Success"
