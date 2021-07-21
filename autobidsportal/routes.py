@@ -1,9 +1,8 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
-from bids_form import scheduled
 from autobidsportal import app, db, mail
-from autobidsportal.models import User, Submitter, Answer
+from autobidsportal.models import User, Submitter, Answer, Principal
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
@@ -18,7 +17,7 @@ def index():
     
     """
     form = BidsForm()
-    
+    principal_names = [(p.principal_name, p.principal_name) for p in db.session.query(Principal).all()]
     form.principal.choices = principal_names
     form.principal.choices.insert(0, ('Other', 'Other'))
 
@@ -135,6 +134,16 @@ def answer_info():
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
+@app.route('/results/user/cfm2tarr', methods=['GET', 'POST'])
+@login_required
+def run_cfm2tarr():
+    """ 
+
+    """
+    if request.method == 'POST':
+        button_id = list(request.form.keys())[0]
+    return render_template('answer_info.html')
+
 @app.route("/results/download", methods=['GET'])
 @login_required
 
@@ -224,17 +233,6 @@ def download():
             ])
     return excel.make_response_from_array(csv_list, 'csv', file_name=file_name)
 
-@app.route('/logout', methods=['GET', 'POST'])
-def logout():
-    """ Logs out current user
-
-    """
-    if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()
-    logout_user()
-    return redirect(url_for('index'))
-
 @app.route('/results/user/dicom', methods=['GET', 'POST'])
 @login_required
 def dicom_verify():
@@ -256,3 +254,14 @@ def dicom_verify():
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
         return render_template('dicom_error.html', err=err, err_cause=err_cause, title='DICOM Result Not Found')
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    """ Logs out current user
+
+    """
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+    logout_user()
+    return redirect(url_for('index'))

@@ -1,7 +1,10 @@
 from datetime import datetime
-from autobidsportal import db, login
+from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from autobidsportal import db, login
+import redis
+import rq
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
@@ -9,6 +12,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    tasks = db.relationship('Task', backref='answer', lazy='dynamic')
 
     def __repr__(self):
         return f'<User {self.email, self.last_seen}>'
@@ -18,6 +22,18 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def launch_task(self, name, description, *args, **kwargs):
+        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, *args, **kwargs)
+        task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
+        db.session.add(task)
+        return task
+
+    def get_tasks_in_progress(self):
+        return Task.query.filter_by(user=self, complete=False).all()
+
+    def get_task_in_progress(self, name):
+        return Task.query.filter_by(name=name, user=self, complete=False).first()
 
 @login.user_loader
 def load_user(id):
@@ -61,29 +77,16 @@ class Answer(db.Model):
     submission_date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     
     submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
-    
-    tasks = db.relationship('Task', backref='answer', lazy='dynamic')
 
     def __repr__(self):
         return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
-    
-    def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, *args, **kwargs)
-        task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
-        db.session.add(task)
-        return task
 
-    def get_tasks_in_progress(self):
-        return Task.query.filter_by(user=self, complete=False).all()
-
-    def get_task_in_progress(self, name):
-        return Task.query.filter_by(name=name, user=self, complete=False).first()
-
+#General task queue
 class Task(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
-    answer_id = db.Column(db.Integer, db.ForeignKey('answer.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     complete = db.Column(db.Boolean, default=False)
 
     def get_rq_job(self):
@@ -96,3 +99,16 @@ class Task(db.Model):
     def get_progress(self):
         job = self.get_rq_job()
         return job.meta.get('progress', 0) if job is not None else 100
+
+#Create separate table for the results associated with the cfm to tarr pull
+class cfm2tarr(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    result = db.Column(db.String(128), index=True)
+
+class Principal(db.Model):
+    __tablename__ = 'principal'
+    id = db.Column(db.Integer, primary_key=True)
+    principal_name = db.Column(db.String(200))
+
+    def __repr__(self):
+        return f'<Prinicpal {self.principal_name}>'

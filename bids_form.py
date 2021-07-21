@@ -1,22 +1,25 @@
 from autobidsportal import app, db
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
-from autobidsportal.models import User, Answer, Submitter, Task
+from autobidsportal.models import User, Answer, Submitter, Principal
 from datetime import datetime
 import time
 
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db, 'User': User, 'Answer': Answer, 'Submitter': Submitter, 'Task': Task}
+    return {'db': db, 'User': User, 'Answer': Answer, 'Submitter': Submitter, 'Principal': Principal}
 
 @app.cli.command()
-def scheduled():
-    """Run scheduled job."""
-    print(str(datetime.utcnow()), 'Importing principal names...')
+def check_pis():
+    """Run scheduled job that gets the list of pi names from dicom and appends them to the Principal table in the database"""
     try:
-        principal_names = [(p, p) for p in gen_utils().get_all_pi_names()]
+        principal_names = gen_utils().get_all_pi_names()
+        db.session.query(Principal).delete()
+        for p in principal_names:
+            principal = Principal(principal_name=p)
+            db.session.add(principal)
+            db.session.commit()
     except Dcm4cheError as err:
-        principal_names = []
-    print(str(datetime.utcnow()), principal_names)
-    print(str(datetime.utcnow()), 'Done!')
-    return principal_names
+        err_cause = err.__cause__.stderr
+        print(err_cause)
+    return "Success"
