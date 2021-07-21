@@ -11,6 +11,7 @@ natively or in a container).
 import subprocess
 import logging
 import re
+import tempfile
 
 # for quote python strings for safe use in posix shells
 import pipes
@@ -59,6 +60,8 @@ class Dcm4cheUtils():
             ' --accept-timeout 10000 ' +\
             ''' --tls-aes --user {} '''.format(pipes.quote(self.username)) +\
             ''' --user-pass {} '''.format(pipes.quote(self.password))
+
+        self._cfmm2tar_list = self.dcm4che_path.split() + ["cfmm2tar"]
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
@@ -200,6 +203,55 @@ class Dcm4cheUtils():
 
         return grouped_dicts
 
+    def run_cfmm2tar(
+        self,
+        out_dir,
+        date_str=None,
+        patient_name=None,
+        project=None
+    ):
+        """Run cfmm2tar with the given options.
+
+        At least one of the optional search arguments must be provided.
+
+        Arguments
+        ---------
+        out_dir : str
+            Directory to which to download tar files.
+        date_str : str, optional
+            String specifying the date(s) to download. Can include up to two
+            dates and a "-" to indicate an open or closed interval of dates.
+        patient_name : str, optional
+            PatientName string.
+        project : str, optional
+            "Principal^Project" to search for.
+        """
+        if all(arg is None for arg in [date_str, patient_name, project]):
+            raise Cfmm2tarError(
+                "At least one search argument must be provided."
+            )
+        date_query = ["-d", date_str] if date_str is not None else []
+        name_query = ["-n", patient_name] if patient_name is not None else []
+        project_query = ["-p", project] if project is not None else []
+
+        with tempfile.NamedTemporaryFile(mode="w+", buffering=1) as cred_file:
+            cred_file.write(self.username + "\n")
+            cred_file.write(self.password + "\n")
+            print(cred_file.name)
+            arg_list = (
+                self._cfmm2tar_list
+                + ["-c", cred_file.name]
+                + date_query
+                + name_query
+                + project_query
+                + [out_dir]
+            )
+
+            try:
+                subprocess.run(arg_list, check=True)
+            except subprocess.CalledProcessError as err:
+                raise Cfmm2tarError("Cfmm2tar failed.") from err
+
 
 def gen_utils():
     """Generate a Dcm4cheUtils with values from the app config."""
@@ -213,6 +265,15 @@ def gen_utils():
 
 class Dcm4cheError(Exception):
     """Exception raised when something goes wrong with a dcm4che process."""
+    def __init__(self, message):
+        super().__init__()
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+class Cfmm2tarError(Exception):
+    """Exception raised when cfmm2tar fails."""
     def __init__(self, message):
         super().__init__()
         self.message = message
