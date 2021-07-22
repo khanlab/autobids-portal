@@ -12,10 +12,11 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    tasks = db.relationship('Task', backref='answer', lazy='dynamic')
+    last_pressed_button_id = db.Column(db.Integer)
+    tasks = db.relationship('Task', backref='user', lazy='dynamic')
 
     def __repr__(self):
-        return f'<User {self.email, self.last_seen}>'
+        return f'<User {self.email, self.last_seen, self.last_pressed_button_id}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -24,7 +25,8 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, *args, **kwargs)
+        print(self.last_pressed_button_id)
+        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs)
         task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
         db.session.add(task)
         return task
@@ -81,7 +83,6 @@ class Answer(db.Model):
     def __repr__(self):
         return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
 
-#General task queue
 class Task(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
@@ -100,8 +101,7 @@ class Task(db.Model):
         job = self.get_rq_job()
         return job.meta.get('progress', 0) if job is not None else 100
 
-#Create separate table for the results associated with the cfm to tarr pull
-class cfm2tarr(db.Model):
+class cfmm2tar(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     result = db.Column(db.String(128), index=True)
 

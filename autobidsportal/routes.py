@@ -131,18 +131,25 @@ def answer_info():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
+        current_user.last_pressed_button_id = button_id
+        db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
-@app.route('/results/user/cfm2tarr', methods=['GET', 'POST'])
+@app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
-def run_cfm2tarr():
-    """ 
+def run_cfmm2tar():
+    """ Launch cfmm2tar task and refresh answer_info.html
 
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-    return render_template('answer_info.html')
+        current_user.last_pressed_button_id = button_id
+        db.session.commit()
+        submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+        current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar...'))
+        db.session.commit()
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
 
 @app.route("/results/download", methods=['GET'])
 @login_required
