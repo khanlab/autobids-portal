@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
-from autobidsportal.models import User, Submitter, Answer, Principal
+from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
@@ -134,7 +134,8 @@ def answer_info():
         current_user.last_pressed_button_id = button_id
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
+        tasks = db.session.query(Task).all()
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
@@ -149,11 +150,23 @@ def run_cfmm2tar():
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
         current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar...'))
         db.session.commit()
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
+        tasks = db.session.query(Task).all()
+
+        subject = "cfmm2tar run has been completed for task"
+        sender = app.config["MAIL_USERNAME"]
+        recipients = app.config["MAIL_RECIPIENTS"]
+
+        msg = Message(
+            subject = subject,
+            body = "cfmm2tar run has been completed for task.",
+            sender = sender,
+            recipients = recipients.split()
+            )
+        mail.send(msg)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks)
 
 @app.route("/results/download", methods=['GET'])
 @login_required
-
 def download():
     """ Downloads csv containing all the survey response
 

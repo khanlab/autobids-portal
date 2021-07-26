@@ -9,87 +9,89 @@
 </div>
 
 <div class="col-xs-12">
-    <table class="table">
-        <tr>
-            <th scope="col"></th>
-            <th scope="col">Name</th>
-            <th scope="col">Email</th>
-            <th scope="col">Which Scanner</th>
-            <th scope="col">Is this Study Longitudinal or Multi-Session</th>
-            <th scope="col">Principal or "PI" Identifier</th>
-            <th scope="col">Project Name Identifier</th>
-            <th scope="col">Overridden Dataset Name</th>
-            <th scope="col">Sample Date</th>
-            <th scope="col">Retrospective Data</th>
-            <th scope="col">Retrospective Data Start Date</th>
-            <th scope="col">Retrospective Data End Date</th>
-        </tr>
-
-        {% for r in res %}
-            {% if r.submission_date > last.last_seen %}
-            <tr class="new">
-                <td>
-                    <form method="POST" action="{{ url_for('answer_info') }}">
-                        <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
-                    </form> 
-                </td>
-                <td>{{ r.submitter.name }}</td>
-                <td>{{ r.submitter.email }}</td>
-                <td>
-                    {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                </td>
-                <td>
-                    {% if r.study_type == True %} Yes {% else %} No {% endif %} 
-                </td>
-                <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
-                <td>{{ r.project_name }}</td>
-                <td>{{ r.dataset_name }}</td>
-                <td>
-                    {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
-                </td>
-            </tr>
-            {% else %}
+    <div class="table-responsive">
+        <table class="table">
             <tr>
-                <td>
-                    <form method="POST" action="{{ url_for('answer_info') }}">
-                        <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
-                    </form> 
-                </td>
-                <td>{{ r.submitter.name }}</td>
-                <td>{{ r.submitter.email }}</td>
-                <td>
-                    {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                </td>
-                <td>
-                    {% if r.study_type == True %} Yes {% else %} No {% endif %} 
-                </td>
-                <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
-                <td>{{ r.project_name }}</td>
-                <td>{{ r.dataset_name }}</td>
-                <td>
-                    {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
-                </td>
-                <td>
-                    {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
-                </td>
+                <th scope="col"></th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Which Scanner</th>
+                <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+                <th scope="col">Principal or "PI" Identifier</th>
+                <th scope="col">Project Name Identifier</th>
+                <th scope="col">Overridden Dataset Name</th>
+                <th scope="col">Sample Date</th>
+                <th scope="col">Retrospective Data</th>
+                <th scope="col">Retrospective Data Start Date</th>
+                <th scope="col">Retrospective Data End Date</th>
             </tr>
-            {% endif %}
-        {% endfor %}
-    </table>
+
+            {% for r in res %}
+                {% if r.submission_date > last.last_seen %}
+                <tr class="new">
+                    <td>
+                        <form method="POST" action="{{ url_for('answer_info') }}">
+                            <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
+                        </form> 
+                    </td>
+                    <td>{{ r.submitter.name }}</td>
+                    <td>{{ r.submitter.email }}</td>
+                    <td>
+                        {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.study_type == True %} Yes {% else %} No {% endif %} 
+                    </td>
+                    <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
+                    <td>{{ r.project_name }}</td>
+                    <td>{{ r.dataset_name }}</td>
+                    <td>
+                        {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td>
+                        <form method="POST" action="{{ url_for('answer_info') }}">
+                            <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
+                        </form> 
+                    </td>
+                    <td>{{ r.submitter.name }}</td>
+                    <td>{{ r.submitter.email }}</td>
+                    <td>
+                        {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.study_type == True %} Yes {% else %} No {% endif %} 
+                    </td>
+                    <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
+                    <td>{{ r.project_name }}</td>
+                    <td>{{ r.dataset_name }}</td>
+                    <td>
+                        {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
+                    </td>
+                    <td>
+                        {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
+                    </td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>
 </div>
 {% endblock %}

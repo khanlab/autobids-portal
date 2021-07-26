@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 
+{% block content %}
+    {% if current_user.is_authenticated %}
+        {% with tasks = current_user.get_tasks_in_progress() %}
+            {% if tasks %}
+                {% for task in tasks %}
+                <div class="alert alert-success" role="alert">
+                    {{ task.description }}
+                    <span id="{{ task.id }}-progress">{% if task.get_progress()==0 %} In Progress {% else %} Completed {% endif %}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+{% endif %}
+
 {% block app_content %}
 <form method="POST" action="{{ url_for('results') }}">
     <input type="submit" class="btn btn-default" value="Back" style="margin-left:10px"></input>
@@ -232,22 +246,21 @@
      <h2 class="sub-header">Previous Runs</h2>
         <div class="table-responsive">
             <table class="table">
-                <thead>
-                    <tr>
-                        <th class="col-md-1">User's Name</th>
-                        <th class="col-md-2">Start Time</th>
-                        <th class="col-md-3">End Time</th>
-                        <th class="col-md-4">Completion Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="col-md-1">1,001</td>
-                        <td class="col-md-2">1,001</td>
-                        <td class="col-md-3">1,001</td>
-                        <td class="col-md-4">1,001</td>
-                    </tr>
-                </tbody>
+                <tr>
+                    <th class="col-md-1">User's Name</th>
+                    <th class="col-md-2">Start Date and Time</th>
+                    <th class="col-md-3">End Date and Time</th>
+                    <th class="col-md-4">Completion Status</th>
+                </tr>
+
+                {% for t in tasks %}
+                <tr>
+                    <td class="col-md-1">{{ t.user_id }}</td>
+                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y%m%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y%m%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td class="col-md-4">{% if t.complete == True %} Complete {% else %} Incomplete {% endif %}</td>
+                </tr>
+                {% endfor %}
             </table>
         </div>
 </div>
@@ -270,4 +283,13 @@
             </table>
         </div>
 </div>
+{% endblock %}
+{% endblock %}
+
+{% block scripts %}
+  <script>
+      function _set_task_progress(task_id) {
+          $('#' + task_id + 'is in progress').text(progress);
+      }
+  </script>
 {% endblock %}

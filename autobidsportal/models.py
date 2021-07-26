@@ -3,6 +3,8 @@ from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from autobidsportal import db, login
+from time import time
+import json
 import redis
 import rq
 
@@ -13,7 +15,9 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     last_pressed_button_id = db.Column(db.Integer)
+    notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
+    cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
 
     def __repr__(self):
         return f'<User {self.email, self.last_seen, self.last_pressed_button_id}>'
@@ -23,11 +27,16 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def add_notification(self, name, data):
+        self.notifications.filter_by(name=name).delete()
+        n = Notification(name=name, payload_json=json.dumps(data), user=self)
+        db.session.add(n)
+        return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        print(self.last_pressed_button_id)
         rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs)
-        task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
+        task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow())
         db.session.add(task)
         return task
 
@@ -83,12 +92,27 @@ class Answer(db.Model):
     def __repr__(self):
         return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
 
+class Notification(db.Model):
+    __tablename__ = 'notification'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    timestamp = db.Column(db.Float, index=True, default=time)
+    payload_json = db.Column(db.Text)
+
+    def get_data(self):
+        return json.loads(str(self.payload_json))
+
 class Task(db.Model):
+    __tablename__ = 'task'
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     complete = db.Column(db.Boolean, default=False)
+    success = db.Column(db.Boolean, default=False)
+    start_time = db.Column(db.DateTime)
+    end_time = db.Column(db.DateTime)
 
     def get_rq_job(self):
         try:
@@ -101,9 +125,14 @@ class Task(db.Model):
         job = self.get_rq_job()
         return job.meta.get('progress', 0) if job is not None else 100
 
-class cfmm2tar(db.Model):
-    id = db.Column(db.String(36), primary_key=True)
+class Cfmm2tar(db.Model):
+    __tablename__ = 'cfmm2tar'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     result = db.Column(db.String(128), index=True)
+
+    def __repr__(self):
+        return f'<Cfmm2tar {self.result}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'
