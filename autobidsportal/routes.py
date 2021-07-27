@@ -134,8 +134,8 @@ def answer_info():
         current_user.last_pressed_button_id = button_id
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-        tasks = db.session.query(Task).all()
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks)
+        tasks = Task.query.filter_by(task_button_id = button_id).all()
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
@@ -148,9 +148,9 @@ def run_cfmm2tar():
         current_user.last_pressed_button_id = button_id
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-        current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar...'))
+        current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar-'))
         db.session.commit()
-        tasks = db.session.query(Task).all()
+        tasks = Task.query.filter_by(task_button_id = button_id).all()
 
         subject = "cfmm2tar run has been completed for task"
         sender = app.config["MAIL_USERNAME"]
@@ -163,7 +163,7 @@ def run_cfmm2tar():
             recipients = recipients.split()
             )
         mail.send(msg)
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id)
 
 @app.route("/results/download", methods=['GET'])
 @login_required

@@ -36,7 +36,7 @@ class User(UserMixin, db.Model):
 
     def launch_task(self, name, description, *args, **kwargs):
         rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs)
-        task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow())
+        task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
         db.session.add(task)
         return task
 
@@ -45,6 +45,9 @@ class User(UserMixin, db.Model):
 
     def get_task_in_progress(self, name):
         return Task.query.filter_by(name=name, user=self, complete=False).first()
+
+    def get_completed_tasks(self):
+        return Task.query.filter_by(user=self, complete=True).all()
 
 @login.user_loader
 def load_user(id):
@@ -109,10 +112,14 @@ class Task(db.Model):
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    task_button_id = db.Column(db.Integer)
     complete = db.Column(db.Boolean, default=False)
     success = db.Column(db.Boolean, default=False)
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<Task {self.user_id, self.task_button_id, self.complete, self.success}>'
 
     def get_rq_job(self):
         try:

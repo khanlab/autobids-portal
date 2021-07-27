@@ -1,12 +1,12 @@
 from autobidsportal import app, db
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
-from autobidsportal.models import User, Answer, Submitter, Principal, Notification, Task
+from autobidsportal.models import User, Answer, Submitter, Principal, Notification, Task, Cfmm2tar
 from datetime import datetime
 import time
 
 @app.shell_context_processor
 def make_shell_context():
-    return {'db': db, 'User': User, 'Answer': Answer, 'Submitter': Submitter, 'Principal': Principal, 'Notification': Notification, 'Task': Task}
+    return {'db': db, 'User': User, 'Answer': Answer, 'Submitter': Submitter, 'Principal': Principal, 'Notification': Notification, 'Task': Task, 'Cfmm2tar': Cfmm2tar}
 
 @app.cli.command()
 def check_pis():

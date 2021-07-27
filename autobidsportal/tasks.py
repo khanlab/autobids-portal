@@ -28,7 +28,7 @@ def get_info_from_cfmm2tar(user_id, button_id):
         study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
     data = "/home/debian/cfmm2tar-download"
     try:
-        cfmm2tar_result = cfmm2tar_results = gen_utils().run_cfmm2tar(out_dir=data, project=study_info)
+        cfmm2tar_result = "gen_utils().run_cfmm2tar(out_dir=data, project=study_info)"
         cfmm2tar = Cfmm2tar(result=cfmm2tar_result)
         db.session.add(cfmm2tar)
         db.session.commit()

@@ -2,17 +2,33 @@
 
 {% block content %}
     {% if current_user.is_authenticated %}
-        {% with tasks = current_user.get_tasks_in_progress() %}
-            {% if tasks %}
-                {% for task in tasks %}
-                <div class="alert alert-success" role="alert">
-                    {{ task.description }}
-                    <span id="{{ task.id }}-progress">{% if task.get_progress()==0 %} In Progress {% else %} Completed {% endif %}</span>
-                </div>
+        {% with current_tasks_in_progress = current_user.get_tasks_in_progress() %}
+            {% if current_tasks_in_progress %}
+                {% for task in current_tasks_in_progress %}
+                    {% if task.task_button_id == button_id %}
+                        <div class="alert alert-warning" role="alert">
+                            {{ task.description }}
+                            <span id="{{ task.id }}-progress">{% if task.get_progress()==0 %} In Progress {% endif %}</span>
+                        </div>
+                    {% endif %}
                 {% endfor %}
             {% endif %}
         {% endwith %}
-{% endif %}
+        {% with completed_tasks = current_user.get_completed_tasks() %}
+            {% if completed_tasks %}
+                {% for task in completed_tasks %}
+                    {% if task.task_button_id == button_id %}
+                        {% if task.end_time>=current_user.last_seen %}
+                            <div class="alert alert-success" role="alert">
+                                {{ task.description }}
+                                <span id="{{ task.id }}-progress">{% if task.get_progress()==100 %} Complete {% endif %}</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    {% endif %}
 
 {% block app_content %}
 <form method="POST" action="{{ url_for('results') }}">
@@ -247,7 +263,7 @@
         <div class="table-responsive">
             <table class="table">
                 <tr>
-                    <th class="col-md-1">User's Name</th>
+                    <th class="col-md-1">Task ID</th>
                     <th class="col-md-2">Start Date and Time</th>
                     <th class="col-md-3">End Date and Time</th>
                     <th class="col-md-4">Completion Status</th>
@@ -255,9 +271,9 @@
 
                 {% for t in tasks %}
                 <tr>
-                    <td class="col-md-1">{{ t.user_id }}</td>
-                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y%m%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y%m%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td class="col-md-1">{{ t.id }}</td>
+                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
                     <td class="col-md-4">{% if t.complete == True %} Complete {% else %} Incomplete {% endif %}</td>
                 </tr>
                 {% endfor %}
