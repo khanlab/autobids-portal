@@ -248,9 +248,22 @@ class Dcm4cheUtils():
             )
 
             try:
-                subprocess.run(arg_list, check=True)
+                out = subprocess.run(
+                    arg_list,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout
             except subprocess.CalledProcessError as err:
                 raise Cfmm2tarError("Cfmm2tar failed.") from err
+
+            return [
+                line.split("created: ")[1]
+                for line in out.splitlines()
+                if any(
+                    ["tar file created" in line, "uid file created" in line]
+                )
+            ]
 
 
 def gen_utils():
@@ -271,6 +284,7 @@ class Dcm4cheError(Exception):
 
     def __str__(self):
         return self.message
+
 
 class Cfmm2tarError(Exception):
     """Exception raised when cfmm2tar fails."""
