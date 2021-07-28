@@ -237,7 +237,6 @@ class Dcm4cheUtils():
         with tempfile.NamedTemporaryFile(mode="w+", buffering=1) as cred_file:
             cred_file.write(self.username + "\n")
             cred_file.write(self.password + "\n")
-            print(cred_file.name)
             arg_list = (
                 self._cfmm2tar_list
                 + ["-c", cred_file.name]
@@ -253,13 +252,13 @@ class Dcm4cheUtils():
                     check=True,
                     capture_output=True,
                     text=True,
-                ).stdout
+                )
             except subprocess.CalledProcessError as err:
                 raise Cfmm2tarError("Cfmm2tar failed.") from err
 
             return [
                 line.split("created: ")[1]
-                for line in out.splitlines()
+                for line in out.stdout.splitlines() + out.stderr.splitlines()
                 if any(
                     ["tar file created" in line, "uid file created" in line]
                 )
