@@ -256,12 +256,21 @@ class Dcm4cheUtils():
             except subprocess.CalledProcessError as err:
                 raise Cfmm2tarError("Cfmm2tar failed.") from err
 
+            all_out = out.stdout + out.stderr
+            split_out = all_out.split("Retrieving #")[1:]
+
             return [
-                line.split("created: ")[1]
-                for line in out.stdout.splitlines() + out.stderr.splitlines()
-                if any(
-                    ["tar file created" in line, "uid file created" in line]
-                )
+                [
+                    line.split("created: ")[1]
+                    for line in file_out.splitlines()
+                    if any(
+                        [
+                            "tar file created" in line,
+                            "uid file created" in line
+                        ]
+                    )
+                ]
+                for file_out in split_out
             ]
 
 
