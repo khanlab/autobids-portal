@@ -35,7 +35,7 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs)
+        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
         task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
         db.session.add(task)
         return task
@@ -115,6 +115,7 @@ class Task(db.Model):
     task_button_id = db.Column(db.Integer)
     complete = db.Column(db.Boolean, default=False)
     success = db.Column(db.Boolean, default=False)
+    error = db.Column(db.String(128))
     start_time = db.Column(db.DateTime)
     end_time = db.Column(db.DateTime)
 
@@ -136,10 +137,11 @@ class Cfmm2tar(db.Model):
     __tablename__ = 'cfmm2tar'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    result = db.Column(db.String(128), index=True)
+    tar_file = db.Column(db.String(200), index=True)
+    uid_file = db.Column(db.String(200), index=True)
 
     def __repr__(self):
-        return f'<Cfmm2tar {self.result}>'
+        return f'<Cfmm2tar {self.user_id, self.tar_file, self.uid_file}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'

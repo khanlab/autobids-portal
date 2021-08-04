@@ -6,10 +6,17 @@
             {% if current_tasks_in_progress %}
                 {% for task in current_tasks_in_progress %}
                     {% if task.task_button_id == button_id %}
-                        <div class="alert alert-warning" role="alert">
-                            {{ task.description }}
-                            <span id="{{ task.id }}-progress">{% if task.get_progress()==0 %} In Progress {% endif %}</span>
-                        </div>
+                        {% if task.error == '' %}
+                            <div class="alert alert-warning" role="alert">
+                                {{ task.description }}
+                                <span id="{{ task.id }}-progress">{% if task.get_progress()==0 %} In Progress {% endif %}</span>
+                            </div>
+                        {% else %}
+                            <div class="alert danger-danger" role="alert">
+                                {{ task.description }}
+                                <span id="{{ task.id }}-progress"></span>
+                            </div>
+                        {% endif %}
                     {% endif %}
                 {% endfor %}
             {% endif %}
@@ -291,10 +298,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for f in files %}
                     <tr>
                         <td class="col-md-1">1,001</td>
-                        <td class="col-md-2">1,001</td>
+                        <td class="col-md-2">f.tar_file</td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
