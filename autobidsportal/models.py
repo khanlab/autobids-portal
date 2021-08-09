@@ -44,7 +44,7 @@ class User(UserMixin, db.Model):
         return Task.query.filter_by(user=self, complete=False).all()
 
     def get_task_in_progress(self, name):
-        return Task.query.filter_by(name=name, user=self, complete=False).first()
+        return Task.query.filter_by(name=name, user=self, complete=False, task_button_id=self.last_pressed_button_id).first()
 
     def get_completed_tasks(self):
         return Task.query.filter_by(user=self, complete=True).all()
@@ -120,7 +120,7 @@ class Task(db.Model):
     end_time = db.Column(db.DateTime)
 
     def __repr__(self):
-        return f'<Task {self.user_id, self.task_button_id, self.complete, self.success}>'
+        return f'<Task {self.user_id, self.task_button_id, self.complete, self.success, self.error}>'
 
     def get_rq_job(self):
         try:
@@ -137,11 +137,13 @@ class Cfmm2tar(db.Model):
     __tablename__ = 'cfmm2tar'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    task_button_id = db.Column(db.Integer)
     tar_file = db.Column(db.String(200), index=True)
     uid_file = db.Column(db.String(200), index=True)
+    date = db.Column(db.DateTime)
 
     def __repr__(self):
-        return f'<Cfmm2tar {self.user_id, self.tar_file, self.uid_file}>'
+        return f'<Cfmm2tar {self.tar_file, self.uid_file, self.date}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'

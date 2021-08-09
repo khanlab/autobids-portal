@@ -135,7 +135,7 @@ def answer_info():
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
         tasks = Task.query.filter_by(task_button_id = button_id).all()
-        files = Cfmm2tar.query.filter_by(user_id = current_user.id).all()
+        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
@@ -149,10 +149,13 @@ def run_cfmm2tar():
         current_user.last_pressed_button_id = button_id
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-        current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar-'))
-        db.session.commit()
+        if current_user.get_task_in_progress('get_info_from_cfmm2tar'):
+            flash('An Cfmm2tar run is currently in progress')
+        else:
+            current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar-'))
+            db.session.commit()
         tasks = Task.query.filter_by(task_button_id = button_id).all()
-        files = Cfmm2tar.query.filter_by(user_id = current_user.id).all()
+        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
 
         subject = "cfmm2tar run has been completed for task"
         sender = app.config["MAIL_USERNAME"]
