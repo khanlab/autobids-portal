@@ -254,7 +254,9 @@ class Dcm4cheUtils():
                     text=True,
                 )
             except subprocess.CalledProcessError as err:
-                raise Cfmm2tarError("Cfmm2tar failed.") from err
+                raise Cfmm2tarError(
+                    f"Cfmm2tar failed:\n{err.stderr}"
+                ) from err
 
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
