@@ -69,7 +69,8 @@ class Dcm4cheUtils():
             ''' --user-pass {} '''.format(pipes.quote(self.password))
 
         self._cfmm2tar_list = self.dcm4che_path.split() + ["cfmm2tar"]
-        self._tar2bids_list = tar2bids_path.split() + ["tar2bids"]
+        self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
+        print(self._tar2bids_list)
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
@@ -295,26 +296,28 @@ class Dcm4cheUtils():
         deface_t1w=False,
         no_heuristics=False
     ):
-        subprocess.run(
+        arg_list = (
             self._tar2bids_list +
-            ["-P", patient_str] if patient_str is not None else [] +
-            ["-T", tar_str] if tar_str is not None else [] +
-            ["-o", output_dir] +
-            ["-N", num_cores] if num_cores is not None else [] +
-            ["-h", heuristic] if heuristic is not None else [] +
-            ["-w", temp_dir] if temp_dir is not None else [] +
-            [
-                "-o",
-                f"\"{heudiconv_options}\""
-            ]
-            if heudiconv_options is not None
-            else [] +
-            ["-C"] if copy_tarfiles else [] +
-            ["-D"] if deface_t1w else [] +
-            ["-x"] if no_heuristics else [] +
-            tar_files,
-            check=True
+            (["-P", patient_str] if patient_str is not None else []) +
+            (["-T", tar_str] if tar_str is not None else []) +
+            (["-o", output_dir]) +
+            (["-N", num_cores] if num_cores is not None else []) +
+            (["-h", heuristic] if heuristic is not None else []) +
+            (["-w", temp_dir] if temp_dir is not None else []) +
+            (
+                [
+                    "-o",
+                    f"\"{heudiconv_options}\""
+                ]
+                if heudiconv_options is not None
+                else []
+            ) +
+            (["-C"] if copy_tarfiles else []) +
+            (["-D"] if deface_t1w else []) +
+            (["-x"] if no_heuristics else []) +
+            tar_files
         )
+        subprocess.run(arg_list, check=True)
 
         return output_dir
 
