@@ -33,7 +33,8 @@ def get_info_from_cfmm2tar(user_id, button_id):
         study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
     else:
         study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
-    data = "/home/debian/cfmm2tar-download/%s/%s" % (user.id, datetime.utcnow().strftime("%Y%m%d%H%M"))
+    prefix = app.config["CFMM2TAR_DOWNLOAD_DIR"]
+    data = "%s/%s/%s" % (prefix, user.id, datetime.utcnow().strftime("%Y%m%d%H%M"))
     try:
         new_results = get_new_cfmm2tar_results(study_info=study_info, data=data, button_id=button_id)
         for r in new_results:        
@@ -74,6 +75,7 @@ def get_new_cfmm2tar_results(study_info, data, button_id):
                             new_results.append(result)
             else:
                 new_results.append(result)
+
     if already_there != []:
     	for new in new_results:
           if new in already_there:

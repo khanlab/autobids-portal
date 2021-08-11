@@ -157,17 +157,37 @@ def run_cfmm2tar():
         tasks = Task.query.filter_by(task_button_id = button_id).all()
         files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
 
-        subject = "cfmm2tar run has been completed for task"
-        sender = app.config["MAIL_USERNAME"]
-        recipients = app.config["MAIL_RECIPIENTS"]
+        try:
+            if submitter_answer.principal_other != None:
+                subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Cfmm2tar run for %s^%s has been submitted." % (submitter_answer.principal, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
 
-        msg = Message(
-            subject = subject,
-            body = "cfmm2tar run has been completed for task.",
-            sender = sender,
-            recipients = recipients.split()
-            )
-        mail.send(msg)
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+            else:
+                subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal_other, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Cfmm2tar run for %s^%s has been submitted." % (submitter_answer.principal_other, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
+
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+        except SMTPAuthenticationError as err:
+            err_cause = err.__cause__.stderr
+            print(err_cause)
+
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
 
 @app.route("/results/download", methods=['GET'])
