@@ -86,16 +86,20 @@ def get_new_cfmm2tar_results(study_info, data, button_id):
 def get_info_from_tar2bids(user_id, button_id, tar_file_id):
     _set_task_progress(0, "None")
     user = User.query.get(user_id)
-    print(user_id)
-    print(button_id)
-    print(tar_file_id)
     tar_file = Cfmm2tar.query.filter_by(id = tar_file_id)[0].tar_file
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
-    data = "%s/%s/%s" % (prefix, user.id, datetime.utcnow().strftime("%Y%m%d%H%M"))
-    tar2bids_results = gen_utils().run_tar2bids(out_dir=data, tar_files=files)
-    for t in tar2bids_results:
-        tar2bids = Tar2bids(user_id=user_id, tar_file_id=tar_file_id, task_button_id=button_id, tar_file=tar_file, bids_file=t)
+    data = "%s/%s/%s" % (prefix, button_id, tar_file_id)
+    if os.path.isdir(data) != True:
+        os.makedirs(data)
+    try:
+        tar2bids_results = gen_utils().run_tar2bids(output_dir=data, tar_files=[tar_file])
+        tar2bids = Tar2bids(user_id=user_id, tar_file_id=tar_file_id, task_button_id=button_id, tar_file=tar_file, bids_file=tar2bids)
         db.session.add(tar2bids)
-    db.session.commit()
-    time.sleep(10)
-    _set_task_progress(100, "None")  
+        db.session.commit()
+        time.sleep(10)
+        _set_task_progress(100, "None")
+    except Tar2bidsError as err:
+        _set_task_progress(50, err.__cause__.stderr)
+        if 'cfmm2tar_intermediate_dicoms' in os.listdir(data):
+            os.listdir(data)
+        return err
