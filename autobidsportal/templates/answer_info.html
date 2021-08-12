@@ -273,7 +273,7 @@
 </div>
 
 <div class="col-xs-6">
-     <h2 class="sub-header">Previous Runs</h2>
+     <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
         <div class="table-responsive">
             <table class="table">
                 <tr>
@@ -283,7 +283,7 @@
                     <th class="col-md-4">Completion Status</th>
                 </tr>
 
-                {% for t in tasks %}
+                {% for t in cfmm2tar_tasks %}
                 <tr>
                     <td class="col-md-1">{{ t.id }}</td>
                     <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
@@ -305,20 +305,79 @@
         </div>
 </div>
 <div class="col-xs-6">
-    <h2 class="sub-header">Most Recent Results</h2>
+    <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
         <div class="table-responsive">
             <table class="table">
                 <tr>
-                    <th class="col-md-1">UID</th>
-                    <th class="col-md-2">File Path</th>
-                    <th class="col-md-2">Date</th>
+                    <th class="col-md-1"></th>
+                    <th class="col-md-2">UID</th>
+                    <th class="col-md-3">Tar File Path</th>
+                    <th class="col-md-4">Date</th>
                 </tr>
 
-                {% for f in files %}
+                {% for f in cfmm2tar_files %}
                 <tr>
-                    <td class="col-md-1">{{ f.uid_file }}</td>
-                    <td class="col-md-2">{{ f.tar_file }}</td>
-                    <td class="col-md-2">{% if f.date != None %} {{ f.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ f.date }} {% endif %}</td>
+                    <td class="col-md-1">
+                        <form method="POST" action="{{ url_for('run_tar2bids') }}">
+                            <input type="submit" name={{submitter_answer.submitter.id}}-{{f.id}} value="Run tar2bids" class="btn btn-default"></input>
+                        </form> 
+                    </td>
+                    <td class="col-md-2">{{ f.uid_file }}</td>
+                    <td class="col-md-3">{{ f.tar_file }}</td>
+                    <td class="col-md-4">{% if f.date != None %} {{ f.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ f.date }} {% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+</div>
+
+<div class="col-xs-12 text-center"></div>
+
+<div class="col-xs-6">
+    <h2 class="sub-header">Previous Tar2bids Runs</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th class="col-md-1">Task ID</th>
+                    <th class="col-md-2">Start Date and Time</th>
+                    <th class="col-md-3">End Date and Time</th>
+                    <th class="col-md-4">Completion Status</th>
+                </tr>
+
+                {% for t in tar2bids_tasks %}
+                <tr>
+                    <td class="col-md-1">{{ t.id }}</td>
+                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td class="col-md-4">
+                        {% if t.complete == True %} 
+                            {% if t.success == True %} 
+                                Completed Successfully
+                            {% else %} 
+                                Failed
+                            {% endif %}
+                        {% else %} 
+                            In Progress
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+</div>
+<div class="col-xs-6">
+    <h2 class="sub-header">Most Recent Tar2bids Results</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th class="col-md-1">Tar File Path</th>
+                    <th class="col-md-2">Bids File Path</th>
+                </tr>
+
+                {% for f in tar2bids_files %}
+                <tr>
+                    <td class="col-md-1">{{ f.tar_file }}</td>
+                    <td class="col-md-2">{{ f.bids_file }}</td>
                 </tr>
                 {% endfor %}
             </table>

@@ -32,6 +32,7 @@ class Config(object):
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+    TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
 
 class Config_test(object):
     TESTING = True
@@ -65,3 +66,4 @@ class Config_test(object):
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+    TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
