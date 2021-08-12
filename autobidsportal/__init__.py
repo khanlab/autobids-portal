@@ -8,6 +8,8 @@ from flask_login import LoginManager
 from flask_bootstrap import Bootstrap
 from flask_mail import Mail
 import flask_excel as excel
+from redis import Redis
+import rq
 
 app = Flask(__name__)
 excel.init_excel(app)
@@ -20,6 +22,8 @@ convention = {
     "pk": "pk_%(table_name)s"
 }
 metadata = MetaData(naming_convention=convention)
+app.redis = Redis.from_url(app.config['REDIS_URL'])
+app.task_queue = rq.Queue(connection=app.redis)
 db = SQLAlchemy(app, metadata=metadata)
 migrate = Migrate(app, db, render_as_batch=True, compare_type=True)
 login = LoginManager(app)

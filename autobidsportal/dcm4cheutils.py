@@ -38,14 +38,7 @@ class Dcm4cheUtils():
     dcm4che utils
     '''
 
-    def __init__(
-        self,
-        connect,
-        username,
-        password,
-        dcm4che_path='',
-        tar2bids_path="",
-    ):
+    def __init__(self, connect, username, password, dcm4che_path=''):
         self.logger = logging.getLogger(__name__)
         self.connect = connect
         self.username = username
@@ -69,8 +62,6 @@ class Dcm4cheUtils():
             ''' --user-pass {} '''.format(pipes.quote(self.password))
 
         self._cfmm2tar_list = self.dcm4che_path.split() + ["cfmm2tar"]
-        self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
-        print(self._tar2bids_list)
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
@@ -263,9 +254,7 @@ class Dcm4cheUtils():
                     text=True,
                 )
             except subprocess.CalledProcessError as err:
-                raise Cfmm2tarError(
-                    f"Cfmm2tar failed:\n{err.stderr}"
-                ) from err
+                raise Cfmm2tarError("Cfmm2tar failed.") from err
 
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
@@ -284,45 +273,6 @@ class Dcm4cheUtils():
                 for file_out in split_out
             ]
 
-    def run_tar2bids(
-        self,
-        tar_files,
-        output_dir,
-        patient_str=None,
-        tar_str=None,
-        num_cores=None,
-        heuristic=None,
-        temp_dir=None,
-        heudiconv_options=None,
-        copy_tarfiles=False,
-        deface_t1w=False,
-        no_heuristics=False
-    ):
-        arg_list = (
-            self._tar2bids_list +
-            (["-P", patient_str] if patient_str is not None else []) +
-            (["-T", tar_str] if tar_str is not None else []) +
-            (["-o", output_dir]) +
-            (["-N", num_cores] if num_cores is not None else []) +
-            (["-h", heuristic] if heuristic is not None else []) +
-            (["-w", temp_dir] if temp_dir is not None else []) +
-            (
-                [
-                    "-o",
-                    f"\"{heudiconv_options}\""
-                ]
-                if heudiconv_options is not None
-                else []
-            ) +
-            (["-C"] if copy_tarfiles else []) +
-            (["-D"] if deface_t1w else []) +
-            (["-x"] if no_heuristics else []) +
-            tar_files
-        )
-        subprocess.run(arg_list, check=True)
-
-        return output_dir
-
 
 def gen_utils():
     """Generate a Dcm4cheUtils with values from the app config."""
@@ -330,8 +280,7 @@ def gen_utils():
         app.config["DICOM_SERVER_URL"],
         app.config["DICOM_SERVER_USERNAME"],
         app.config["DICOM_SERVER_PASSWORD"],
-        app.config["DCM4CHE_PREFIX"],
-        app.config["TAR2BIDS_PREFIX"],
+        app.config["DCM4CHE_PREFIX"]
     )
 
 

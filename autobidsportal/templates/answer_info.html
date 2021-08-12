@@ -1,217 +1,328 @@
 {% extends "base.html" %}
 
 {% block content %}
+    {% if current_user.is_authenticated %}
+        {% with current_tasks_in_progress = current_user.get_tasks_in_progress() %}
+            {% if current_tasks_in_progress %}
+                {% for task in current_tasks_in_progress %}
+                    {% if task.task_button_id == button_id %}
+                        {% if task.error == None %}
+                            <div class="alert alert-warning" role="alert">
+                                {{ task.description }}
+                                <span id="{{ task.id }}-progress">In Progress</span>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ task.description }}
+                                <span id="{{ task.id }}-progress">Failed</span>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% with completed_tasks = current_user.get_completed_tasks() %}
+            {% if completed_tasks %}
+                {% for task in completed_tasks %}
+                    {% if task.task_button_id == button_id %}
+                        {% if task.end_time>=current_user.last_seen %}
+                            {% if task.error == None %}
+                                <div class="alert alert-success" role="alert">
+                                    {{ task.description }}
+                                    <span id="{{ task.id }}-progress">Complete</span>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ task.description }}
+                                    <span id="{{ task.id }}-progress">Failed</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    {% endif %}
+
+{% block app_content %}
 <form method="POST" action="{{ url_for('results') }}">
     <input type="submit" class="btn btn-default" value="Back" style="margin-left:10px"></input>
 </form> 
 
-<table class="table"></p>
-    <tr>
-        <th scope="col"></th>
-        <th scope="col">Name</th>
-        <th scope="col">Email</th>
-        <th scope="col">Current Status</th>
-        <th scope="col">Which Scanner</th>
-        <th scope="col">Number of Expected Scans</th>
-        <th scope="col">Is this Study Longitudinal or Multi-Session</th>
-        <th scope="col">Familiarity</th>
-        <th scope="col">Principal or "PI" Identifier</th>
-        <th scope="col">Project Name Identifier</th>
-        <th scope="col">Overridden Dataset Name</th>
-        <th scope="col">Sample Date</th>
-        {% if submitter_answer.retrospective_data == True %}
-            <th scope="col">Retrospective Data</th>
-            <th scope="col">Retrospective Data Start Date</th>
-            <th scope="col">Retrospective Data End Date</th>
-        {% endif %}
-        <th scope="col">Comment</th>
-    </tr>
+<div class="col-xs-12">
+    <h2 class="sub-header">DICOM Result</h2>
+        <div class="table-responsive">
+            <table class="table"></p>
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Current Status</th>
+                    <th scope="col">Which Scanner</th>
+                    <th scope="col">Number of Expected Scans</th>
+                    <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+                    <th scope="col">Familiarity</th>
+                    <th scope="col">Principal or "PI" Identifier</th>
+                    <th scope="col">Project Name Identifier</th>
+                    <th scope="col">Overridden Dataset Name</th>
+                    <th scope="col">Sample Date</th>
+                    {% if submitter_answer.retrospective_data == True %}
+                        <th scope="col">Retrospective Data</th>
+                        <th scope="col">Retrospective Data Start Date</th>
+                        <th scope="col">Retrospective Data End Date</th>
+                    {% endif %}
+                    <th scope="col">Comment</th>
+                </tr>
 
-    <tr>
-        <td>
-            <form method="POST" action="{{ url_for('dicom_verify') }}">
-                <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default"></input>
-            </form> 
-            <br>
-            <form method="POST" action="{{ url_for('dicom_verify') }}">
-                <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Date" class="btn btn-default"></input>
-            </form> 
-            <br>
-            <form method="POST" action="{{ url_for('dicom_verify') }}">
-                <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Description" class="btn btn-default"></input>
-            </form> 
-        </td>
-        <td>{{ submitter_answer.submitter.name }}</td>
-        <td>{{ submitter_answer.submitter.email }}</td>
-        <td>{{ submitter_answer.status.capitalize() }}</td>
-        <td>
-            {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-        </td>
-        <td>{{ submitter_answer.scan_number }}</td>
-        <td>
-            {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
-        </td>
-        <td>
-            <table class="familiarity-results">
                 <tr>
-                    <td class="familiarity-result-opt">Bids:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_bids == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_bids == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_bids == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_bids == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_bids == '5' %}
-                            <p class="opt">I consider myself an expert</p>
+                    <td>
+                        <form method="POST" action="{{ url_for('dicom_verify') }}">
+                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default"></input>
+                        </form> 
+                        <br>
+                        <form method="POST" action="{{ url_for('dicom_verify') }}">
+                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Date" class="btn btn-default"></input>
+                        </form> 
+                        <br>
+                        <form method="POST" action="{{ url_for('dicom_verify') }}">
+                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Description" class="btn btn-default"></input>
+                        </form> 
+                    </td>
+                    <td>{{ submitter_answer.submitter.name }}</td>
+                    <td>{{ submitter_answer.submitter.email }}</td>
+                    <td>{{ submitter_answer.status.capitalize() }}</td>
+                    <td>
+                        {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
+                    </td>
+                    <td>{{ submitter_answer.scan_number }}</td>
+                    <td>
+                        {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
+                    </td>
+                    <td>
+                        <table class="familiarity-results">
+                            <tr>
+                                <td class="familiarity-result-opt">Bids:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_bids == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_bids == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_bids == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_bids == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_bids == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">Bids App:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_bidsapp == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_bidsapp == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_bidsapp == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_bidsapp == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_bidsapp == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">Python:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_python == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_python == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_python == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_python == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_python == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">Linux:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_linux == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_linux == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_linux == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_linux == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_linux == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">Bash:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_bash == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_bash == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_bash == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_bash == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_bash == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">HPC:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_hpc == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_hpc == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_hpc == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_hpc == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_hpc == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">Open Neuro:</td>
+                                <td class="familiarity-result-opt">
+                                    {% if submitter_answer.familiarity_openneuro == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_openneuro == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_openneuro == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_openneuro == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_openneuro == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="familiarity-result-opt">CBRAIN:</td>
+                                <td class="familiarity-result-opt">{% if submitter_answer.familiarity_cbrain == '1' %}
+                                        <p class="opt">Not familiar at all</p>
+                                    {% elif submitter_answer.familiarity_cbrain == '2' %}
+                                        <p class="opt">Have heard of it</p>
+                                    {% elif submitter_answer.familiarity_cbrain == '3' %}
+                                        <p class="opt">Have used of it</p>
+                                    {% elif submitter_answer.familiarity_cbrain == '4' %}
+                                        <p class="opt">Used it regularly</p>
+                                    {% elif submitter_answer.familiarity_cbrain == '5' %}
+                                        <p class="opt">I consider myself an expert</p>
+                                    {% endif %} 
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td>{% if submitter_answer.principal == 'Other' %} {{ submitter_answer.principal_other }} {% else %} {{ submitter_answer.principal }} {% endif %} </td>
+                    <td>{{ submitter_answer.project_name }}</td>
+                    <td>{{ submitter_answer.dataset_name }}</td>
+                    <td>
+                        {% if submitter_answer.sample != None %}
+                            {{ submitter_answer.sample.date() }}
+                        {% else %}
+                            {{ submitter_answer.sample }}
                         {% endif %} 
                     </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">Bids App:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_bidsapp == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_bidsapp == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_bidsapp == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_bidsapp == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_bidsapp == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">Python:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_python == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_python == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_python == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_python == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_python == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">Linux:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_linux == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_linux == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_linux == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_linux == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_linux == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">Bash:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_bash == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_bash == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_bash == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_bash == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_bash == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">HPC:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_hpc == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_hpc == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_hpc == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_hpc == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_hpc == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">Open Neuro:</td>
-                    <td class="familiarity-result-opt">
-                        {% if submitter_answer.familiarity_openneuro == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_openneuro == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_openneuro == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_openneuro == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_openneuro == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
-                </tr>
-                <tr>
-                    <td class="familiarity-result-opt">CBRAIN:</td>
-                    <td class="familiarity-result-opt">{% if submitter_answer.familiarity_cbrain == '1' %}
-                            <p class="opt">Not familiar at all</p>
-                        {% elif submitter_answer.familiarity_cbrain == '2' %}
-                            <p class="opt">Have heard of it</p>
-                        {% elif submitter_answer.familiarity_cbrain == '3' %}
-                            <p class="opt">Have used of it</p>
-                        {% elif submitter_answer.familiarity_cbrain == '4' %}
-                            <p class="opt">Used it regularly</p>
-                        {% elif submitter_answer.familiarity_cbrain == '5' %}
-                            <p class="opt">I consider myself an expert</p>
-                        {% endif %} 
-                    </td>
+                    {% if submitter_answer.retrospective_data == True %}
+                        <td>
+                            {% if submitter_answer.retrospective_data == True %} Yes {% else %} None {% endif %} 
+                        </td>
+                        <td>
+                            {% if submitter_answer.retrospective_start != None %}
+                                {{ submitter_answer.retrospective_start.date() }}
+                            {% else %}
+                                {{ submitter_answer.retrospective_start }}
+                            {% endif %} 
+                        </td>
+                        <td>
+                            {% if submitter_answer.retrospective_end != None %}
+                                {{ submitter_answer.retrospective_end.date() }}
+                            {% else %}
+                                {{ submitter_answer.retrospective_end }}
+                            {% endif %} 
+                        </td>
+                    {% endif %} 
+                    <td>{{ submitter_answer.comment.capitalize() }}</td>
                 </tr>
             </table>
-        </td>
-        <td>{% if submitter_answer.principal == 'Other' %} {{ submitter_answer.principal_other }} {% else %} {{ submitter_answer.principal }} {% endif %} </td>
-        <td>{{ submitter_answer.project_name }}</td>
-        <td>{{ submitter_answer.dataset_name }}</td>
-        <td>
-            {% if submitter_answer.sample != None %}
-                {{ submitter_answer.sample.date() }}
-            {% else %}
-                {{ submitter_answer.sample }}
-            {% endif %} 
-        </td>
-        {% if submitter_answer.retrospective_data == True %}
-            <td>
-                {% if submitter_answer.retrospective_data == True %} Yes {% else %} None {% endif %} 
-            </td>
-            <td>
-                {% if submitter_answer.retrospective_start != None %}
-                    {{ submitter_answer.retrospective_start.date() }}
-                {% else %}
-                    {{ submitter_answer.retrospective_start }}
-                {% endif %} 
-            </td>
-            <td>
-                {% if submitter_answer.retrospective_end != None %}
-                    {{ submitter_answer.retrospective_end.date() }}
-                {% else %}
-                    {{ submitter_answer.retrospective_end }}
-                {% endif %} 
-            </td>
-        {% endif %} 
-        <td>{{ submitter_answer.comment.capitalize() }}</td>
-    </tr>
-</table>
+        </div>
+</div>
+
+<div class="col-xs-12 text-center">
+    <div class="text-center">
+        <form method="POST" action="{{ url_for('run_cfmm2tar') }}">
+            <input type="submit" name={{submitter_answer.submitter.id}} value="Run cfmm2tar" class="btn btn-default"></input>
+        </form>
+    </div>
+</div>
+
+<div class="col-xs-6">
+     <h2 class="sub-header">Previous Runs</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th class="col-md-1">Task ID</th>
+                    <th class="col-md-2">Start Date and Time</th>
+                    <th class="col-md-3">End Date and Time</th>
+                    <th class="col-md-4">Completion Status</th>
+                </tr>
+
+                {% for t in tasks %}
+                <tr>
+                    <td class="col-md-1">{{ t.id }}</td>
+                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td class="col-md-4">
+                        {% if t.complete == True %} 
+                            {% if t.success == True %} 
+                                Completed Successfully
+                            {% else %} 
+                                Failed
+                            {% endif %}
+                        {% else %} 
+                            In Progress
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+</div>
+<div class="col-xs-6">
+    <h2 class="sub-header">Most Recent Results</h2>
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th class="col-md-1">UID</th>
+                    <th class="col-md-2">File Path</th>
+                    <th class="col-md-2">Date</th>
+                </tr>
+
+                {% for f in files %}
+                <tr>
+                    <td class="col-md-1">{{ f.uid_file }}</td>
+                    <td class="col-md-2">{{ f.tar_file }}</td>
+                    <td class="col-md-2">{% if f.date != None %} {{ f.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ f.date }} {% endif %}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+</div>
+{% endblock %}
 {% endblock %}

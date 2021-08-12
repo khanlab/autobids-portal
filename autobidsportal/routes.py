@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
-from autobidsportal.models import User, Submitter, Answer, Principal
+from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
@@ -131,12 +131,66 @@ def answer_info():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
+        current_user.last_pressed_button_id = button_id
+        db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer)
+        tasks = Task.query.filter_by(task_button_id = button_id).all()
+        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
+
+@app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
+@login_required
+def run_cfmm2tar():
+    """ Launch cfmm2tar task and refresh answer_info.html
+
+    """
+    if request.method == 'POST':
+        button_id = list(request.form.keys())[0]
+        current_user.last_pressed_button_id = button_id
+        db.session.commit()
+        submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+        if current_user.get_task_in_progress('get_info_from_cfmm2tar'):
+            flash('An Cfmm2tar run is currently in progress')
+        else:
+            current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar-'))
+            db.session.commit()
+        tasks = Task.query.filter_by(task_button_id = button_id).all()
+        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+
+        try:
+            if submitter_answer.principal_other != None:
+                subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Cfmm2tar run for %s^%s has been submitted." % (submitter_answer.principal, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
+
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+            else:
+                subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal_other, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Cfmm2tar run for %s^%s has been submitted." % (submitter_answer.principal_other, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
+
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+        except SMTPAuthenticationError as err:
+            print(err)
+
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
 
 @app.route("/results/download", methods=['GET'])
 @login_required
-
 def download():
     """ Downloads csv containing all the survey response
 
@@ -223,23 +277,12 @@ def download():
             ])
     return excel.make_response_from_array(csv_list, 'csv', file_name=file_name)
 
-@app.route('/logout', methods=['GET', 'POST'])
-def logout():
-    """ Logs out current user
-
-    """
-    if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
-        db.session.commit()
-    logout_user()
-    return redirect(url_for('index'))
-
 @app.route('/results/user/dicom', methods=['GET', 'POST'])
 @login_required
 def dicom_verify():
     button_id = list(request.form.keys())[0]
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-    if submitter_answer.principal_other is not None:
+    if submitter_answer.principal_other != '':
         study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
     else:
         study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
@@ -255,3 +298,14 @@ def dicom_verify():
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
         return render_template('dicom_error.html', err=err, err_cause=err_cause, title='DICOM Result Not Found')
+
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    """ Logs out current user
+
+    """
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        db.session.commit()
+    logout_user()
+    return redirect(url_for('index'))

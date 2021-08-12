@@ -29,6 +29,10 @@ class Config(object):
     MAIL_USERNAME = "email"
     MAIL_PASSWORD = "password"
 
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+
+    CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+
 class Config_test(object):
     TESTING = True
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
@@ -57,3 +61,7 @@ class Config_test(object):
     MAIL_RECIPIENTS = "email_recipients"
     MAIL_USERNAME = "email"
     MAIL_PASSWORD = "password"
+
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+
+    CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
