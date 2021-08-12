@@ -185,8 +185,7 @@ def run_cfmm2tar():
                     )
                 mail.send(msg)
         except SMTPAuthenticationError as err:
-            err_cause = err.__cause__.stderr
-            print(err_cause)
+            print(err)
 
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
 
