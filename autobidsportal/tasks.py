@@ -94,7 +94,7 @@ def get_info_from_tar2bids(user_id, button_id, tar_file_id):
         os.makedirs(data)
     try:
         tar2bids_results = gen_utils().run_tar2bids(output_dir=data, tar_files=[tar_file], heuristic=selected_heuristic)
-        tar2bids = Tar2bids(user_id=user_id, tar_file_id=tar_file_id, task_button_id=button_id, tar_file=tar_file, bids_file=tar2bids, heuristic=selected_heuristic)
+        tar2bids = Tar2bids(user_id=user_id, tar_file_id=tar_file_id, task_button_id=button_id, tar_file=tar_file, bids_file=tar2bids_results, heuristic=selected_heuristic)
         db.session.add(tar2bids)
         db.session.commit()
         time.sleep(10)
