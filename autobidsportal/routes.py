@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
-from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
+from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from datetime import datetime
 from flask_mail import Message
@@ -129,6 +129,8 @@ def answer_info():
     """ Obtains complete survey response based on the submission id
 
     """
+    form = HeuristicForm()
+    current_user.heuristic=form.heuristic.data
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         if len(button_id)>1:
@@ -145,7 +147,7 @@ def answer_info():
         cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
         tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
         tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
@@ -153,6 +155,8 @@ def run_cfmm2tar():
     """ Launch cfmm2tar task and refresh answer_info.html
 
     """
+    form = HeuristicForm()
+    current_user.heuristic=form.heuristic.data
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         if len(button_id)>1:
@@ -206,7 +210,7 @@ def run_cfmm2tar():
             err_cause = err.__cause__.stderr
             print(err_cause)
 
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route('/results/user/tar2bids', methods=['GET', 'POST'])
 @login_required
@@ -214,6 +218,11 @@ def run_tar2bids():
     """ Launch tar2bids task and refresh answer_info.html
 
     """
+    form = HeuristicForm()
+    current_user.heuristic=form.heuristic.data
+    print(current_user.heuristic)
+    other_heuristics=form.heuristic.choices
+    print(other_heuristics)
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         if len(button_id)>1:
@@ -268,7 +277,7 @@ def run_tar2bids():
             err_cause = err.__cause__.stderr
             print(err_cause)
 
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route("/results/download", methods=['GET'])
 @login_required

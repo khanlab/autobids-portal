@@ -317,6 +317,11 @@
                 {% for f in cfmm2tar_files %}
                 <tr>
                     <td class="col-md-1">
+                        <form id="survey-form" action="" method="post">
+                            {{ form.csrf_token }}
+                            {{ form.heuristic.label }}
+                            {{ form.heuristic(class="form-control", style="width: 400px", placeholder="Please enter your name") }} 
+                        </form>
                         <form method="POST" action="{{ url_for('run_tar2bids') }}">
                             <input type="submit" name={{submitter_answer.submitter.id}}-{{f.id}} value="Run tar2bids" class="btn btn-default"></input>
                         </form> 

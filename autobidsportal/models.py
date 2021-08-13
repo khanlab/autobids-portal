@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     last_pressed_button_id = db.Column(db.Integer)
     second_last_pressed_button_id = db.Column(db.Integer)
+    selected_heuristic = db.Column(db.String(128))
+    other_heuristic = db.Column(db.String(128))
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
     cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
