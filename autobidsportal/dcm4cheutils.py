@@ -37,18 +37,7 @@ class Dcm4cheUtils:
     dcm4che utils
     """
 
-<<<<<<< HEAD
-    def __init__(
-        self,
-        connect,
-        username,
-        password,
-        dcm4che_path='',
-        tar2bids_path="",
-    ):
-=======
     def __init__(self, connect, username, password, dcm4che_path="", tar2bids_path=""):
->>>>>>> 6663fb5fdff7ce8bc1d9acc5cd61a7f843902041
         self.logger = logging.getLogger(__name__)
         self.connect = connect
         self.username = username
@@ -75,10 +64,6 @@ class Dcm4cheUtils:
 
         self._cfmm2tar_list = self.dcm4che_path.split() + ["cfmm2tar"]
         self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
-<<<<<<< HEAD
-        print(self._tar2bids_list)
-=======
->>>>>>> 6663fb5fdff7ce8bc1d9acc5cd61a7f843902041
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
@@ -241,13 +226,7 @@ class Dcm4cheUtils:
                     text=True,
                 )
             except subprocess.CalledProcessError as err:
-<<<<<<< HEAD
-                raise Cfmm2tarError(
-                    f"Cfmm2tar failed:\n{err.stderr}"
-                ) from err
-=======
                 raise Cfmm2tarError(f"Cfmm2tar failed:\n{err.stderr}") from err
->>>>>>> 6663fb5fdff7ce8bc1d9acc5cd61a7f843902041
 
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
@@ -273,32 +252,6 @@ class Dcm4cheUtils:
         heudiconv_options=None,
         copy_tarfiles=False,
         deface_t1w=False,
-<<<<<<< HEAD
-        no_heuristics=False
-    ):
-        arg_list = (
-            self._tar2bids_list +
-            (["-P", patient_str] if patient_str is not None else []) +
-            (["-T", tar_str] if tar_str is not None else []) +
-            (["-o", output_dir]) +
-            (["-N", num_cores] if num_cores is not None else []) +
-            (["-h", heuristic] if heuristic is not None else []) +
-            (["-w", temp_dir] if temp_dir is not None else []) +
-            (
-                [
-                    "-o",
-                    f"\"{heudiconv_options}\""
-                ]
-                if heudiconv_options is not None
-                else []
-            ) +
-            (["-C"] if copy_tarfiles else []) +
-            (["-D"] if deface_t1w else []) +
-            (["-x"] if no_heuristics else []) +
-            tar_files
-        )
-        subprocess.run(arg_list, check=True)
-=======
         no_heuristics=False,
     ):
         """Run tar2bids with the given arguments.
@@ -329,7 +282,6 @@ class Dcm4cheUtils:
             subprocess.run(arg_list, check=True)
         except subprocess.CalledProcessError as err:
             raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
->>>>>>> 6663fb5fdff7ce8bc1d9acc5cd61a7f843902041
 
         return output_dir
 
