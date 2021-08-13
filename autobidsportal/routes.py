@@ -130,7 +130,6 @@ def answer_info():
 
     """
     form = HeuristicForm()
-    current_user.heuristic=form.heuristic.data
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         if len(button_id)>1:
@@ -156,7 +155,6 @@ def run_cfmm2tar():
 
     """
     form = HeuristicForm()
-    current_user.heuristic=form.heuristic.data
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         if len(button_id)>1:
@@ -219,12 +217,14 @@ def run_tar2bids():
 
     """
     form = HeuristicForm()
-    current_user.heuristic=form.heuristic.data
-    print(current_user.heuristic)
-    other_heuristics=form.heuristic.choices
-    print(other_heuristics)
-    if request.method == 'POST':
-        button_id = list(request.form.keys())[0]
+    if form.validate_on_submit() and request.method == 'POST':
+        current_user.selected_heuristic = form.heuristic.data
+        all_options = dict(form.heuristic.choices)
+        options=list(all_options.values())
+        options.remove(form.heuristic.data)
+        current_user.other_heuristic = ' '.join(options)
+    
+        button_id = list(request.form.keys())[2]
         if len(button_id)>1:
             cfmm2tar_file_id = button_id.rsplit('-',2)[1]
             button_id = button_id.rsplit('-',2)[0]

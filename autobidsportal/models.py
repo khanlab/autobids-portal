@@ -157,9 +157,10 @@ class Tar2bids(db.Model):
     tar_file_id = db.Column(db.Integer)
     tar_file = db.Column(db.String(200), index=True)
     bids_file = db.Column(db.String(200), index=True)
+    heuristic = db.Column(db.String(200), index=True)
 
     def __repr__(self):
-        return f'<Tar2bids {self.tar_file, self.bids_file}>'
+        return f'<Tar2bids {self.tar_file, self.bids_file, self.heuristic}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'
