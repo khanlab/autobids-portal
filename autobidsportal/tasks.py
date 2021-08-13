@@ -1,6 +1,6 @@
 from autobidsportal import app, db
 from autobidsportal.models import User, Answer, Task, Notification, Cfmm2tar, Tar2bids
-from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Cfmm2tarError
+from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Cfmm2tarError, Tar2bidsError
 from rq import get_current_job
 from datetime import datetime
 import time
