@@ -105,6 +105,4 @@ def get_info_from_tar2bids(user_id, button_id, tar_file_id):
         _set_task_progress(100, "None")
     except Tar2bidsError as err:
         _set_task_progress(50, err.__cause__.stderr)
-        if 'cfmm2tar_intermediate_dicoms' in os.listdir(data):
-            os.listdir(data)
         return err
