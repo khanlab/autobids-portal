@@ -5,6 +5,7 @@ from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
+from smtplib import SMTPAuthenticationError
 from datetime import datetime
 from flask_mail import Message
 import flask_excel as excel
@@ -273,7 +274,6 @@ def run_tar2bids():
                     )
                 mail.send(msg)
         except SMTPAuthenticationError as err:
-            err_cause = err.__cause__.stderr
             print(err_cause)
 
     return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
