@@ -32,6 +32,7 @@ class Config(object):
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+    TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
 
 class Config_test(object):
     TESTING = True
@@ -49,6 +50,7 @@ class Config_test(object):
     # String to be inserted before dcm4che utilities are invoked.
     # e.g. "singularity exec dcm4che.simg"
     DCM4CHE_PREFIX = ""
+    TAR2BIDS_PREFIX= ""
 
     # List of PIs accessible on the DICOM server that shouldn't be presented
     # as options in the study form.
@@ -65,3 +67,4 @@ class Config_test(object):
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+    TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"

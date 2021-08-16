@@ -1,6 +1,6 @@
 from autobidsportal import app, db
-from autobidsportal.models import User, Answer, Task, Notification, Cfmm2tar
-from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Cfmm2tarError
+from autobidsportal.models import User, Answer, Task, Notification, Cfmm2tar, Tar2bids
+from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Cfmm2tarError, Tar2bidsError
 from rq import get_current_job
 from datetime import datetime
 import time
@@ -25,7 +25,7 @@ def _set_task_progress(progress, error):
             task.end_time = datetime.utcnow()
         db.session.commit()
 
-def get_info_from_cfmm2tar(user_id, button_id):
+def get_info_from_cfmm2tar(user_id, second_last_pressed_button_id, button_id):
     _set_task_progress(0, "None")
     user = User.query.get(user_id)
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
@@ -82,3 +82,27 @@ def get_new_cfmm2tar_results(study_info, data, button_id):
             new_results.remove(new)
 
     return(new_results)
+
+def get_info_from_tar2bids(user_id, button_id, tar_file_id):
+    _set_task_progress(0, "None")
+    user = User.query.get(user_id)
+    submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+    if submitter_answer.principal_other != '':
+        study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
+    else:
+        study_info = f"{submitter_answer.principal}^{submitter_answer.project_name}"
+    tar_file = Cfmm2tar.query.filter_by(id = tar_file_id)[0].tar_file
+    prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
+    data = "%s/%s/%s" % (prefix, study_info, button_id)
+    if os.path.isdir(data) != True:
+        os.makedirs(data)
+    try:
+        tar2bids_results = gen_utils().run_tar2bids(output_dir=data, tar_files=[tar_file])
+        tar2bids = Tar2bids(user_id=user_id, tar_file_id=tar_file_id, task_button_id=button_id, tar_file=tar_file, bids_file=tar2bids_results)
+        db.session.add(tar2bids)
+        db.session.commit()
+        time.sleep(10)
+        _set_task_progress(100, "None")
+    except Tar2bidsError as err:
+        _set_task_progress(50, err.__cause__.stderr)
+        return err

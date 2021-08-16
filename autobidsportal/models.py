@@ -15,9 +15,11 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     last_pressed_button_id = db.Column(db.Integer)
+    second_last_pressed_button_id = db.Column(db.Integer)
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
     cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
+    tar2bids_results = db.relationship('Tar2bids', backref='user', lazy='dynamic')
 
     def __repr__(self):
         return f'<User {self.email, self.last_seen, self.last_pressed_button_id}>'
@@ -35,7 +37,7 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
+        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
         task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
         db.session.add(task)
         return task
@@ -144,6 +146,18 @@ class Cfmm2tar(db.Model):
 
     def __repr__(self):
         return f'<Cfmm2tar {self.tar_file, self.uid_file, self.date}>'
+
+class Tar2bids(db.Model):
+    __tablename__ = 'tar2bids'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    task_button_id = db.Column(db.Integer)
+    tar_file_id = db.Column(db.Integer)
+    tar_file = db.Column(db.String(200), index=True)
+    bids_file = db.Column(db.String(200), index=True)
+
+    def __repr__(self):
+        return f'<Tar2bids {self.tar_file, self.bids_file}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'

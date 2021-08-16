@@ -2,9 +2,10 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
-from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar
+from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
+from smtplib import SMTPAuthenticationError
 from datetime import datetime
 from flask_mail import Message
 import flask_excel as excel
@@ -131,12 +132,21 @@ def answer_info():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        current_user.last_pressed_button_id = button_id
+        if len(button_id)>1:
+            cfmm2tar_file_id = button_id.rsplit('-',2)[1]
+            button_id = button_id.rsplit('-',2)[0]
+            current_user.second_last_pressed_button_id = button_id
+            current_user.last_pressed_button_id = cfmm2tar_file_id
+        else:
+            current_user.last_pressed_button_id = button_id
+            current_user.second_last_pressed_button_id = None
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
-        tasks = Task.query.filter_by(task_button_id = button_id).all()
-        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
+        cfmm2tar_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running cfmm2tar-').all()
+        cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+        tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
+        tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
@@ -146,7 +156,14 @@ def run_cfmm2tar():
     """
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        current_user.last_pressed_button_id = button_id
+        if len(button_id)>1:
+            cfmm2tar_file_id = button_id.rsplit('-',2)[1]
+            button_id = button_id.rsplit('-',2)[0]
+            current_user.second_last_pressed_button_id = button_id
+            current_user.last_pressed_button_id = cfmm2tar_file_id
+        else:
+            current_user.last_pressed_button_id = button_id
+            current_user.second_last_pressed_button_id = None
         db.session.commit()
         submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
         if current_user.get_task_in_progress('get_info_from_cfmm2tar'):
@@ -154,11 +171,13 @@ def run_cfmm2tar():
         else:
             current_user.launch_task('get_info_from_cfmm2tar', ('Running cfmm2tar-'))
             db.session.commit()
-        tasks = Task.query.filter_by(task_button_id = button_id).all()
-        files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+        cfmm2tar_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running cfmm2tar-').all()
+        cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+        tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
+        tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
 
         try:
-            if submitter_answer.principal_other != None:
+            if submitter_answer.principal_other == None:
                 subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
                 body = "A Cfmm2tar run for %s^%s has been submitted." % (submitter_answer.principal, submitter_answer.project_name)
                 sender = app.config["MAIL_USERNAME"]
@@ -187,7 +206,69 @@ def run_cfmm2tar():
         except SMTPAuthenticationError as err:
             print(err)
 
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, tasks=tasks, button_id=current_user.last_pressed_button_id, files=files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+
+@app.route('/results/user/tar2bids', methods=['GET', 'POST'])
+@login_required
+def run_tar2bids():
+    """ Launch tar2bids task and refresh answer_info.html
+
+    """
+    if request.method == 'POST':
+        button_id = list(request.form.keys())[0]
+        if len(button_id)>1:
+            cfmm2tar_file_id = button_id.rsplit('-',2)[1]
+            button_id = button_id.rsplit('-',2)[0]
+            current_user.second_last_pressed_button_id = button_id
+            current_user.last_pressed_button_id = cfmm2tar_file_id
+        else:
+            current_user.last_pressed_button_id = button_id
+            current_user.second_last_pressed_button_id = None
+        db.session.commit()
+        submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
+        tar_file = db.session.query(Cfmm2tar).filter(Cfmm2tar.id==cfmm2tar_file_id)[0].tar_file
+        if current_user.get_task_in_progress('get_info_from_tar2bids'):
+            flash('An Tar2bids run is currently in progress')
+        else:
+            current_user.launch_task('get_info_from_tar2bids', ('Running tar2bids-'))
+            db.session.commit()
+        cfmm2tar_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running cfmm2tar-').all()
+        cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
+        tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
+        tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
+
+        try:
+            if submitter_answer.principal_other == None:
+                subject = "A Tar2bids run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Tar2bids run for %s^%s has been submitted." % (submitter_answer.principal, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
+
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+            else:
+                subject = "A Tar2bids run for %s^%s has been submitted by %s" % (submitter_answer.principal_other, submitter_answer.project_name, submitter_answer.submitter.name)
+                body = "A Tar2bids run for %s^%s has been submitted." % (submitter_answer.principal_other, submitter_answer.project_name)
+                sender = app.config["MAIL_USERNAME"]
+                recipients = app.config["MAIL_RECIPIENTS"]
+
+                msg = Message(
+                    subject = subject,
+                    body = body,
+                    sender = sender,
+                    recipients = recipients.split()
+                    )
+                mail.send(msg)
+        except SMTPAuthenticationError as err:
+            err_cause = err.__cause__.stderr
+            print(err_cause)
+
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
 
 @app.route("/results/download", methods=['GET'])
 @login_required

@@ -3,7 +3,6 @@
 Define a (limited) Dcm4cheUtils class, which can query a DICOM server for
 specified information. Adapted from YingLi Lu's class in the cfmm2tar
 project.
-
 For this to work, the machine must have dcm4che installed in some way (i.e.
 natively or in a container).
 """
@@ -68,7 +67,6 @@ class Dcm4cheUtils:
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
-
         Specifically, find all StudyDescriptions, take the portion before
         the caret, and return each unique value."""
         cmd = self._findscu_str + " -r StudyDescription "
@@ -104,7 +102,6 @@ class Dcm4cheUtils:
         retrieve_level="STUDY",
     ):
         """Queries a DICOM server for specified tags from one study.
-
         Parameters
         ----------
         output_fields : list of str
@@ -118,7 +115,6 @@ class Dcm4cheUtils:
         retrieve_level : str
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
-
         Returns
         -------
         list of list of dict
@@ -191,9 +187,7 @@ class Dcm4cheUtils:
 
     def run_cfmm2tar(self, out_dir, date_str=None, patient_name=None, project=None):
         """Run cfmm2tar with the given options.
-
         At least one of the optional search arguments must be provided.
-
         Arguments
         ---------
         out_dir : str
