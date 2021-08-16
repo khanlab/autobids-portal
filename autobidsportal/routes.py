@@ -5,6 +5,7 @@ from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
 from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
+from smtplib import SMTPAuthenticationError
 from datetime import datetime
 from flask_mail import Message
 import flask_excel as excel
