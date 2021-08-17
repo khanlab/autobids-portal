@@ -320,7 +320,8 @@
                         <form id="survey-form" method="POST" action="{{ url_for('run_tar2bids') }}">
                             {{ form.csrf_token }}
                             {{ form.heuristic.label }}
-                            {{ form.heuristic(class="form-control", style="width: 400px") }} 
+                            {{ form.heuristic(class="form-control", style="width: 200px") }} 
+                            <br>
                             <input type="submit" name={{submitter_answer.submitter.id}}-{{f.id}} value="Run tar2bids" class="btn btn-default"></input>
                         </form>
                     </td>
