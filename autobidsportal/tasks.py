@@ -7,6 +7,9 @@ import time
 import os
 
 def _set_task_progress(progress, error):
+    """ Checks the progress of a Task and updates the task in the "task" table in the database accordingly.
+
+    """
     job = get_current_job()
     if job:
         job.meta['progress'] = progress
@@ -26,6 +29,9 @@ def _set_task_progress(progress, error):
         db.session.commit()
 
 def get_info_from_cfmm2tar(user_id, second_last_pressed_button_id, button_id):
+    """ Adds each result in the new_results array to the "cfmm2tar" table in the database.
+
+    """
     _set_task_progress(0, "None")
     user = User.query.get(user_id)
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
@@ -57,6 +63,9 @@ def get_info_from_cfmm2tar(user_id, second_last_pressed_button_id, button_id):
         return err
 
 def get_new_cfmm2tar_results(study_info, data, button_id):
+    """ Runs cfmm2tar and appends any new results to the new_results array.
+
+    """
     cfmm2tar_result = gen_utils().run_cfmm2tar(out_dir=data, project=study_info)
     cfmm2tar_results_in_db = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
     new_results = []
@@ -84,6 +93,9 @@ def get_new_cfmm2tar_results(study_info, data, button_id):
     return(new_results)
 
 def get_info_from_tar2bids(user_id, button_id, tar_file_id):
+    """ Runs tar2bids and adds the tar2bids_result to the "tar2bids" table in the database.
+
+    """
     _set_task_progress(0, "None")
     user = User.query.get(user_id)
     selected_heuristic = user.selected_heuristic

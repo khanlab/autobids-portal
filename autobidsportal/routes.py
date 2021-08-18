@@ -14,16 +14,19 @@ import flask_excel as excel
 
 @app.route('/index', methods=['GET', 'POST'])
 def index():
-    """ Adds submitter information and their answer to the database
+    """ If the Prinicpal table in the database is not empty, add the principal names as options for the Principal drop down in the BidsForm. 
+    After submitter presses submit, their information and their answer is added to the database.
     
     """
     form = BidsForm()
+    # List of principal names generated from the check-pis cron job and "Other" option are added as choices for the Principal drop down on the BidsForm.
     principal_names = [(p.principal_name, p.principal_name) for p in db.session.query(Principal).all()]
     form.principal.choices = principal_names
     form.principal.choices.insert(0, ('Other', 'Other'))
 
     if form.validate_on_submit():
         
+        # Records name and email of the submitter in the "submitter" table in the database.
         submitter = Submitter(
             name=form.name.data,
             email=form.email.data
@@ -31,6 +34,7 @@ def index():
         db.session.add(submitter)
         db.session.commit()
 
+        # Records submitter's answer in the "answer" table in the database.
         answer = Answer(
             status=form.status.data,
             scanner=form.scanner.data,
@@ -62,6 +66,7 @@ def index():
         
         flash(f"Thanks, the survey has been submitted!")
 
+        # Email is sent to "MAIL_RECIPIENTS" after the BidsForm has been submitted.
         subject = "A new request has been submitted by %s" % (answer.submitter.name)
         sender = app.config["MAIL_USERNAME"]
         recipients = app.config["MAIL_RECIPIENTS"]
@@ -79,7 +84,7 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """ Validates that user inputed correct email and password. If so, user is redirected to index.
+    """ Validates that user inputed correct email and password. If so, user is redirected to login.html.
 
     """
     if current_user.is_authenticated:
@@ -99,7 +104,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    """ Validates that user is using a valid email and password when registering. After the user is registered, they are redirected to index.
+    """ Validates that user is using a valid email and password when registering. After the user is registered, they are redirected to login.html.
 
     """
     if current_user.is_authenticated:
@@ -117,7 +122,7 @@ def register():
 @app.route('/results', methods=['GET', 'POST'])
 @login_required
 def results():
-    """ Obtains all the responses from the database as well as the date and time the current user last logged in
+    """ Obtains all the responses from the database as well as the date and time the current user last logged in.
 
     """
     last = db.session.query(User).filter(User.id==1)[0]
@@ -127,7 +132,7 @@ def results():
 @app.route('/results/user', methods=['GET', 'POST'])
 @login_required
 def answer_info():
-    """ Obtains complete survey response based on the submission id
+    """ Obtains complete survey response based on the submission id.
 
     """
     form = HeuristicForm()
@@ -152,7 +157,7 @@ def answer_info():
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
 def run_cfmm2tar():
-    """ Launch cfmm2tar task and refresh answer_info.html
+    """ Launch cfmm2tar task and refresh answer_info.html.
 
     """
     form = HeuristicForm()
@@ -178,6 +183,7 @@ def run_cfmm2tar():
         tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
         tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
 
+        # Email is sent to "MAIL_RECIPIENTS" after a Cfmm2tar task has been started.
         try:
             if submitter_answer.principal_other == None:
                 subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
@@ -213,9 +219,10 @@ def run_cfmm2tar():
 @app.route('/results/user/tar2bids', methods=['GET', 'POST'])
 @login_required
 def run_tar2bids():
-    """ Launch tar2bids task and refresh answer_info.html
+    """ Launch tar2bids task and refresh answer_info.html.
 
     """
+    # A heuristic is selected using HeuristicForm. The selected heuristic is recorded and used when running Tar2bids.
     form = HeuristicForm()
     if form.validate_on_submit() and request.method == 'POST':
         current_user.selected_heuristic = form.heuristic.data
@@ -246,6 +253,7 @@ def run_tar2bids():
         tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
         tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
 
+        # Email is sent to "MAIL_RECIPIENTS" after a Tar2bids task has been started.
         try:
             if submitter_answer.principal_other == None:
                 subject = "A Tar2bids run for %s^%s has been submitted by %s" % (submitter_answer.principal, submitter_answer.project_name, submitter_answer.submitter.name)
@@ -281,7 +289,7 @@ def run_tar2bids():
 @app.route("/results/download", methods=['GET'])
 @login_required
 def download():
-    """ Downloads csv containing all the survey response
+    """ Downloads csv containing all the survey response.
 
     """
     response_list = db.session.query(Answer).all()
@@ -369,6 +377,9 @@ def download():
 @app.route('/results/user/dicom', methods=['GET', 'POST'])
 @login_required
 def dicom_verify():
+    """ Obtains all DICOM results for a specific study.
+
+    """
     button_id = list(request.form.keys())[0]
     submitter_answer = db.session.query(Answer).filter(Answer.submitter_id==button_id)[0]
     if submitter_answer.principal_other != '':
@@ -390,7 +401,7 @@ def dicom_verify():
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
-    """ Logs out current user
+    """ Logs out current user.
 
     """
     if current_user.is_authenticated:
