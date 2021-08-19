@@ -39,8 +39,12 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
-        task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
+        if description == 'Running tar2bids-':
+            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
+            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.second_last_pressed_button_id)
+        else:
+            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
+            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
         db.session.add(task)
         return task
 

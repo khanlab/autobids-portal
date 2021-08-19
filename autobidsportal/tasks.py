@@ -77,9 +77,9 @@ def get_new_cfmm2tar_results(study_info, data, button_id):
                 new_results.append(result)
 
     if already_there != []:
-    	for new in new_results:
-          if new in already_there:
-            new_results.remove(new)
+        for new in list(new_results):
+            if new in already_there:
+                new_results.remove(new)
 
     return(new_results)
 
