@@ -142,8 +142,7 @@ def admin():
 
     """
     form = AccessForm()
-    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
-    form.choices.choices = study_names
+    form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         user = User.query.filter_by(id=button_id)[0]
@@ -157,11 +156,17 @@ def make_admin():
     """
     button_id = list(request.form.keys())[0].rsplit('-',2)[1]
     form = AccessForm()
-    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
-    form.choices.choices = study_names
+    form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
     if request.method == 'POST':
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = True
+        c_records = Choice.query.all()
+        accepted = []
+        for choice in c_records:
+            accepted.append(choice)
+        for a in accepted:
+            if a not in user.access_to:
+                user.access_to.append(a)
         db.session.commit()
     return render_template('administration.html', title='Administration', form=form, user=user)
 
@@ -173,11 +178,17 @@ def remove_admin():
     """
     button_id = list(request.form.keys())[0].rsplit('-',2)[1]
     form = AccessForm()
-    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
-    form.choices.choices = study_names
+    form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
     if request.method == 'POST':
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = False
+        c_records = Choice.query.all()
+        remove = []
+        for choice in c_records:
+            remove.append(choice)
+        for r in remove:
+            if r in user.access_to:
+                user.access_to.remove(r)
         db.session.commit()
     return render_template('administration.html', title='Administration', form=form, user=user)
 
@@ -224,8 +235,6 @@ def remove_access():
             if r in user.access_to:
                 user.access_to.remove(r)
         db.session.commit()
-    else:
-        form.choices.data = [c.id for c in user.choices]
 
     return render_template('administration.html', title='Administration', form=form, user=user)
 
@@ -235,9 +244,18 @@ def results():
     """ Obtains all the responses from the database as well as the date and time the current user last logged in
 
     """
-    last = db.session.query(User).filter(User.id==1)[0]
-    res = db.session.query(Answer).order_by(Answer.submission_date.desc()).all()
-    return render_template('results.html', title='Responses', res=res, last=last)
+    last = current_user.last_seen
+    answers = []
+    for c in current_user.access_to:
+        ans = Answer.query.filter_by(principal=c.desc.rsplit(' ',2)[0], project_name=c.desc.rsplit(' ',2)[1]).all()
+        if ans == []:
+            ans = Answer.query.filter_by(principal_other=c.desc.rsplit(' ',2)[0], project_name=c.desc.rsplit(' ',2)[1]).all()
+        for a in ans:
+            answers.append(a)
+
+    answers=sorted(answers, key=lambda x: x.submission_date, reverse=True)
+    
+    return render_template('results.html', title='Responses', answers=answers, last=last)
 
 @app.route('/results/user', methods=['GET', 'POST'])
 @login_required

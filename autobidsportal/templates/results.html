@@ -26,8 +26,8 @@
                 <th scope="col">Retrospective Data End Date</th>
             </tr>
 
-            {% for r in res %}
-                {% if r.submission_date > last.last_seen %}
+            {% for r in answers %}
+                {% if r.submission_date > last %}
                 <tr class="new">
                     <td>
                         <form method="POST" action="{{ url_for('answer_info') }}">
