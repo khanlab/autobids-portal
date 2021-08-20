@@ -155,3 +155,6 @@ class MultiCheckboxField(SelectMultipleField):
 
 class AccessForm(FlaskForm):
     choices = MultiCheckboxField('Access', coerce=int)
+
+class RemoveAccessForm(FlaskForm):
+    choices_to_remove = MultiCheckboxField('Remove access', coerce=int)

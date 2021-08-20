@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids, Choice
-from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm, AccessForm
+from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm, AccessForm, RemoveAccessForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from smtplib import SMTPAuthenticationError
 from datetime import datetime
@@ -142,11 +142,13 @@ def admin():
 
     """
     form = AccessForm()
+    removal_form = RemoveAccessForm()
     form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    removal_form.choices_to_remove.choices = form.choices.choices
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
         user = User.query.filter_by(id=button_id)[0]
-    return render_template('administration.html', title='Administration', form=form, user=user)
+    return render_template('administration.html', title='Administration', form=form, removal_form=removal_form, user=user)
 
 @app.route('/administration/make_admin', methods=['GET', 'POST'])
 @login_required
@@ -156,7 +158,9 @@ def make_admin():
     """
     button_id = list(request.form.keys())[0].rsplit('-',2)[1]
     form = AccessForm()
+    removal_form = RemoveAccessForm()
     form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    removal_form.choices_to_remove.choices = form.choices.choices
     if request.method == 'POST':
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = True
@@ -168,7 +172,7 @@ def make_admin():
             if a not in user.access_to:
                 user.access_to.append(a)
         db.session.commit()
-    return render_template('administration.html', title='Administration', form=form, user=user)
+    return render_template('administration.html', title='Administration', form=form, removal_form=removal_form, user=user)
 
 @app.route('/administration/remove_admin', methods=['GET', 'POST'])
 @login_required
@@ -178,7 +182,9 @@ def remove_admin():
     """
     button_id = list(request.form.keys())[0].rsplit('-',2)[1]
     form = AccessForm()
+    removal_form = RemoveAccessForm()
     form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    removal_form.choices_to_remove.choices = form.choices.choices
     if request.method == 'POST':
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = False
@@ -190,7 +196,7 @@ def remove_admin():
             if r in user.access_to:
                 user.access_to.remove(r)
         db.session.commit()
-    return render_template('administration.html', title='Administration', form=form, user=user)
+    return render_template('administration.html', title='Administration', form=form, removal_form=removal_form, user=user)
 
 @app.route('/administration/grant_access', methods=['GET', 'POST'])
 @login_required
@@ -199,7 +205,9 @@ def grant_access():
 
     """
     form = AccessForm(request.form)
-    form.choices.choices = [(c.id, c.desc) for c in Choice.query.all()]
+    removal_form = RemoveAccessForm()
+    form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    removal_form.choices_to_remove.choices = form.choices.choices
     if request.method == 'POST'and form.validate_on_submit():
         button_id = list(request.form.keys())[2].rsplit('-',2)[1]
         user = User.query.filter_by(id=button_id).all()[0]
@@ -213,7 +221,7 @@ def grant_access():
                 user.access_to.append(a)
         db.session.commit()
 
-    return render_template('administration.html', title='Administration', form=form, user=user)
+    return render_template('administration.html', title='Administration', form=form, removal_form=removal_form, user=user)
 
 @app.route('/administration/remove_access', methods=['GET', 'POST'])
 @login_required
@@ -222,21 +230,24 @@ def remove_access():
 
     """
     form = AccessForm(request.form)
-    form.choices.choices = [(c.id, c.desc) for c in Choice.query.all()]
-    if request.method == 'POST' and form.validate_on_submit():
+    removal_form = RemoveAccessForm()
+    form.choices.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    removal_form.choices_to_remove.choices = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    print(removal_form.choices_to_remove.choices)
+    if request.method == 'POST' and removal_form.validate_on_submit():
         button_id = list(request.form.keys())[2].rsplit('-',2)[1]
         user = User.query.filter_by(id=button_id).all()[0]
         c_records = Choice.query.all()
         remove = []
         for choice in c_records:
-            if choice.id in form.choices.data:
+            if choice.id in removal_form.choices_to_remove.data:
                 remove.append(choice)
         for r in remove:
             if r in user.access_to:
                 user.access_to.remove(r)
         db.session.commit()
 
-    return render_template('administration.html', title='Administration', form=form, user=user)
+    return render_template('administration.html', title='Administration', form=form, removal_form=removal_form, user=user)
 
 @app.route('/results', methods=['GET', 'POST'])
 @login_required

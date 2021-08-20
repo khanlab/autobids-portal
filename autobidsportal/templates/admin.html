@@ -24,7 +24,7 @@
                     <td>{{ u.email }}</td>
                     <td>
                         {% for a in u.access_to %}
-                            {{ a.desc.replace(" ", "^") }}
+                            <div>{{ a.desc.replace(" ", "^") }}</div>
                         {% endfor %}   
                     </td>
                 </tr>

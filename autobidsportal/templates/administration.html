@@ -46,16 +46,20 @@
                                     </div>
                                 {% endfor %}
                             </fieldset>
-                            <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default"></input>
+                            {% if user.admin == True %}
+                                <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default" disabled=True></input>
+                            {% else %}
+                                <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default"></input>
+                            {% endif %}
                         </form>
                     </td>
 
                     <td>
                         <form id="survey-form" method="POST" action="{{ url_for('remove_access') }}">
-                            {{ form.hidden_tag() }}
+                            {{ removal_form.hidden_tag() }}
                             <fieldset class="form-group">
-                                {{ form.csrf_token }}
-                                {% for choice in form.choices %}
+                                {{ removal_form.csrf_token }}
+                                {% for choice in removal_form.choices_to_remove %}
                                     {% if choice not in user.access_to %}
                                         <div class="form-check">
                                             {{ choice(class="form-check-input") }}
@@ -64,7 +68,11 @@
                                     {% endif %}
                                 {% endfor %}
                             </fieldset>
-                            <input type="submit" name=access-{{user.id}} value="Remove Access" class="btn btn-default"></input>
+                            {% if user.admin == True %}
+                                <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-default" disabled=True></input>
+                            {% else %}
+                                <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-default"></input>
+                            {% endif %}
                         </form>
                     </td>
                 </tr>
