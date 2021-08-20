@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
 from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
-from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm
+from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from smtplib import SMTPAuthenticationError
 from datetime import datetime
@@ -130,9 +130,10 @@ def answer_info():
     """ Obtains complete survey response based on the submission id
 
     """
+    form = HeuristicForm()
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        if len(button_id)>1:
+        if "-" in button_id:
             cfmm2tar_file_id = button_id.rsplit('-',2)[1]
             button_id = button_id.rsplit('-',2)[0]
             current_user.second_last_pressed_button_id = button_id
@@ -146,7 +147,7 @@ def answer_info():
         cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id = button_id).all()
         tar2bids_tasks = Task.query.filter_by(task_button_id = button_id, description = 'Running tar2bids-').all()
         tar2bids_files = Tar2bids.query.filter_by(task_button_id = button_id).all()
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route('/results/user/cfmm2tar', methods=['GET', 'POST'])
 @login_required
@@ -154,9 +155,10 @@ def run_cfmm2tar():
     """ Launch cfmm2tar task and refresh answer_info.html
 
     """
+    form = HeuristicForm()
     if request.method == 'POST':
         button_id = list(request.form.keys())[0]
-        if len(button_id)>1:
+        if "-" in button_id:
             cfmm2tar_file_id = button_id.rsplit('-',2)[1]
             button_id = button_id.rsplit('-',2)[0]
             current_user.second_last_pressed_button_id = button_id
@@ -206,7 +208,7 @@ def run_cfmm2tar():
         except SMTPAuthenticationError as err:
             print(err)
 
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route('/results/user/tar2bids', methods=['GET', 'POST'])
 @login_required
@@ -214,9 +216,16 @@ def run_tar2bids():
     """ Launch tar2bids task and refresh answer_info.html
 
     """
-    if request.method == 'POST':
-        button_id = list(request.form.keys())[0]
-        if len(button_id)>1:
+    form = HeuristicForm()
+    if form.validate_on_submit() and request.method == 'POST':
+        current_user.selected_heuristic = form.heuristic.data
+        all_options = dict(form.heuristic.choices)
+        options=list(all_options.values())
+        options.remove(form.heuristic.data)
+        current_user.other_heuristic = ' '.join(options)
+    
+        button_id = list(request.form.keys())[2]
+        if "-" in button_id:
             cfmm2tar_file_id = button_id.rsplit('-',2)[1]
             button_id = button_id.rsplit('-',2)[0]
             current_user.second_last_pressed_button_id = button_id
@@ -265,10 +274,9 @@ def run_tar2bids():
                     )
                 mail.send(msg)
         except SMTPAuthenticationError as err:
-            err_cause = err.__cause__.stderr
             print(err_cause)
 
-    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files)
+    return render_template('answer_info.html', title='Response', submitter_answer=submitter_answer, cfmm2tar_tasks=cfmm2tar_tasks, button_id=current_user.last_pressed_button_id, cfmm2tar_files=cfmm2tar_files, tar2bids_tasks=tar2bids_tasks, tar2bids_files=tar2bids_files, form=form)
 
 @app.route("/results/download", methods=['GET'])
 @login_required

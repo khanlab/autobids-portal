@@ -132,3 +132,19 @@ class BidsForm(FlaskForm):
     comment = TextAreaField('Comments')
 
     submit = SubmitField('Submit')
+
+class HeuristicForm(FlaskForm):
+    heuristic = SelectField('Heuristic:', choices=[
+        ('cfmm_baron.py', 'cfmm_baron.py'),
+        ('cfmm_base.py', 'cfmm_base.py'),
+        ('cfmm_bold_rest.py', 'cfmm_bold_rest.py'),
+        ('cfmm_bruker.py', 'cfmm_bruker.py'),
+        ('cfmm_PS_PRC_3T.py', 'cfmm_PS_PRC_3T.py'),
+        ('clinicalDBS.py', 'clinicalDBS.py'),
+        ('cmrr_ANNA_OBJCAT_MTL_3T.py', 'cmrr_ANNA_OBJCAT_MTL_3T.py'),
+        ('EPL14A_GE_3T.py', 'EPL14A_GE_3T.py'),
+        ('EPL14B_3T.py', 'EPL14B_3T.py'),
+        ('GEvSE.py', 'GEvSE.py'),
+        ('Kohler_HcECT.py', 'Kohler_HcECT.py'),
+        ('Menon_CogMS.py', 'Menon_CogMS.py'),
+    ], validators=[InputRequired()])

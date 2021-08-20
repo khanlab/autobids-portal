@@ -255,7 +255,6 @@ class Dcm4cheUtils:
         no_heuristics=False,
     ):
         """Run tar2bids with the given arguments.
-
         Returns
         -------
         The given output_dir, if successful.

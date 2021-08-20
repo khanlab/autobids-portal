@@ -16,6 +16,8 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     last_pressed_button_id = db.Column(db.Integer)
     second_last_pressed_button_id = db.Column(db.Integer)
+    selected_heuristic = db.Column(db.String(128))
+    other_heuristic = db.Column(db.String(128))
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
     cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
@@ -37,8 +39,12 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
-        task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
+        if description == 'Running tar2bids-':
+            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
+            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.second_last_pressed_button_id)
+        else:
+            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
+            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
         db.session.add(task)
         return task
 
@@ -155,9 +161,10 @@ class Tar2bids(db.Model):
     tar_file_id = db.Column(db.Integer)
     tar_file = db.Column(db.String(200), index=True)
     bids_file = db.Column(db.String(200), index=True)
+    heuristic = db.Column(db.String(200), index=True)
 
     def __repr__(self):
-        return f'<Tar2bids {self.tar_file, self.bids_file}>'
+        return f'<Tar2bids {self.tar_file, self.bids_file, self.heuristic}>'
 
 class Principal(db.Model):
     __tablename__ = 'principal'
