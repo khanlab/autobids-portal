@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, RadioField, SelectField, DateField, TextAreaField
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, RadioField, SelectField, DateField, TextAreaField, SelectMultipleField, widgets
 from wtforms.fields.html5 import EmailField, IntegerField, DateField
 from wtforms.validators import ValidationError, DataRequired, Length, Optional, InputRequired, Email, EqualTo
 from autobidsportal.models import Submitter, User, Answer
@@ -148,3 +148,13 @@ class HeuristicForm(FlaskForm):
         ('Kohler_HcECT.py', 'Kohler_HcECT.py'),
         ('Menon_CogMS.py', 'Menon_CogMS.py'),
     ], validators=[InputRequired()])
+
+class MultiCheckboxField(SelectMultipleField):
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
+
+class AccessForm(FlaskForm):
+    choices = MultiCheckboxField('Access', coerce=int)
+
+class RemoveAccessForm(FlaskForm):
+    choices_to_remove = MultiCheckboxField('Remove access', coerce=int)

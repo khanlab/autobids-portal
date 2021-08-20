@@ -8,9 +8,14 @@ import json
 import redis
 import rq
 
+user_choices = db.Table('user_choices',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
+    db.Column('choice_id', db.Integer, db.ForeignKey('choice.id'), primary_key=True))
+    
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
+    admin = db.Column(db.Boolean)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
@@ -18,13 +23,15 @@ class User(UserMixin, db.Model):
     second_last_pressed_button_id = db.Column(db.Integer)
     selected_heuristic = db.Column(db.String(128))
     other_heuristic = db.Column(db.String(128))
+    access_to = db.relationship('Choice', secondary=user_choices, lazy='subquery',
+                            backref=db.backref('users_choice', lazy=True))
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
     cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
     tar2bids_results = db.relationship('Tar2bids', backref='user', lazy='dynamic')
 
     def __repr__(self):
-        return f'<User {self.email, self.last_seen, self.last_pressed_button_id}>'
+        return f'<User {self.admin, self.email, self.last_seen, self.last_pressed_button_id}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -173,3 +180,11 @@ class Principal(db.Model):
 
     def __repr__(self):
         return f'<Prinicpal {self.principal_name}>'
+
+class Choice(db.Model):
+    __tablename__ = 'choice'
+    id = db.Column(db.Integer, primary_key=True)
+    desc = db.Column(db.String(200))
+
+    def __repr__(self):
+        return f'<Choice {self.desc}>'
