@@ -2,8 +2,8 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
-from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids
-from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm
+from autobidsportal.models import User, Submitter, Answer, Principal, Task, Cfmm2tar, Tar2bids, Choice
+from autobidsportal.forms import LoginForm, BidsForm, RegistrationForm, HeuristicForm, AccessForm
 from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
 from smtplib import SMTPAuthenticationError
 from datetime import datetime
@@ -59,7 +59,19 @@ def index():
         
         db.session.add(answer)
         db.session.commit()
+
+        if answer.principal_other != '':
+            study_info = f"{answer.principal_other} {answer.project_name}"
+        else:
+            study_info = f"{answer.principal} {answer.project_name}"
+        if Choice.query.filter_by(desc=study_info).all() == []:
+            choice = Choice(
+                desc=study_info
+                )
         
+            db.session.add(choice)
+            db.session.commit()
+ 
         flash(f"Thanks, the survey has been submitted!")
 
         subject = "A new request has been submitted by %s" % (answer.submitter.name)
@@ -113,6 +125,109 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
+
+@app.route('/admin', methods=['GET', 'POST'])
+@login_required
+def user_list():
+    """ Obtains all the registered users from the database.
+
+    """
+    users = User.query.all()
+    return render_template('admin.html', title='Administration', users=users)
+
+@app.route('/administration', methods=['GET', 'POST'])
+@login_required
+def admin():
+    """ Obtains more information about a specific registered user.
+
+    """
+    form = AccessForm()
+    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    form.choices.choices = study_names
+    if request.method == 'POST':
+        button_id = list(request.form.keys())[0]
+        user = User.query.filter_by(id=button_id)[0]
+    return render_template('administration.html', title='Administration', form=form, user=user)
+
+@app.route('/administration/make_admin', methods=['GET', 'POST'])
+@login_required
+def make_admin():
+    """ Grants a particular user's admin privileges.
+
+    """
+    button_id = list(request.form.keys())[0].rsplit('-',2)[1]
+    form = AccessForm()
+    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    form.choices.choices = study_names
+    if request.method == 'POST':
+        user = User.query.filter_by(id=button_id).all()[0]
+        user.admin = True
+        db.session.commit()
+    return render_template('administration.html', title='Administration', form=form, user=user)
+
+@app.route('/administration/remove_admin', methods=['GET', 'POST'])
+@login_required
+def remove_admin():
+    """ Removes a particular user's admin privileges.
+
+    """
+    button_id = list(request.form.keys())[0].rsplit('-',2)[1]
+    form = AccessForm()
+    study_names = [(c.id, c.desc) for c in db.session.query(Choice).all()]
+    form.choices.choices = study_names
+    if request.method == 'POST':
+        user = User.query.filter_by(id=button_id).all()[0]
+        user.admin = False
+        db.session.commit()
+    return render_template('administration.html', title='Administration', form=form, user=user)
+
+@app.route('/administration/grant_access', methods=['GET', 'POST'])
+@login_required
+def grant_access():
+    """ Grants a particular user's the ability to view certain studies.
+
+    """
+    form = AccessForm(request.form)
+    form.choices.choices = [(c.id, c.desc) for c in Choice.query.all()]
+    if request.method == 'POST'and form.validate_on_submit():
+        button_id = list(request.form.keys())[2].rsplit('-',2)[1]
+        user = User.query.filter_by(id=button_id).all()[0]
+        c_records = Choice.query.all()
+        accepted = []
+        for choice in c_records:
+            if choice.id in form.choices.data:
+                accepted.append(choice)
+        for a in accepted:
+            if a not in user.access_to:
+                user.access_to.append(a)
+        db.session.commit()
+
+    return render_template('administration.html', title='Administration', form=form, user=user)
+
+@app.route('/administration/remove_access', methods=['GET', 'POST'])
+@login_required
+def remove_access():
+    """ Removes a particular user's ability to view certain studies.
+
+    """
+    form = AccessForm(request.form)
+    form.choices.choices = [(c.id, c.desc) for c in Choice.query.all()]
+    if request.method == 'POST' and form.validate_on_submit():
+        button_id = list(request.form.keys())[2].rsplit('-',2)[1]
+        user = User.query.filter_by(id=button_id).all()[0]
+        c_records = Choice.query.all()
+        remove = []
+        for choice in c_records:
+            if choice.id in form.choices.data:
+                remove.append(choice)
+        for r in remove:
+            if r in user.access_to:
+                user.access_to.remove(r)
+        db.session.commit()
+    else:
+        form.choices.data = [c.id for c in user.choices]
+
+    return render_template('administration.html', title='Administration', form=form, user=user)
 
 @app.route('/results', methods=['GET', 'POST'])
 @login_required

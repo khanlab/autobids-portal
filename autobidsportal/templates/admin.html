@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="col-xs-12">
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Admin</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Has access to the following studies</th>
+                </tr>
+    
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin') }}">
+                            <input name={{u.id}} class="btn btn-default" type="submit" value="View more"></input>
+                        </form> 
+                    </td>
+                    <td>{% if u.admin==True %}Yes{% else %}No{% endif %}</td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        {% for a in u.access_to %}
+                            {{ a.desc.replace(" ", "^") }}
+                        {% endfor %}   
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>             
+{% endblock %}

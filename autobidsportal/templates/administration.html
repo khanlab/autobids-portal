@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="col-xs-12">
+        <div class="table-responsive">
+            <table class="table">
+                <tr>
+                    <th scope="col">Administrator</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Access to which studies?</th>
+                    <th scope="col">Grant access to the following studies?</th>
+                    <th scope="col">Remove access to the following studies?</th>
+                </tr>
+
+                <tr>
+                    <td>
+                        {% if user.admin == True %}
+                            <div>Yes</div>
+                            <br>
+                            <form id="form" method="POST" action="{{ url_for('remove_admin') }}">
+                                <input type="submit" name=remove-{{user.id}} value="Remove Admin" class="btn btn-default"></input>
+                            </form> 
+                        {% else %}
+                            <div>No</div>
+                            <br>
+                            <form id="form" method="POST" action="{{ url_for('make_admin') }}">
+                                <input type="submit" name=add-{{user.id}} value="Make Admin" class="btn btn-default"></input>
+                            </form> 
+                        {% endif %}
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% for a in user.access_to %}
+                            <div>{{ a.desc.replace(" ", "^") }}</div>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <form id="survey-form" method="POST" action="{{ url_for('grant_access') }}">
+                            {{ form.hidden_tag() }}
+                            <fieldset class="form-group">
+                                {{ form.csrf_token }}
+                                {% for choice in form.choices %}
+                                    <div class="form-check">
+                                        {{ choice(class="form-check-input") }}
+                                        {{ choice.label(class="form-check-label") }}
+                                    </div>
+                                {% endfor %}
+                            </fieldset>
+                            <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default"></input>
+                        </form>
+                    </td>
+
+                    <td>
+                        <form id="survey-form" method="POST" action="{{ url_for('remove_access') }}">
+                            {{ form.hidden_tag() }}
+                            <fieldset class="form-group">
+                                {{ form.csrf_token }}
+                                {% for choice in form.choices %}
+                                    {% if choice not in user.access_to %}
+                                        <div class="form-check">
+                                            {{ choice(class="form-check-input") }}
+                                            {{ choice.label(class="form-check-label") }}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </fieldset>
+                            <input type="submit" name=access-{{user.id}} value="Remove Access" class="btn btn-default"></input>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>             
+{% endblock %}
