@@ -15,6 +15,9 @@ from datetime import datetime
 import time
 
 
+test = 'this is a string to be changed by black'
+
+
 @app.shell_context_processor
 def make_shell_context():
     return {
