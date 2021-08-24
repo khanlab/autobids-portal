@@ -17,7 +17,7 @@ To use all functionality, you will need:
 1. Set up a virtual environment.
 2. `pip install -e .`.
 3. Adjust your configuration by making a copy of `defaultconfig.py` and changing any relevant config variables.
-4. Export all necessary environment variables (see `.envtemplate` for a full listing), including `FLASK_APP=bids_form.py` and `AUTOBIDPORTAL_CONFIG={configfile}.Config`.
+4. Export all necessary environment variables (see `.envtemplate` for a full listing), including `FLASK_APP=bids_form.py` and `AUTOBIDSPORTAL_CONFIG={configfile}.Config`.
 5. Set up the db: `flask db upgrade`.
 
 # Running the application
