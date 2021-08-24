@@ -23,6 +23,9 @@ class Config(object):
     # as options in the study form.
     DICOM_PI_BLACKLIST = []
 
+    # Feature flag for email (No email if false)
+    MAIL_ENABLED = True
+
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 465
     MAIL_USE_TLS = False

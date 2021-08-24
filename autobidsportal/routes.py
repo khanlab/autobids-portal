@@ -86,19 +86,20 @@ def index():
 
         flash(f"Thanks, the survey has been submitted!")
 
-        subject = "A new request has been submitted by %s" % (
-            answer.submitter.name
-        )
-        sender = app.config["MAIL_USERNAME"]
-        recipients = app.config["MAIL_RECIPIENTS"]
+        if app.config["MAIL_ENABLED"]:
+            subject = "A new request has been submitted by %s" % (
+                answer.submitter.name
+            )
+            sender = app.config["MAIL_USERNAME"]
+            recipients = app.config["MAIL_RECIPIENTS"]
 
-        msg = Message(
-            subject=subject,
-            body="A new request has been submitted. Please login to see the submitter's response",
-            sender=sender,
-            recipients=recipients.split(),
-        )
-        mail.send(msg)
+            msg = Message(
+                subject=subject,
+                body="A new request has been submitted. Please login to see the submitter's response",
+                sender=sender,
+                recipients=recipients.split(),
+            )
+            mail.send(msg)
 
         return redirect(url_for("index"))
     return render_template("survey.html", form=form)
@@ -407,55 +408,56 @@ def run_cfmm2tar():
             task_button_id=button_id
         ).all()
 
-        try:
-            if submitter_answer.principal_other == None:
-                subject = (
-                    "A Cfmm2tar run for %s^%s has been submitted by %s"
-                    % (
+        if app.config["MAIL_ENABLED"]:
+            try:
+                if submitter_answer.principal_other == None:
+                    subject = (
+                        "A Cfmm2tar run for %s^%s has been submitted by %s"
+                        % (
+                            submitter_answer.principal,
+                            submitter_answer.project_name,
+                            submitter_answer.submitter.name,
+                        )
+                    )
+                    body = "A Cfmm2tar run for %s^%s has been submitted." % (
                         submitter_answer.principal,
                         submitter_answer.project_name,
-                        submitter_answer.submitter.name,
                     )
-                )
-                body = "A Cfmm2tar run for %s^%s has been submitted." % (
-                    submitter_answer.principal,
-                    submitter_answer.project_name,
-                )
-                sender = app.config["MAIL_USERNAME"]
-                recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = app.config["MAIL_USERNAME"]
+                    recipients = app.config["MAIL_RECIPIENTS"]
 
-                msg = Message(
-                    subject=subject,
-                    body=body,
-                    sender=sender,
-                    recipients=recipients.split(),
-                )
-                mail.send(msg)
-            else:
-                subject = (
-                    "A Cfmm2tar run for %s^%s has been submitted by %s"
-                    % (
+                    msg = Message(
+                        subject=subject,
+                        body=body,
+                        sender=sender,
+                        recipients=recipients.split(),
+                    )
+                    mail.send(msg)
+                else:
+                    subject = (
+                        "A Cfmm2tar run for %s^%s has been submitted by %s"
+                        % (
+                            submitter_answer.principal_other,
+                            submitter_answer.project_name,
+                            submitter_answer.submitter.name,
+                        )
+                    )
+                    body = "A Cfmm2tar run for %s^%s has been submitted." % (
                         submitter_answer.principal_other,
                         submitter_answer.project_name,
-                        submitter_answer.submitter.name,
                     )
-                )
-                body = "A Cfmm2tar run for %s^%s has been submitted." % (
-                    submitter_answer.principal_other,
-                    submitter_answer.project_name,
-                )
-                sender = app.config["MAIL_USERNAME"]
-                recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = app.config["MAIL_USERNAME"]
+                    recipients = app.config["MAIL_RECIPIENTS"]
 
-                msg = Message(
-                    subject=subject,
-                    body=body,
-                    sender=sender,
-                    recipients=recipients.split(),
-                )
-                mail.send(msg)
-        except SMTPAuthenticationError as err:
-            print(err)
+                    msg = Message(
+                        subject=subject,
+                        body=body,
+                        sender=sender,
+                        recipients=recipients.split(),
+                    )
+                    mail.send(msg)
+            except SMTPAuthenticationError as err:
+                print(err)
 
     return render_template(
         "answer_info.html",
@@ -520,55 +522,56 @@ def run_tar2bids():
             task_button_id=button_id
         ).all()
 
-        try:
-            if submitter_answer.principal_other == None:
-                subject = (
-                    "A Tar2bids run for %s^%s has been submitted by %s"
-                    % (
+        if app.config["MAIL_ENABLED"]:
+            try:
+                if submitter_answer.principal_other == None:
+                    subject = (
+                        "A Tar2bids run for %s^%s has been submitted by %s"
+                        % (
+                            submitter_answer.principal,
+                            submitter_answer.project_name,
+                            submitter_answer.submitter.name,
+                        )
+                    )
+                    body = "A Tar2bids run for %s^%s has been submitted." % (
                         submitter_answer.principal,
                         submitter_answer.project_name,
-                        submitter_answer.submitter.name,
                     )
-                )
-                body = "A Tar2bids run for %s^%s has been submitted." % (
-                    submitter_answer.principal,
-                    submitter_answer.project_name,
-                )
-                sender = app.config["MAIL_USERNAME"]
-                recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = app.config["MAIL_USERNAME"]
+                    recipients = app.config["MAIL_RECIPIENTS"]
 
-                msg = Message(
-                    subject=subject,
-                    body=body,
-                    sender=sender,
-                    recipients=recipients.split(),
-                )
-                mail.send(msg)
-            else:
-                subject = (
-                    "A Tar2bids run for %s^%s has been submitted by %s"
-                    % (
+                    msg = Message(
+                        subject=subject,
+                        body=body,
+                        sender=sender,
+                        recipients=recipients.split(),
+                    )
+                    mail.send(msg)
+                else:
+                    subject = (
+                        "A Tar2bids run for %s^%s has been submitted by %s"
+                        % (
+                            submitter_answer.principal_other,
+                            submitter_answer.project_name,
+                            submitter_answer.submitter.name,
+                        )
+                    )
+                    body = "A Tar2bids run for %s^%s has been submitted." % (
                         submitter_answer.principal_other,
                         submitter_answer.project_name,
-                        submitter_answer.submitter.name,
                     )
-                )
-                body = "A Tar2bids run for %s^%s has been submitted." % (
-                    submitter_answer.principal_other,
-                    submitter_answer.project_name,
-                )
-                sender = app.config["MAIL_USERNAME"]
-                recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = app.config["MAIL_USERNAME"]
+                    recipients = app.config["MAIL_RECIPIENTS"]
 
-                msg = Message(
-                    subject=subject,
-                    body=body,
-                    sender=sender,
-                    recipients=recipients.split(),
-                )
-                mail.send(msg)
-        except SMTPAuthenticationError as err:
-            print(err_cause)
+                    msg = Message(
+                        subject=subject,
+                        body=body,
+                        sender=sender,
+                        recipients=recipients.split(),
+                    )
+                    mail.send(msg)
+            except SMTPAuthenticationError as err:
+                print(err_cause)
 
     return render_template(
         "answer_info.html",
