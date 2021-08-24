@@ -37,7 +37,9 @@ class Dcm4cheUtils:
     dcm4che utils
     """
 
-    def __init__(self, connect, username, password, dcm4che_path="", tar2bids_path=""):
+    def __init__(
+        self, connect, username, password, dcm4che_path="", tar2bids_path=""
+    ):
         self.logger = logging.getLogger(__name__)
         self.connect = connect
         self.username = username
@@ -83,7 +85,8 @@ class Dcm4cheUtils:
             line for line in dcm4che_out if "StudyDescription" in line
         ]
         pi_matches = [
-            re.match(r".*\[([\w ]+)\^[\w ]+\].*", line) for line in study_descriptions
+            re.match(r".*\[([\w ]+)\^[\w ]+\].*", line)
+            for line in study_descriptions
         ]
         pis = [match.group(1) for match in pi_matches if match is not None]
 
@@ -124,7 +127,8 @@ class Dcm4cheUtils:
         """
         if study_description is None and study_date is None:
             raise Dcm4cheError(
-                "You must specify at least one of study_description and " "study_date"
+                "You must specify at least one of study_description and "
+                "study_date"
             )
 
         cmd = self._findscu_str
@@ -132,9 +136,13 @@ class Dcm4cheUtils:
         if study_description is not None:
             cmd = '{} -m StudyDescription="{}"'.format(cmd, study_description)
         if study_date is not None:
-            cmd = '{} -m StudyDate="{}"'.format(cmd, study_date.strftime("%Y%m%d"))
+            cmd = '{} -m StudyDate="{}"'.format(
+                cmd, study_date.strftime("%Y%m%d")
+            )
 
-        cmd = " ".join([cmd] + ["-r {}".format(field) for field in output_fields])
+        cmd = " ".join(
+            [cmd] + ["-r {}".format(field) for field in output_fields]
+        )
         cmd = "{} -L {}".format(cmd, retrieve_level)
 
         try:
@@ -152,7 +160,9 @@ class Dcm4cheUtils:
             for field in output_fields
         ]
 
-        output_re = r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
+        output_re = (
+            r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
+        )
 
         # Idea: Discard everything before:
         # C-FIND Request done in
@@ -185,7 +195,9 @@ class Dcm4cheUtils:
 
         return grouped_dicts
 
-    def run_cfmm2tar(self, out_dir, date_str=None, patient_name=None, project=None):
+    def run_cfmm2tar(
+        self, out_dir, date_str=None, patient_name=None, project=None
+    ):
         """Run cfmm2tar with the given options.
         At least one of the optional search arguments must be provided.
         Arguments
@@ -201,7 +213,9 @@ class Dcm4cheUtils:
             "Principal^Project" to search for.
         """
         if all(arg is None for arg in [date_str, patient_name, project]):
-            raise Cfmm2tarError("At least one search argument must be provided.")
+            raise Cfmm2tarError(
+                "At least one search argument must be provided."
+            )
         date_query = ["-d", date_str] if date_str is not None else []
         name_query = ["-n", patient_name] if patient_name is not None else []
         project_query = ["-p", project] if project is not None else []
@@ -235,7 +249,12 @@ class Dcm4cheUtils:
                 [
                     line.split("created: ")[1]
                     for line in file_out.splitlines()
-                    if any(["tar file created" in line, "uid file created" in line])
+                    if any(
+                        [
+                            "tar file created" in line,
+                            "uid file created" in line,
+                        ]
+                    )
                 ]
                 for file_out in split_out
             ]
