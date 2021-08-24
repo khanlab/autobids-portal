@@ -63,6 +63,8 @@ class Config_test(object):
     # as options in the study form.
     DICOM_PI_BLACKLIST = []
 
+    MAIL_ENABLED = False
+
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 465
     MAIL_USE_TLS = False
