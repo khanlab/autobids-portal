@@ -8,12 +8,19 @@ import json
 import redis
 import rq
 
-user_choices = db.Table('user_choices',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-    db.Column('choice_id', db.Integer, db.ForeignKey('choice.id'), primary_key=True))
-    
+user_choices = db.Table(
+    "user_choices",
+    db.Column(
+        "user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True
+    ),
+    db.Column(
+        "choice_id", db.Integer, db.ForeignKey("choice.id"), primary_key=True
+    ),
+)
+
+
 class User(UserMixin, db.Model):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     admin = db.Column(db.Boolean)
     email = db.Column(db.String(120), index=True, unique=True)
@@ -23,22 +30,32 @@ class User(UserMixin, db.Model):
     second_last_pressed_button_id = db.Column(db.Integer)
     selected_heuristic = db.Column(db.String(128))
     other_heuristic = db.Column(db.String(128))
-    access_to = db.relationship('Choice', secondary=user_choices, lazy='subquery',
-                            backref=db.backref('users_choice', lazy=True))
-    notifications = db.relationship('Notification', backref='user', lazy='dynamic')
-    tasks = db.relationship('Task', backref='user', lazy='dynamic')
-    cfmm2tar_results = db.relationship('Cfmm2tar', backref='user', lazy='dynamic')
-    tar2bids_results = db.relationship('Tar2bids', backref='user', lazy='dynamic')
+    access_to = db.relationship(
+        "Choice",
+        secondary=user_choices,
+        lazy="subquery",
+        backref=db.backref("users_choice", lazy=True),
+    )
+    notifications = db.relationship(
+        "Notification", backref="user", lazy="dynamic"
+    )
+    tasks = db.relationship("Task", backref="user", lazy="dynamic")
+    cfmm2tar_results = db.relationship(
+        "Cfmm2tar", backref="user", lazy="dynamic"
+    )
+    tar2bids_results = db.relationship(
+        "Tar2bids", backref="user", lazy="dynamic"
+    )
 
     def __repr__(self):
-        return f'<User {self.admin, self.email, self.last_seen, self.last_pressed_button_id}>'
+        return f"<User {self.admin, self.email, self.last_seen, self.last_pressed_button_id}>"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
+
     def add_notification(self, name, data):
         self.notifications.filter_by(name=name).delete()
         n = Notification(name=name, payload_json=json.dumps(data), user=self)
@@ -46,12 +63,44 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        if description == 'Running tar2bids-':
-            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
-            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.second_last_pressed_button_id)
+        if description == "Running tar2bids-":
+            rq_job = current_app.task_queue.enqueue(
+                "autobidsportal.tasks." + name,
+                self.id,
+                self.second_last_pressed_button_id,
+                self.last_pressed_button_id,
+                *args,
+                **kwargs,
+                job_timeout=100000,
+            )
+            task = Task(
+                id=rq_job.get_id(),
+                name=name,
+                description=description,
+                user_id=self.id,
+                user=self,
+                start_time=datetime.utcnow(),
+                task_button_id=self.second_last_pressed_button_id,
+            )
         else:
-            rq_job = current_app.task_queue.enqueue('autobidsportal.tasks.' + name, self.id, self.second_last_pressed_button_id, self.last_pressed_button_id, *args, **kwargs, job_timeout=100000)
-            task = Task(id=rq_job.get_id(), name=name, description=description, user_id=self.id, user=self, start_time=datetime.utcnow(), task_button_id=self.last_pressed_button_id)
+            rq_job = current_app.task_queue.enqueue(
+                "autobidsportal.tasks." + name,
+                self.id,
+                self.second_last_pressed_button_id,
+                self.last_pressed_button_id,
+                *args,
+                **kwargs,
+                job_timeout=100000,
+            )
+            task = Task(
+                id=rq_job.get_id(),
+                name=name,
+                description=description,
+                user_id=self.id,
+                user=self,
+                start_time=datetime.utcnow(),
+                task_button_id=self.last_pressed_button_id,
+            )
         db.session.add(task)
         return task
 
@@ -59,27 +108,35 @@ class User(UserMixin, db.Model):
         return Task.query.filter_by(user=self, complete=False).all()
 
     def get_task_in_progress(self, name):
-        return Task.query.filter_by(name=name, user=self, complete=False, task_button_id=self.last_pressed_button_id).first()
+        return Task.query.filter_by(
+            name=name,
+            user=self,
+            complete=False,
+            task_button_id=self.last_pressed_button_id,
+        ).first()
 
     def get_completed_tasks(self):
         return Task.query.filter_by(user=self, complete=True).all()
+
 
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
 
+
 class Submitter(db.Model):
-    __tablename__ = 'submitter'
+    __tablename__ = "submitter"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
     email = db.Column(db.String(40))
-    answers = db.relationship('Answer', backref='submitter', lazy='dynamic')
+    answers = db.relationship("Answer", backref="submitter", lazy="dynamic")
 
     def __repr__(self):
-        return f'<Submitter {self.name, self.email}>'
+        return f"<Submitter {self.name, self.email}>"
+
 
 class Answer(db.Model):
-    __tablename__ = 'answer'
+    __tablename__ = "answer"
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
     scanner = db.Column(db.String(20))
@@ -103,30 +160,34 @@ class Answer(db.Model):
     retrospective_end = db.Column(db.DateTime)
     consent = db.Column(db.Boolean)
     comment = db.Column(db.String(200))
-    submission_date = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    
-    submitter_id = db.Column(db.Integer, db.ForeignKey('submitter.id'))
+    submission_date = db.Column(
+        db.DateTime, index=True, default=datetime.utcnow
+    )
+
+    submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"))
 
     def __repr__(self):
-        return f'<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>'
+        return f"<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>"
+
 
 class Notification(db.Model):
-    __tablename__ = 'notification'
+    __tablename__ = "notification"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     timestamp = db.Column(db.Float, index=True, default=time)
     payload_json = db.Column(db.Text)
 
     def get_data(self):
         return json.loads(str(self.payload_json))
 
+
 class Task(db.Model):
-    __tablename__ = 'task'
+    __tablename__ = "task"
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     task_button_id = db.Column(db.Integer)
     complete = db.Column(db.Boolean, default=False)
     success = db.Column(db.Boolean, default=False)
@@ -135,7 +196,7 @@ class Task(db.Model):
     end_time = db.Column(db.DateTime)
 
     def __repr__(self):
-        return f'<Task {self.user_id, self.task_button_id, self.complete, self.success, self.error}>'
+        return f"<Task {self.user_id, self.task_button_id, self.complete, self.success, self.error}>"
 
     def get_rq_job(self):
         try:
@@ -146,24 +207,26 @@ class Task(db.Model):
 
     def get_progress(self):
         job = self.get_rq_job()
-        return job.meta.get('progress', 0) if job is not None else 100
+        return job.meta.get("progress", 0) if job is not None else 100
+
 
 class Cfmm2tar(db.Model):
-    __tablename__ = 'cfmm2tar'
+    __tablename__ = "cfmm2tar"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     task_button_id = db.Column(db.Integer)
     tar_file = db.Column(db.String(200), index=True)
     uid_file = db.Column(db.String(200), index=True)
     date = db.Column(db.DateTime)
 
     def __repr__(self):
-        return f'<Cfmm2tar {self.tar_file, self.uid_file, self.date}>'
+        return f"<Cfmm2tar {self.tar_file, self.uid_file, self.date}>"
+
 
 class Tar2bids(db.Model):
-    __tablename__ = 'tar2bids'
+    __tablename__ = "tar2bids"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     task_button_id = db.Column(db.Integer)
     tar_file_id = db.Column(db.Integer)
     tar_file = db.Column(db.String(200), index=True)
@@ -171,20 +234,22 @@ class Tar2bids(db.Model):
     heuristic = db.Column(db.String(200), index=True)
 
     def __repr__(self):
-        return f'<Tar2bids {self.tar_file, self.bids_file, self.heuristic}>'
+        return f"<Tar2bids {self.tar_file, self.bids_file, self.heuristic}>"
+
 
 class Principal(db.Model):
-    __tablename__ = 'principal'
+    __tablename__ = "principal"
     id = db.Column(db.Integer, primary_key=True)
     principal_name = db.Column(db.String(200))
 
     def __repr__(self):
-        return f'<Prinicpal {self.principal_name}>'
+        return f"<Prinicpal {self.principal_name}>"
+
 
 class Choice(db.Model):
-    __tablename__ = 'choice'
+    __tablename__ = "choice"
     id = db.Column(db.Integer, primary_key=True)
     desc = db.Column(db.String(200))
 
     def __repr__(self):
-        return f'<Choice {self.desc}>'
+        return f"<Choice {self.desc}>"
