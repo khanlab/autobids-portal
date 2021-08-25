@@ -17,13 +17,13 @@
                         {% if user.admin == True %}
                             <div>Yes</div>
                             <br>
-                            <form id="form" method="POST" action="{{ url_for('remove_admin') }}">
+                            <form id="form" method="POST" action="{{ url_for('portal_blueprint.remove_admin') }}">
                                 <input type="submit" name=remove-{{user.id}} value="Remove Admin" class="btn btn-default"></input>
                             </form> 
                         {% else %}
                             <div>No</div>
                             <br>
-                            <form id="form" method="POST" action="{{ url_for('make_admin') }}">
+                            <form id="form" method="POST" action="{{ url_for('portal_blueprint.make_admin') }}">
                                 <input type="submit" name=add-{{user.id}} value="Make Admin" class="btn btn-default"></input>
                             </form> 
                         {% endif %}
@@ -35,7 +35,7 @@
                         {% endfor %}
                     </td>
                     <td>
-                        <form id="survey-form" method="POST" action="{{ url_for('grant_access') }}">
+                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.grant_access') }}">
                             {{ form.hidden_tag() }}
                             <fieldset class="form-group">
                                 {{ form.csrf_token }}
@@ -55,7 +55,7 @@
                     </td>
 
                     <td>
-                        <form id="survey-form" method="POST" action="{{ url_for('remove_access') }}">
+                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.remove_access') }}">
                             {{ removal_form.hidden_tag() }}
                             <fieldset class="form-group">
                                 {{ removal_form.csrf_token }}

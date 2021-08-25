@@ -3,14 +3,22 @@
 from datetime import datetime
 from smtplib import SMTPAuthenticationError
 
-from flask import render_template, flash, redirect, url_for, request
+from flask import (
+    current_app,
+    Blueprint,
+    render_template,
+    flash,
+    redirect,
+    url_for,
+    request,
+)
 from flask_login import login_user, logout_user, current_user, login_required
-from flask_mail import Message
+from flask_mail import Mail, Message
 import flask_excel as excel
 
 from werkzeug.urls import url_parse
-from autobidsportal import app, db, mail
 from autobidsportal.models import (
+    db,
     User,
     Submitter,
     Answer,
@@ -30,9 +38,15 @@ from autobidsportal.forms import (
     RemoveAccessForm,
 )
 
+portal_blueprint = Blueprint(
+    "portal_blueprint", __name__, template_folder="templates"
+)
 
-@app.route("/", methods=["GET", "POST"])
-@app.route("/index", methods=["GET", "POST"])
+mail = Mail()
+
+
+@portal_blueprint.route("/", methods=["GET", "POST"])
+@portal_blueprint.route("/index", methods=["GET", "POST"])
 def index():
     """Provides a survey form for users to fill out.
 
@@ -95,12 +109,12 @@ def index():
 
         flash("Thanks, the survey has been submitted!")
 
-        if app.config["MAIL_ENABLED"]:
+        if current_app.config["MAIL_ENABLED"]:
             subject = "A new request has been submitted by %s" % (
                 answer.submitter.name
             )
-            sender = app.config["MAIL_USERNAME"]
-            recipients = app.config["MAIL_RECIPIENTS"]
+            sender = current_app.config["MAIL_USERNAME"]
+            recipients = current_app.config["MAIL_RECIPIENTS"]
 
             msg = Message(
                 subject=subject,
@@ -111,37 +125,37 @@ def index():
             )
             mail.send(msg)
 
-        return redirect(url_for("index"))
+        return redirect(url_for("portal_blueprint.index"))
     return render_template("survey.html", form=form)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@portal_blueprint.route("/login", methods=["GET", "POST"])
 def login():
     """Redirects user to login if they their email and password is valid."""
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        return redirect(url_for("portal_blueprint.index"))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
         if user is None or not user.check_password(form.password.data):
             flash("Invalid email or password")
-            return redirect(url_for("login"))
+            return redirect(url_for("portal_blueprint.login"))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get("next")
         if not next_page or url_parse(next_page).netloc != "":
-            next_page = url_for("index")
+            next_page = url_for("portal_blueprint.index")
         return redirect(next_page)
     return render_template("login.html", title="Sign In", form=form)
 
 
-@app.route("/register", methods=["GET", "POST"])
+@portal_blueprint.route("/register", methods=["GET", "POST"])
 def register():
     """Validates that provided email and password are valid.
 
     After the user is registered, they are redirected to login.
     """
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
+        return redirect(url_for("portal_blueprint.index"))
     form = RegistrationForm()
     if form.validate_on_submit():
         user = User(email=form.email.data)
@@ -149,11 +163,11 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash("Congratulations, you are now a registered user!")
-        return redirect(url_for("login"))
+        return redirect(url_for("portal_blueprint.login"))
     return render_template("register.html", title="Register", form=form)
 
 
-@app.route("/admin", methods=["GET", "POST"])
+@portal_blueprint.route("/admin", methods=["GET", "POST"])
 @login_required
 def user_list():
     """Obtains all the registered users from the database."""
@@ -161,7 +175,7 @@ def user_list():
     return render_template("admin.html", title="Administration", users=users)
 
 
-@app.route("/administration", methods=["GET", "POST"])
+@portal_blueprint.route("/administration", methods=["GET", "POST"])
 @login_required
 def admin():
     """Obtains more information about a specific registered user."""
@@ -183,7 +197,7 @@ def admin():
     )
 
 
-@app.route("/administration/make_admin", methods=["GET", "POST"])
+@portal_blueprint.route("/administration/make_admin", methods=["GET", "POST"])
 @login_required
 def make_admin():
     """Grants a particular user's admin privileges."""
@@ -212,7 +226,9 @@ def make_admin():
     )
 
 
-@app.route("/administration/remove_admin", methods=["GET", "POST"])
+@portal_blueprint.route(
+    "/administration/remove_admin", methods=["GET", "POST"]
+)
 @login_required
 def remove_admin():
     """Removes a particular user's admin privileges."""
@@ -241,7 +257,9 @@ def remove_admin():
     )
 
 
-@app.route("/administration/grant_access", methods=["GET", "POST"])
+@portal_blueprint.route(
+    "/administration/grant_access", methods=["GET", "POST"]
+)
 @login_required
 def grant_access():
     """Grants a particular user's the ability to view certain studies."""
@@ -273,7 +291,9 @@ def grant_access():
     )
 
 
-@app.route("/administration/remove_access", methods=["GET", "POST"])
+@portal_blueprint.route(
+    "/administration/remove_access", methods=["GET", "POST"]
+)
 @login_required
 def remove_access():
     """Removes a particular user's ability to view certain studies."""
@@ -309,7 +329,7 @@ def remove_access():
     )
 
 
-@app.route("/results", methods=["GET", "POST"])
+@portal_blueprint.route("/results", methods=["GET", "POST"])
 @login_required
 def results():
     """Get responses and the date and time the current user last logged in."""
@@ -334,7 +354,7 @@ def results():
     )
 
 
-@app.route("/results/user", methods=["GET", "POST"])
+@portal_blueprint.route("/results/user", methods=["GET", "POST"])
 @login_required
 def answer_info():
     """Obtains complete survey response based on the submission id"""
@@ -378,7 +398,7 @@ def answer_info():
     )
 
 
-@app.route("/results/user/cfmm2tar", methods=["GET", "POST"])
+@portal_blueprint.route("/results/user/cfmm2tar", methods=["GET", "POST"])
 @login_required
 def run_cfmm2tar():
     """Launch cfmm2tar task and refresh answer_info.html"""
@@ -417,7 +437,7 @@ def run_cfmm2tar():
             task_button_id=button_id
         ).all()
 
-        if app.config["MAIL_ENABLED"]:
+        if current_app.config["MAIL_ENABLED"]:
             try:
                 if submitter_answer.principal_other is None:
                     subject = (
@@ -432,8 +452,8 @@ def run_cfmm2tar():
                         submitter_answer.principal,
                         submitter_answer.project_name,
                     )
-                    sender = app.config["MAIL_USERNAME"]
-                    recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = current_app.config["MAIL_USERNAME"]
+                    recipients = current_app.config["MAIL_RECIPIENTS"]
 
                     msg = Message(
                         subject=subject,
@@ -455,8 +475,8 @@ def run_cfmm2tar():
                         submitter_answer.principal_other,
                         submitter_answer.project_name,
                     )
-                    sender = app.config["MAIL_USERNAME"]
-                    recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = current_app.config["MAIL_USERNAME"]
+                    recipients = current_app.config["MAIL_RECIPIENTS"]
 
                     msg = Message(
                         subject=subject,
@@ -481,7 +501,7 @@ def run_cfmm2tar():
     )
 
 
-@app.route("/results/user/tar2bids", methods=["GET", "POST"])
+@portal_blueprint.route("/results/user/tar2bids", methods=["GET", "POST"])
 @login_required
 def run_tar2bids():
     """Launch tar2bids task and refresh answer_info.html"""
@@ -526,7 +546,7 @@ def run_tar2bids():
             task_button_id=button_id
         ).all()
 
-        if app.config["MAIL_ENABLED"]:
+        if current_app.config["MAIL_ENABLED"]:
             try:
                 if submitter_answer.principal_other is None:
                     subject = (
@@ -541,8 +561,8 @@ def run_tar2bids():
                         submitter_answer.principal,
                         submitter_answer.project_name,
                     )
-                    sender = app.config["MAIL_USERNAME"]
-                    recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = current_app.config["MAIL_USERNAME"]
+                    recipients = current_app.config["MAIL_RECIPIENTS"]
 
                     mail.send(
                         Message(
@@ -565,8 +585,8 @@ def run_tar2bids():
                         submitter_answer.principal_other,
                         submitter_answer.project_name,
                     )
-                    sender = app.config["MAIL_USERNAME"]
-                    recipients = app.config["MAIL_RECIPIENTS"]
+                    sender = current_app.config["MAIL_USERNAME"]
+                    recipients = current_app.config["MAIL_RECIPIENTS"]
 
                     mail.send(
                         Message(
@@ -592,7 +612,7 @@ def run_tar2bids():
     )
 
 
-@app.route("/results/download", methods=["GET"])
+@portal_blueprint.route("/results/download", methods=["GET"])
 @login_required
 def download():
     """Downloads csv containing all the survey response"""
@@ -683,7 +703,7 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
-@app.route("/results/user/dicom", methods=["GET", "POST"])
+@portal_blueprint.route("/results/user/dicom", methods=["GET", "POST"])
 @login_required
 def dicom_verify():
     """Gets all DICOM results for a specific study."""
@@ -692,7 +712,10 @@ def dicom_verify():
         Answer.submitter_id == button_id
     )[0]
     if submitter_answer.principal_other != "":
-        study_info = f"{submitter_answer.principal_other}^{submitter_answer.project_name}"
+        study_info = (
+            f"{submitter_answer.principal_other}^"
+            + f"{submitter_answer.project_name}"
+        )
     else:
         study_info = (
             f"{submitter_answer.principal}^{submitter_answer.project_name}"
@@ -767,11 +790,11 @@ def dicom_verify():
         )
 
 
-@app.route("/logout", methods=["GET", "POST"])
+@portal_blueprint.route("/logout", methods=["GET", "POST"])
 def logout():
     """Logs out current user."""
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()
     logout_user()
-    return redirect(url_for("index"))
+    return redirect(url_for("portal_blueprint.index"))

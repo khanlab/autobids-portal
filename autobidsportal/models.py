@@ -5,12 +5,15 @@ from time import time
 import json
 
 from flask import current_app
-from flask_login import UserMixin
+from flask_login import LoginManager, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 import redis
 import rq
+from flask_sqlalchemy import SQLAlchemy
 
-from autobidsportal import db, login
+
+login = LoginManager()
+db = SQLAlchemy()
 
 user_choices = db.Table(
     "user_choices",
