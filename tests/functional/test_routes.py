@@ -1,8 +1,8 @@
-import datetime
-import flask_excel as excel
+"""Test route responses with the test client."""
 
 
 def test_login_page(test_client):
+    """Test that the login page loads."""
     response = test_client.get("/login")
     assert response.status_code == 200
     assert b"Email" in response.data
@@ -10,6 +10,7 @@ def test_login_page(test_client):
 
 
 def test_valid_login_logout(test_client, init_database):
+    """Test that a login and logout with valid credentials works."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -34,6 +35,7 @@ def test_valid_login_logout(test_client, init_database):
 
 
 def test_invalid_login(test_client, init_database):
+    """Test that an invalid login fails."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -55,6 +57,7 @@ def test_invalid_login(test_client, init_database):
 def test_login_already_logged_in(
     test_client, init_database, login_default_user
 ):
+    """Test that a login fails when a user is already logs in."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -74,6 +77,7 @@ def test_login_already_logged_in(
 
 
 def test_valid_registration(test_client, init_database):
+    """Test that a valid registration succeeds."""
     response = test_client.post(
         "/register",
         data=dict(
@@ -94,6 +98,7 @@ def test_valid_registration(test_client, init_database):
 
 
 def test_invalid_registration(test_client, init_database):
+    """Test that an invalid registration fails."""
     response = test_client.post(
         "/register",
         data=dict(
@@ -116,6 +121,7 @@ def test_invalid_registration(test_client, init_database):
 
 
 def test_duplicate_registration(test_client, init_database):
+    """Test that a duplicate registration fails."""
     test_client.post(
         "/register",
         data=dict(
@@ -139,7 +145,8 @@ def test_duplicate_registration(test_client, init_database):
     )
     assert response.status_code == 200
     assert (
-        b"There is already an account using this email address. Please use a different email address."
+        b"There is already an account using this email address. "
+        + b"Please use a different email address."
         in response.data
     )
     assert b"Logout" not in response.data
@@ -149,6 +156,7 @@ def test_duplicate_registration(test_client, init_database):
 
 
 def test_valid_login_complete_survey_logout(test_client, init_database):
+    """Test an example session with login, logout, and form fill."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -211,6 +219,7 @@ def test_valid_login_complete_survey_logout(test_client, init_database):
 
 
 def test_valid_survey(test_client, init_database):
+    """Test that a valid survey successfully submits."""
     response = test_client.post(
         "/index",
         data=dict(
@@ -251,6 +260,7 @@ def test_valid_survey(test_client, init_database):
 
 
 def test_invalid_survey(test_client, init_database):
+    """Test that an invalid survey fails."""
     response = test_client.post(
         "/index",
         data=dict(
@@ -291,6 +301,7 @@ def test_invalid_survey(test_client, init_database):
 
 
 def test_valid_login_access_results(test_client, init_database):
+    """Test that results can be accessed."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -315,6 +326,7 @@ def test_valid_login_access_results(test_client, init_database):
 
 
 def test_valid_login_access_results_download(test_client, init_database):
+    """Test that results can be downloaded."""
     response = test_client.post(
         "/login",
         data=dict(
@@ -344,6 +356,7 @@ def test_valid_login_access_results_download(test_client, init_database):
 def test_valid_login_complete_survey_access_results_view_more(
     test_client, init_database
 ):
+    """Test that a survey's results are viewable."""
     response = test_client.post(
         "/login",
         data=dict(

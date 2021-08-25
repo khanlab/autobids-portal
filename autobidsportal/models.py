@@ -1,12 +1,16 @@
+"""Define SQL models."""
+
 from datetime import datetime
+from time import time
+import json
+
 from flask import current_app
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from autobidsportal import db, login
-from time import time
-import json
 import redis
 import rq
+
+from autobidsportal import db, login
 
 user_choices = db.Table(
     "user_choices",
@@ -20,6 +24,8 @@ user_choices = db.Table(
 
 
 class User(UserMixin, db.Model):
+    """Information related to registered users."""
+
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     admin = db.Column(db.Boolean)
@@ -51,18 +57,24 @@ class User(UserMixin, db.Model):
         return f"<User {self.admin, self.email, self.last_seen, self.last_pressed_button_id}>"
 
     def set_password(self, password):
+        """Generate a hash for a password and assign it to the user."""
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        """Check whether the password matches this user's password."""
         return check_password_hash(self.password_hash, password)
 
     def add_notification(self, name, data):
+        """Set the user's active notification."""
         self.notifications.filter_by(name=name).delete()
-        n = Notification(name=name, payload_json=json.dumps(data), user=self)
-        db.session.add(n)
-        return n
+        notification = Notification(
+            name=name, payload_json=json.dumps(data), user=self
+        )
+        db.session.add(notification)
+        return notification
 
     def launch_task(self, name, description, *args, **kwargs):
+        """Enqueue a task with rq and record it in the DB."""
         if description == "Running tar2bids-":
             rq_job = current_app.task_queue.enqueue(
                 "autobidsportal.tasks." + name,
@@ -105,9 +117,11 @@ class User(UserMixin, db.Model):
         return task
 
     def get_tasks_in_progress(self):
+        """Return all active tasks associated with this user."""
         return Task.query.filter_by(user=self, complete=False).all()
 
     def get_task_in_progress(self, name):
+        """Get this user's active task with the given name."""
         return Task.query.filter_by(
             name=name,
             user=self,
@@ -116,15 +130,22 @@ class User(UserMixin, db.Model):
         ).first()
 
     def get_completed_tasks(self):
+        """Get all completed tasks associated with this user."""
         return Task.query.filter_by(user=self, complete=True).all()
 
 
 @login.user_loader
-def load_user(id):
-    return User.query.get(int(id))
+def load_user(user_id):
+    """Get a user with a specific ID."""
+    return User.query.get(int(user_id))
 
 
 class Submitter(db.Model):
+    """Describe someone who has submitted a given answer.
+
+    A submitter does not necessarily need a user account.
+    """
+
     __tablename__ = "submitter"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40))
@@ -136,6 +157,8 @@ class Submitter(db.Model):
 
 
 class Answer(db.Model):
+    """One answer to the new study form."""
+
     __tablename__ = "answer"
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(db.String(20))
@@ -167,10 +190,37 @@ class Answer(db.Model):
     submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"))
 
     def __repr__(self):
-        return f"<Answer {self.status, self.scanner, self.scan_number, self.study_type, self.familiarity_bids, self.familiarity_bidsapp, self.familiarity_python, self.familiarity_linux, self.familiarity_bash, self.familiarity_hpc, self.familiarity_openneuro, self.familiarity_cbrain, self.principal, self.principal_other, self.project_name, self.dataset_name, self.sample, self.retrospective_data, self.retrospective_start, self.retrospective_end, self.consent, self.comment, self.submission_date}>"
+        answer_cols = (
+            self.status,
+            self.scanner,
+            self.scan_number,
+            self.study_type,
+            self.familiarity_bids,
+            self.familiarity_bidsapp,
+            self.familiarity_python,
+            self.familiarity_linux,
+            self.familiarity_bash,
+            self.familiarity_hpc,
+            self.familiarity_openneuro,
+            self.familiarity_cbrain,
+            self.principal,
+            self.principal_other,
+            self.project_name,
+            self.dataset_name,
+            self.sample,
+            self.retrospective_data,
+            self.retrospective_start,
+            self.retrospective_end,
+            self.consent,
+            self.comment,
+            self.submission_date,
+        )
+        return f"<Answer {answer_cols}>"
 
 
 class Notification(db.Model):
+    """An active notification for an active user."""
+
     __tablename__ = "notification"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), index=True)
@@ -179,10 +229,13 @@ class Notification(db.Model):
     payload_json = db.Column(db.Text)
 
     def get_data(self):
+        """Get the notification contents."""
         return json.loads(str(self.payload_json))
 
 
 class Task(db.Model):
+    """A task deferred to the task queue."""
+
     __tablename__ = "task"
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
@@ -196,9 +249,17 @@ class Task(db.Model):
     end_time = db.Column(db.DateTime)
 
     def __repr__(self):
-        return f"<Task {self.user_id, self.task_button_id, self.complete, self.success, self.error}>"
+        task_cols = (
+            self.user_id,
+            self.task_button_id,
+            self.complete,
+            self.success,
+            self.error,
+        )
+        return f"<Task {task_cols}>"
 
     def get_rq_job(self):
+        """Get the rq job associated with this task."""
         try:
             rq_job = rq.job.Job.fetch(self.id, connection=current_app.redis)
         except (redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
@@ -206,11 +267,14 @@ class Task(db.Model):
         return rq_job
 
     def get_progress(self):
+        """Get the progress of this task."""
         job = self.get_rq_job()
         return job.meta.get("progress", 0) if job is not None else 100
 
 
 class Cfmm2tar(db.Model):
+    """One completed cfmm2tar run."""
+
     __tablename__ = "cfmm2tar"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -224,6 +288,8 @@ class Cfmm2tar(db.Model):
 
 
 class Tar2bids(db.Model):
+    """One completed tar2bids run."""
+
     __tablename__ = "tar2bids"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
@@ -238,6 +304,8 @@ class Tar2bids(db.Model):
 
 
 class Principal(db.Model):
+    """One PI name known on the DICOM scanner."""
+
     __tablename__ = "principal"
     id = db.Column(db.Integer, primary_key=True)
     principal_name = db.Column(db.String(200))
@@ -247,6 +315,8 @@ class Principal(db.Model):
 
 
 class Choice(db.Model):
+    """One study that a user can have access to."""
+
     __tablename__ = "choice"
     id = db.Column(db.Integer, primary_key=True)
     desc = db.Column(db.String(200))

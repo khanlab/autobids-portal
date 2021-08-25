@@ -1,3 +1,5 @@
+"""Initialize flask and all its plugins"""
+
 import os
 
 from flask import Flask
@@ -31,4 +33,5 @@ login.login_view = "login"
 mail = Mail(app)
 bootstrap = Bootstrap(app)
 
-from autobidsportal import routes, models, errors
+# Will be fixed by an application factory
+from autobidsportal import routes, models, errors  # pylint: disable=C0413

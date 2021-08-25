@@ -1,3 +1,5 @@
+"""Forms to be used in some views."""
+
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -6,7 +8,6 @@ from wtforms import (
     BooleanField,
     RadioField,
     SelectField,
-    DateField,
     TextAreaField,
     SelectMultipleField,
     widgets,
@@ -15,17 +16,18 @@ from wtforms.fields.html5 import EmailField, IntegerField, DateField
 from wtforms.validators import (
     ValidationError,
     DataRequired,
-    Length,
     Optional,
     InputRequired,
     Email,
     EqualTo,
 )
-from autobidsportal.models import Submitter, User, Answer
-from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
+
+from autobidsportal.models import User
 
 
 class LoginForm(FlaskForm):
+    """A form for logging users in."""
+
     email = StringField("Email", validators=[DataRequired()])
     password = PasswordField("Password", validators=[DataRequired()])
     remember_me = BooleanField("Remember Me")
@@ -33,6 +35,8 @@ class LoginForm(FlaskForm):
 
 
 class RegistrationForm(FlaskForm):
+    """A form for registering new users."""
+
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
     password2 = PasswordField(
@@ -41,14 +45,17 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("Register")
 
     def validate_email(self, email):
+        """Check that no user with this email address exists."""
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError(
-                "There is already an account using this email address. Please use a different email address."
+                "There is already an account using this email address. "
+                + "Please use a different email address."
             )
 
 
 class BidsForm(FlaskForm):
+    """Form representing the new study survey."""
 
     name = StringField("Name:", validators=[DataRequired()])
 
@@ -82,7 +89,8 @@ class BidsForm(FlaskForm):
     )
 
     study_type = BooleanField(
-        "Is this study longitudinal or multi-session (i.e. same subject scanned multiple times)? If so, check the box below.:",
+        "Is this study longitudinal or multi-session (i.e. same subject "
+        + "scanned multiple times)? If so, check the box below.:",
         validators=[Optional()],
     )
 
@@ -188,7 +196,8 @@ class BidsForm(FlaskForm):
     )
 
     principal_other = StringField(
-        'If you selected "Other" for the question above please enter the "Principal" or "PI" identifier for this study below:',
+        'If you selected "Other" for the question above please enter the '
+        + '"Principal" or "PI" identifier for this study below:',
         validators=[Optional()],
     )
 
@@ -198,7 +207,9 @@ class BidsForm(FlaskForm):
     )
 
     dataset_name = StringField(
-        'The name for your BIDS dataset will by default be the "Project Name". If you wish to override this, please enter a new name below (optional):',
+        'The name for your BIDS dataset will by default be the "Project '
+        + 'Name". If you wish to override this, please enter a new name '
+        + "below (optional):",
         validators=[Optional()],
     )
 
@@ -209,7 +220,8 @@ class BidsForm(FlaskForm):
     )
 
     retrospective_data = BooleanField(
-        "Does this study have retrospective (previously acquired) data to convert? If so, check the box below.:"
+        "Does this study have retrospective (previously acquired) data to "
+        + "convert? If so, check the box below.:"
     )
 
     retrospective_start = DateField(
@@ -235,6 +247,8 @@ class BidsForm(FlaskForm):
 
 
 class HeuristicForm(FlaskForm):
+    """Form for selecting one of the default heuristics."""
+
     heuristic = SelectField(
         "Heuristic:",
         choices=[
@@ -256,13 +270,19 @@ class HeuristicForm(FlaskForm):
 
 
 class MultiCheckboxField(SelectMultipleField):
+    """Generic field for multiple checkboxes."""
+
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
 
 
 class AccessForm(FlaskForm):
+    """A field to pick new studies for access."""
+
     choices = MultiCheckboxField("Access", coerce=int)
 
 
 class RemoveAccessForm(FlaskForm):
+    """A field to pick studies for which to remove access."""
+
     choices_to_remove = MultiCheckboxField("Remove access", coerce=int)

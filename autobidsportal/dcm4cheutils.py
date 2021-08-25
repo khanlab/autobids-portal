@@ -54,17 +54,6 @@ class Dcm4cheUtils:
             + """ --tls-aes --user {} """.format(pipes.quote(self.username))
             + """ --user-pass {} """.format(pipes.quote(self.password))
         )
-
-        self._getscu_str = (
-            """{} getscu""".format(self.dcm4che_path)
-            + " --bind  DEFAULT "
-            + " --connect {} ".format(self.connect)
-            + " --accept-timeout 10000 "
-            + """ --tls-aes --user {} """.format(pipes.quote(self.username))
-            + """ --user-pass {} """.format(pipes.quote(self.password))
-        )
-
-        self._cfmm2tar_list = self.dcm4che_path.split() + ["cfmm2tar"]
         self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
 
     def get_all_pi_names(self):
@@ -160,10 +149,6 @@ class Dcm4cheUtils:
             for field in output_fields
         ]
 
-        output_re = (
-            r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) [A-Z]{2} \[(.*)\] (\w+)"
-        )
-
         # Idea: Discard everything before:
         # C-FIND Request done in
 
@@ -177,7 +162,11 @@ class Dcm4cheUtils:
             for line in dataset.splitlines():
                 if not any(field in line for field in output_fields):
                     continue
-                match = re.match(output_re, line)
+                match = re.match(
+                    r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) "
+                    + r"[A-Z]{2} \[(.*)\] (\w+)",
+                    line,
+                )
                 if match is None:
                     continue
                 out_dicts.append(
@@ -224,7 +213,8 @@ class Dcm4cheUtils:
             cred_file.write(self.username + "\n")
             cred_file.write(self.password + "\n")
             arg_list = (
-                self._cfmm2tar_list
+                self.dcm4che_path.split()
+                + ["cfmm2tar"]
                 + ["-c", cred_file.name]
                 + date_query
                 + name_query
