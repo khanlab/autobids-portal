@@ -14,8 +14,7 @@ import tempfile
 
 # for quote python strings for safe use in posix shells
 import pipes
-
-from autobidsportal import app
+from flask import current_app
 
 
 def _get_stdout_stderr_returncode(cmd):
@@ -26,7 +25,7 @@ def _get_stdout_stderr_returncode(cmd):
         cmd,
         capture_output=True,
         check=True,
-        shell=True,  # This is kind of unsafe in a webapp, should rethink
+        shell=True,  # This is kind of unsafe in a webcurrent_app, should rethink
     )
 
     return proc.stdout, proc.stderr, proc.returncode
@@ -79,7 +78,7 @@ class Dcm4cheUtils:
         ]
         pis = [match.group(1) for match in pi_matches if match is not None]
 
-        all_pis = list(set(pis) - set(app.config["DICOM_PI_BLACKLIST"]))
+        all_pis = list(set(pis) - set(current_app.config["DICOM_PI_BLACKLIST"]))
 
         if len(all_pis) < 1:
             raise Dcm4cheError("No PIs accessible.")
@@ -295,13 +294,13 @@ class Dcm4cheUtils:
 
 
 def gen_utils():
-    """Generate a Dcm4cheUtils with values from the app config."""
+    """Generate a Dcm4cheUtils with values from the current_app config."""
     return Dcm4cheUtils(
-        app.config["DICOM_SERVER_URL"],
-        app.config["DICOM_SERVER_USERNAME"],
-        app.config["DICOM_SERVER_PASSWORD"],
-        app.config["DCM4CHE_PREFIX"],
-        app.config["TAR2BIDS_PREFIX"],
+        current_app.config["DICOM_SERVER_URL"],
+        current_app.config["DICOM_SERVER_USERNAME"],
+        current_app.config["DICOM_SERVER_PASSWORD"],
+        current_app.config["DCM4CHE_PREFIX"],
+        current_app.config["TAR2BIDS_PREFIX"],
     )
 
 
