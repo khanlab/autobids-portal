@@ -1,8 +1,11 @@
-from autobidsportal.models import User, Submitter, Answer
+"""Unit tests of the database models."""
+
 import datetime
+from autobidsportal.models import User, Submitter, Answer
 
 
 def test_new_user():
+    """Generate a user and ensure their password gets hashed."""
     user = User(email="johnsmith@gmail.com")
     user.set_password(password="Password123")
     assert user.email == "johnsmith@gmail.com"
@@ -11,11 +14,13 @@ def test_new_user():
 
 
 def test_new_user_with_fixture(new_user):
+    """Ensure the fixture user's password gets hashed."""
     assert new_user.email == "johnsmith@gmail.com"
     assert new_user.password_hash != "Password123"
 
 
 def test_new_submitter():
+    """Test submitter columns."""
     submitter = Submitter(email="johnsmith@gmail.com", name="John")
     assert submitter.email == "johnsmith@gmail.com"
     assert submitter.name == "John"
@@ -25,6 +30,7 @@ def test_new_submitter():
 
 
 def test_new_answer():
+    """Test answer columns."""
     answer = Answer(
         status="undergraduate",
         scanner="type2",
@@ -53,7 +59,7 @@ def test_new_answer():
     assert answer.status == "undergraduate"
     assert answer.scanner == "type2"
     assert answer.scan_number == 4
-    assert answer.study_type == True
+    assert answer.study_type
     assert answer.familiarity_bids == "1"
     assert answer.familiarity_bidsapp == "1"
     assert answer.familiarity_python == "1"
@@ -66,15 +72,36 @@ def test_new_answer():
     assert answer.project_name == "Autobids"
     assert answer.dataset_name == ""
     assert answer.sample == datetime.datetime(2021, 1, 10, 0, 0)
-    assert answer.retrospective_data == True
+    assert answer.retrospective_data
     assert answer.retrospective_start == datetime.datetime(2021, 1, 1, 0, 0)
     assert answer.retrospective_end == datetime.datetime(2021, 1, 5, 0, 0)
-    assert answer.consent == True
+    assert answer.consent
     assert answer.comment == ""
     assert answer.submission_date == datetime.datetime(
         2021, 1, 1, 10, 10, 10, 100000
     )
-    assert (
-        answer.__repr__()
-        == "<Answer ('undergraduate', 'type2', 4, True, '1', '1', '1', '1', '1', '1', '1', '1', 'Khan', 'Autobids', '', datetime.datetime(2021, 1, 10, 0, 0), True, datetime.datetime(2021, 1, 1, 0, 0), datetime.datetime(2021, 1, 5, 0, 0), True, '', datetime.datetime(2021, 1, 1, 10, 10, 10, 100000))>"
+    answers = (
+        "undergraduate",
+        "type2",
+        4,
+        True,
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "1",
+        "Khan",
+        "Autobids",
+        "",
+        datetime.datetime(2021, 1, 10, 0, 0),
+        True,
+        datetime.datetime(2021, 1, 1, 0, 0),
+        datetime.datetime(2021, 1, 5, 0, 0),
+        True,
+        "",
+        datetime.datetime(2021, 1, 1, 10, 10, 10, 100000),
     )
+    assert answer.__repr__() == f"<Answer {answers}>"

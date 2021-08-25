@@ -1,5 +1,7 @@
+"""Flask entry point with extra CLI commands."""
+
 from autobidsportal import app, db
-from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
+from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
     User,
     Answer,
@@ -11,12 +13,11 @@ from autobidsportal.models import (
     Tar2bids,
     Choice,
 )
-from datetime import datetime
-import time
 
 
 @app.shell_context_processor
 def make_shell_context():
+    """Add useful variables into the shell context."""
     return {
         "db": db,
         "User": User,
@@ -33,15 +34,14 @@ def make_shell_context():
 
 @app.cli.command()
 def check_pis():
-    """Run scheduled job that gets the list of pi names from dicom and appends them to the Principal table in the database"""
+    """Add a list of pi names from dicom server to the Principal table."""
     try:
         principal_names = gen_utils().get_all_pi_names()
         db.session.query(Principal).delete()
-        for p in principal_names:
-            principal = Principal(principal_name=p)
+        for principal_name in principal_names:
+            principal = Principal(principal_name=principal_name)
             db.session.add(principal)
             db.session.commit()
     except Dcm4cheError as err:
-        err_cause = err.__cause__.stderr
-        print(err_cause)
+        print(err)
     return "Success"

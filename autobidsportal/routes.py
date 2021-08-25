@@ -1,5 +1,13 @@
+"""All routes in the portal are defined here."""
+
+from datetime import datetime
+from smtplib import SMTPAuthenticationError
+
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, current_user, login_required
+from flask_mail import Message
+import flask_excel as excel
+
 from werkzeug.urls import url_parse
 from autobidsportal import app, db, mail
 from autobidsportal.models import (
@@ -12,6 +20,7 @@ from autobidsportal.models import (
     Tar2bids,
     Choice,
 )
+from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.forms import (
     LoginForm,
     BidsForm,
@@ -20,17 +29,17 @@ from autobidsportal.forms import (
     AccessForm,
     RemoveAccessForm,
 )
-from autobidsportal.dcm4cheutils import Dcm4cheUtils, gen_utils, Dcm4cheError
-from smtplib import SMTPAuthenticationError
-from datetime import datetime
-from flask_mail import Message
-import flask_excel as excel
 
 
 @app.route("/", methods=["GET", "POST"])
 @app.route("/index", methods=["GET", "POST"])
 def index():
-    """Adds submitter information and their answer to the database"""
+    """Provides a survey form for users to fill out.
+
+    If the Principal table is not empty, the principal names are added to
+    the principal dropdown in the form. Submitter information and their
+    answer is added to the database.
+    """
     form = BidsForm()
     principal_names = [
         (p.principal_name, p.principal_name)
@@ -84,7 +93,7 @@ def index():
             db.session.add(choice)
             db.session.commit()
 
-        flash(f"Thanks, the survey has been submitted!")
+        flash("Thanks, the survey has been submitted!")
 
         if app.config["MAIL_ENABLED"]:
             subject = "A new request has been submitted by %s" % (
@@ -95,7 +104,8 @@ def index():
 
             msg = Message(
                 subject=subject,
-                body="A new request has been submitted. Please login to see the submitter's response",
+                body="A new request has been submitted. Please login to "
+                + "see the submitter's response",
                 sender=sender,
                 recipients=recipients.split(),
             )
@@ -107,7 +117,7 @@ def index():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """Validates that user inputed correct email and password. If so, user is redirected to index."""
+    """Redirects user to login if they their email and password is valid."""
     if current_user.is_authenticated:
         return redirect(url_for("index"))
     form = LoginForm()
@@ -126,7 +136,10 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    """Validates that user is using a valid email and password when registering. After the user is registered, they are redirected to index."""
+    """Validates that provided email and password are valid.
+
+    After the user is registered, they are redirected to login.
+    """
     if current_user.is_authenticated:
         return redirect(url_for("index"))
     form = RegistrationForm()
@@ -185,12 +198,10 @@ def make_admin():
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = True
         c_records = Choice.query.all()
-        accepted = []
-        for choice in c_records:
-            accepted.append(choice)
-        for a in accepted:
-            if a not in user.access_to:
-                user.access_to.append(a)
+        accepted = c_records.copy()
+        for choice in accepted:
+            if choice not in user.access_to:
+                user.access_to.append(choice)
         db.session.commit()
     return render_template(
         "administration.html",
@@ -216,12 +227,10 @@ def remove_admin():
         user = User.query.filter_by(id=button_id).all()[0]
         user.admin = False
         c_records = Choice.query.all()
-        remove = []
-        for choice in c_records:
-            remove.append(choice)
-        for r in remove:
-            if r in user.access_to:
-                user.access_to.remove(r)
+        remove = c_records.copy()
+        for choice in remove:
+            if choice in user.access_to:
+                user.access_to.remove(choice)
         db.session.commit()
     return render_template(
         "administration.html",
@@ -250,9 +259,9 @@ def grant_access():
         for choice in c_records:
             if choice.id in form.choices.data:
                 accepted.append(choice)
-        for a in accepted:
-            if a not in user.access_to:
-                user.access_to.append(a)
+        for choice in accepted:
+            if choice not in user.access_to:
+                user.access_to.append(choice)
         db.session.commit()
 
     return render_template(
@@ -281,13 +290,14 @@ def remove_access():
         button_id = list(request.form.keys())[2].rsplit("-", 2)[1]
         user = User.query.filter_by(id=button_id).all()[0]
         c_records = Choice.query.all()
-        remove = []
-        for choice in c_records:
-            if choice.id in removal_form.choices_to_remove.data:
-                remove.append(choice)
-        for r in remove:
-            if r in user.access_to:
-                user.access_to.remove(r)
+        remove = [
+            choice
+            for choice in c_records
+            if choice.id in removal_form.choices_to_remove.data
+        ]
+        for choice in remove:
+            if choice in user.access_to:
+                user.access_to.remove(choice)
         db.session.commit()
 
     return render_template(
@@ -302,21 +312,20 @@ def remove_access():
 @app.route("/results", methods=["GET", "POST"])
 @login_required
 def results():
-    """Obtains all the responses from the database as well as the date and time the current user last logged in"""
+    """Get responses and the date and time the current user last logged in."""
     last = current_user.last_seen
     answers = []
-    for c in current_user.access_to:
+    for choice in current_user.access_to:
         ans = Answer.query.filter_by(
-            principal=c.desc.rsplit(" ", 2)[0],
-            project_name=c.desc.rsplit(" ", 2)[1],
+            principal=choice.desc.rsplit(" ", 2)[0],
+            project_name=choice.desc.rsplit(" ", 2)[1],
         ).all()
         if ans == []:
             ans = Answer.query.filter_by(
-                principal_other=c.desc.rsplit(" ", 2)[0],
-                project_name=c.desc.rsplit(" ", 2)[1],
+                principal_other=choice.desc.rsplit(" ", 2)[0],
+                project_name=choice.desc.rsplit(" ", 2)[1],
             ).all()
-        for a in ans:
-            answers.append(a)
+        answers.extend(ans)
 
     answers = sorted(answers, key=lambda x: x.submission_date, reverse=True)
 
@@ -410,7 +419,7 @@ def run_cfmm2tar():
 
         if app.config["MAIL_ENABLED"]:
             try:
-                if submitter_answer.principal_other == None:
+                if submitter_answer.principal_other is None:
                     subject = (
                         "A Cfmm2tar run for %s^%s has been submitted by %s"
                         % (
@@ -497,11 +506,6 @@ def run_tar2bids():
         submitter_answer = db.session.query(Answer).filter(
             Answer.submitter_id == button_id
         )[0]
-        tar_file = (
-            db.session.query(Cfmm2tar)
-            .filter(Cfmm2tar.id == cfmm2tar_file_id)[0]
-            .tar_file
-        )
         if current_user.get_task_in_progress("get_info_from_tar2bids"):
             flash("An Tar2bids run is currently in progress")
         else:
@@ -524,7 +528,7 @@ def run_tar2bids():
 
         if app.config["MAIL_ENABLED"]:
             try:
-                if submitter_answer.principal_other == None:
+                if submitter_answer.principal_other is None:
                     subject = (
                         "A Tar2bids run for %s^%s has been submitted by %s"
                         % (
@@ -540,13 +544,14 @@ def run_tar2bids():
                     sender = app.config["MAIL_USERNAME"]
                     recipients = app.config["MAIL_RECIPIENTS"]
 
-                    msg = Message(
-                        subject=subject,
-                        body=body,
-                        sender=sender,
-                        recipients=recipients.split(),
+                    mail.send(
+                        Message(
+                            subject=subject,
+                            body=body,
+                            sender=sender,
+                            recipients=recipients.split(),
+                        )
                     )
-                    mail.send(msg)
                 else:
                     subject = (
                         "A Tar2bids run for %s^%s has been submitted by %s"
@@ -563,15 +568,16 @@ def run_tar2bids():
                     sender = app.config["MAIL_USERNAME"]
                     recipients = app.config["MAIL_RECIPIENTS"]
 
-                    msg = Message(
-                        subject=subject,
-                        body=body,
-                        sender=sender,
-                        recipients=recipients.split(),
+                    mail.send(
+                        Message(
+                            subject=subject,
+                            body=body,
+                            sender=sender,
+                            recipients=recipients.split(),
+                        )
                     )
-                    mail.send(msg)
             except SMTPAuthenticationError as err:
-                print(err_cause)
+                print(err)
 
     return render_template(
         "answer_info.html",
@@ -618,7 +624,8 @@ def download():
             "Retrospective Data",
             "Retrospective Data Start Date",
             "Retrospective Data End Date",
-            "Consent" "Comment",
+            "Consent",
+            "Comment",
         ],
     ]
 
@@ -641,37 +648,36 @@ def download():
     def update_date(date):
         return date.date() if date is not None else date
 
-    def update_bool(bool):
-        return "Yes" if bool == "1" else "No"
+    def update_bool(bool_str):
+        return "Yes" if bool_str == "1" else "No"
 
-    for r in response_list:
-
+    for response in response_list:
         csv_list.append(
             [
-                r.submitter.name,
-                r.submitter.email,
-                r.status.capitalize(),
-                update_scanner(r.scanner),
-                r.scan_number,
-                update_bool(r.study_type),
-                update_familiarity(r.familiarity_bids),
-                update_familiarity(r.familiarity_bidsapp),
-                update_familiarity(r.familiarity_python),
-                update_familiarity(r.familiarity_linux),
-                update_familiarity(r.familiarity_bash),
-                update_familiarity(r.familiarity_hpc),
-                update_familiarity(r.familiarity_openneuro),
-                update_familiarity(r.familiarity_cbrain),
-                r.principal,
-                r.principal_other,
-                r.project_name,
-                r.dataset_name,
-                update_date(r.sample),
-                update_bool(r.retrospective_data),
-                update_date(r.retrospective_start),
-                update_date(r.retrospective_end),
-                update_bool(r.consent),
-                r.comment,
+                response.submitter.name,
+                response.submitter.email,
+                response.status.capitalize(),
+                update_scanner(response.scanner),
+                response.scan_number,
+                update_bool(response.study_type),
+                update_familiarity(response.familiarity_bids),
+                update_familiarity(response.familiarity_bidsapp),
+                update_familiarity(response.familiarity_python),
+                update_familiarity(response.familiarity_linux),
+                update_familiarity(response.familiarity_bash),
+                update_familiarity(response.familiarity_hpc),
+                update_familiarity(response.familiarity_openneuro),
+                update_familiarity(response.familiarity_cbrain),
+                response.principal,
+                response.principal_other,
+                response.project_name,
+                response.dataset_name,
+                update_date(response.sample),
+                update_bool(response.retrospective_data),
+                update_date(response.retrospective_start),
+                update_date(response.retrospective_end),
+                update_bool(response.consent),
+                response.comment,
             ]
         )
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
@@ -680,6 +686,7 @@ def download():
 @app.route("/results/user/dicom", methods=["GET", "POST"])
 @login_required
 def dicom_verify():
+    """Gets all DICOM results for a specific study."""
     button_id = list(request.form.keys())[0]
     submitter_answer = db.session.query(Answer).filter(
         Answer.submitter_id == button_id
@@ -690,7 +697,8 @@ def dicom_verify():
         study_info = (
             f"{submitter_answer.principal}^{submitter_answer.project_name}"
         )
-    # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime','EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
+    # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime',
+    # 'EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
     try:
         if list(request.form.values())[0] == "Config":
             dicom_response = gen_utils().query_single_study(
@@ -761,7 +769,7 @@ def dicom_verify():
 
 @app.route("/logout", methods=["GET", "POST"])
 def logout():
-    """Logs out current user"""
+    """Logs out current user."""
     if current_user.is_authenticated:
         current_user.last_seen = datetime.utcnow()
         db.session.commit()

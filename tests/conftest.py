@@ -1,17 +1,14 @@
+"""Test fixtures."""
+
 import pytest
-from flask import Flask, flash
-from config import Config_test
-from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager
-from flask_bootstrap import Bootstrap
-import flask_excel as excel
 
 from autobidsportal import app, db
-from autobidsportal.models import User, Answer, Submitter
+from autobidsportal.models import User
 
 
 @pytest.fixture(scope="module")
 def new_user():
+    """Make a user that can be added to the db."""
     user = User(email="johnsmith@gmail.com")
     user.set_password(password="Password123")
     return user
@@ -19,6 +16,7 @@ def new_user():
 
 @pytest.fixture(scope="module")
 def test_client():
+    """Make an app with the test config and yield a test client."""
     app.config.from_object("config.Config_test")
     with app.test_client() as testing_client:
         with app.app_context():
@@ -27,6 +25,7 @@ def test_client():
 
 @pytest.fixture(scope="module")
 def init_database(test_client):
+    """Create a test database and populate it with some users."""
     db.create_all()
     user1 = User(email="johnsmith@gmail.com")
     user1.set_password(password="Password123")
@@ -41,6 +40,7 @@ def init_database(test_client):
 
 @pytest.fixture(scope="function")
 def login_default_user(test_client):
+    """Log the default user in."""
     test_client.post(
         "/login",
         data=dict(email="johnsmith@gmail.com", password="Password123"),
