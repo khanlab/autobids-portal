@@ -2,8 +2,8 @@
 
 import pytest
 
-from autobidsportal import app, db
-from autobidsportal.models import User
+from autobidsportal import create_app
+from autobidsportal.models import db, User
 
 
 @pytest.fixture(scope="module")
@@ -17,7 +17,7 @@ def new_user():
 @pytest.fixture(scope="module")
 def test_client():
     """Make an app with the test config and yield a test client."""
-    app.config.from_object("config.Config_test")
+    app = create_app("config.Config_test")
     with app.test_client() as testing_client:
         with app.app_context():
             yield testing_client
