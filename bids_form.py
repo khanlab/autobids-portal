@@ -1,8 +1,9 @@
 """Flask entry point with extra CLI commands."""
 
-from autobidsportal import app, db
+from autobidsportal import create_app
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
+    db,
     User,
     Answer,
     Submitter,
@@ -13,6 +14,9 @@ from autobidsportal.models import (
     Tar2bids,
     Choice,
 )
+
+
+app = create_app()
 
 
 @app.shell_context_processor

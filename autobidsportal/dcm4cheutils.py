@@ -78,7 +78,9 @@ class Dcm4cheUtils:
         ]
         pis = [match.group(1) for match in pi_matches if match is not None]
 
-        all_pis = list(set(pis) - set(current_app.config["DICOM_PI_BLACKLIST"]))
+        all_pis = list(
+            set(pis) - set(current_app.config["DICOM_PI_BLACKLIST"])
+        )
 
         if len(all_pis) < 1:
             raise Dcm4cheError("No PIs accessible.")
