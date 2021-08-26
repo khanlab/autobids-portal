@@ -175,9 +175,9 @@ def user_list():
     return render_template("admin.html", title="Administration", users=users)
 
 
-@portal_blueprint.route("/administration", methods=["GET", "POST"])
+@portal_blueprint.route("/admin/<int:user_id>", methods=["GET", "POST"])
 @login_required
-def admin():
+def admin(user_id):
     """Obtains more information about a specific registered user."""
     form = AccessForm()
     removal_form = RemoveAccessForm()
@@ -185,140 +185,39 @@ def admin():
         (c.id, c.desc) for c in db.session.query(Choice).all()
     ]
     removal_form.choices_to_remove.choices = form.choices.choices
+    user = User.query.get(user_id)
     if request.method == "POST":
-        button_id = list(request.form.keys())[0]
-        user = User.query.filter_by(id=button_id)[0]
-    return render_template(
-        "administration.html",
-        title="Administration",
-        form=form,
-        removal_form=removal_form,
-        user=user,
-    )
-
-
-@portal_blueprint.route("/administration/make_admin", methods=["GET", "POST"])
-@login_required
-def make_admin():
-    """Grants a particular user's admin privileges."""
-    button_id = list(request.form.keys())[0].rsplit("-", 2)[1]
-    form = AccessForm()
-    removal_form = RemoveAccessForm()
-    form.choices.choices = [
-        (c.id, c.desc) for c in db.session.query(Choice).all()
-    ]
-    removal_form.choices_to_remove.choices = form.choices.choices
-    if request.method == "POST":
-        user = User.query.filter_by(id=button_id).all()[0]
-        user.admin = True
         c_records = Choice.query.all()
-        accepted = c_records.copy()
-        for choice in accepted:
-            if choice not in user.access_to:
-                user.access_to.append(choice)
-        db.session.commit()
-    return render_template(
-        "administration.html",
-        title="Administration",
-        form=form,
-        removal_form=removal_form,
-        user=user,
-    )
-
-
-@portal_blueprint.route(
-    "/administration/remove_admin", methods=["GET", "POST"]
-)
-@login_required
-def remove_admin():
-    """Removes a particular user's admin privileges."""
-    button_id = list(request.form.keys())[0].rsplit("-", 2)[1]
-    form = AccessForm()
-    removal_form = RemoveAccessForm()
-    form.choices.choices = [
-        (c.id, c.desc) for c in db.session.query(Choice).all()
-    ]
-    removal_form.choices_to_remove.choices = form.choices.choices
-    if request.method == "POST":
-        user = User.query.filter_by(id=button_id).all()[0]
-        user.admin = False
-        c_records = Choice.query.all()
-        remove = c_records.copy()
-        for choice in remove:
-            if choice in user.access_to:
-                user.access_to.remove(choice)
-        db.session.commit()
-    return render_template(
-        "administration.html",
-        title="Administration",
-        form=form,
-        removal_form=removal_form,
-        user=user,
-    )
-
-
-@portal_blueprint.route(
-    "/administration/grant_access", methods=["GET", "POST"]
-)
-@login_required
-def grant_access():
-    """Grants a particular user's the ability to view certain studies."""
-    form = AccessForm(request.form)
-    removal_form = RemoveAccessForm()
-    form.choices.choices = [
-        (c.id, c.desc) for c in db.session.query(Choice).all()
-    ]
-    removal_form.choices_to_remove.choices = form.choices.choices
-    if request.method == "POST" and form.validate_on_submit():
-        button_id = list(request.form.keys())[2].rsplit("-", 2)[1]
-        user = User.query.filter_by(id=button_id).all()[0]
-        c_records = Choice.query.all()
-        accepted = []
-        for choice in c_records:
-            if choice.id in form.choices.data:
-                accepted.append(choice)
-        for choice in accepted:
-            if choice not in user.access_to:
-                user.access_to.append(choice)
-        db.session.commit()
-
-    return render_template(
-        "administration.html",
-        title="Administration",
-        form=form,
-        removal_form=removal_form,
-        user=user,
-    )
-
-
-@portal_blueprint.route(
-    "/administration/remove_access", methods=["GET", "POST"]
-)
-@login_required
-def remove_access():
-    """Removes a particular user's ability to view certain studies."""
-    form = AccessForm(request.form)
-    removal_form = RemoveAccessForm()
-    form.choices.choices = [
-        (c.id, c.desc) for c in db.session.query(Choice).all()
-    ]
-    removal_form.choices_to_remove.choices = [
-        (c.id, c.desc) for c in db.session.query(Choice).all()
-    ]
-    print(removal_form.choices_to_remove.choices)
-    if request.method == "POST" and removal_form.validate_on_submit():
-        button_id = list(request.form.keys())[2].rsplit("-", 2)[1]
-        user = User.query.filter_by(id=button_id).all()[0]
-        c_records = Choice.query.all()
-        remove = [
-            choice
-            for choice in c_records
-            if choice.id in removal_form.choices_to_remove.data
-        ]
-        for choice in remove:
-            if choice in user.access_to:
-                user.access_to.remove(choice)
-        db.session.commit()
+        if "admin" in request.form:
+            make_admin = request.form["admin"].lower() == "true"
+            if make_admin:
+                user.admin = True
+                new_choice = [
+                    choice
+                    for choice in c_records
+                    if choice not in user.access_to
+                ]
+                user.access_to.extend(new_choice)
+            else:
+                user.admin = False
+                user.access_to = []
+            db.session.commit()
+        if form.validate_on_submit():
+            for choice in c_records:
+                if (
+                    choice.id in form.choices.data
+                    and choice not in user.access_to
+                ):
+                    user.access_to.append(choice)
+            db.session.commit()
+        if removal_form.validate_on_submit():
+            for choice in c_records:
+                if (
+                    choice.id in removal_form.choices_to_remove.data
+                    and choice in user.access_to
+                ):
+                    user.access_to.remove(choice)
+            db.session.commit()
 
     return render_template(
         "administration.html",

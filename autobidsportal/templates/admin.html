@@ -15,9 +15,7 @@
                 {% for u in users %}
                 <tr>
                     <td>
-                        <form method="POST" action="{{ url_for('portal_blueprint.admin') }}">
-                            <input name={{u.id}} class="btn btn-default" type="submit" value="View more"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.admin', user_id=u.id) }}" role="button">View more</a>
                     </td>
                     <td>{% if u.admin==True %}Yes{% else %}No{% endif %}</td>
                     <td>{{ u.email }}</td>
