@@ -178,7 +178,17 @@ def user_list():
 @portal_blueprint.route("/admin/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def admin(user_id):
-    """Obtains more information about a specific registered user."""
+    """Exposes information about a specific registered user.
+
+    A GET request shows a page with information about the user.
+
+    A POST request alters some aspect of the user, then shows the same page.
+
+    Parameters
+    ----------
+    user_id : int
+        ID of the user to expose.
+    """
     form = AccessForm()
     removal_form = RemoveAccessForm()
     form.choices.choices = [
