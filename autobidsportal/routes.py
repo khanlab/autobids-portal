@@ -11,6 +11,7 @@ from flask import (
     redirect,
     url_for,
     request,
+    abort,
 )
 from flask_login import login_user, logout_user, current_user, login_required
 from flask_mail import Mail, Message
@@ -263,43 +264,26 @@ def results():
     )
 
 
-@portal_blueprint.route("/results/user", methods=["GET", "POST"])
+@portal_blueprint.route("/results/<int:answer_id>", methods=["GET"])
 @login_required
-def answer_info():
+def answer_info(answer_id):
     """Obtains complete survey response based on the submission id"""
     form = HeuristicForm()
-    if request.method == "POST":
-        button_id = list(request.form.keys())[0]
-        if "-" in button_id:
-            cfmm2tar_file_id = button_id.rsplit("-", 2)[1]
-            button_id = button_id.rsplit("-", 2)[0]
-            current_user.second_last_pressed_button_id = button_id
-            current_user.last_pressed_button_id = cfmm2tar_file_id
-        else:
-            current_user.last_pressed_button_id = button_id
-            current_user.second_last_pressed_button_id = None
-        db.session.commit()
-        submitter_answer = db.session.query(Answer).filter(
-            Answer.submitter_id == button_id
-        )[0]
-        cfmm2tar_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running cfmm2tar-"
-        ).all()
-        cfmm2tar_files = Cfmm2tar.query.filter_by(
-            task_button_id=button_id
-        ).all()
-        tar2bids_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running tar2bids-"
-        ).all()
-        tar2bids_files = Tar2bids.query.filter_by(
-            task_button_id=button_id
-        ).all()
+    answer = Answer.query.get(answer_id)
+    cfmm2tar_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running cfmm2tar-"
+    ).all()
+    cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id=answer_id).all()
+    tar2bids_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running tar2bids-"
+    ).all()
+    tar2bids_files = Tar2bids.query.filter_by(task_button_id=answer_id).all()
     return render_template(
         "answer_info.html",
         title="Response",
-        submitter_answer=submitter_answer,
+        submitter_answer=answer,
         cfmm2tar_tasks=cfmm2tar_tasks,
-        button_id=current_user.last_pressed_button_id,
+        button_id=answer_id,
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
@@ -307,102 +291,62 @@ def answer_info():
     )
 
 
-@portal_blueprint.route("/results/user/cfmm2tar", methods=["GET", "POST"])
+@portal_blueprint.route("/results/<int:answer_id>/cfmm2tar", methods=["POST"])
 @login_required
-def run_cfmm2tar():
+def run_cfmm2tar(answer_id):
     """Launch cfmm2tar task and refresh answer_info.html"""
     form = HeuristicForm()
-    if request.method == "POST":
-        button_id = list(request.form.keys())[0]
-        if "-" in button_id:
-            cfmm2tar_file_id = button_id.rsplit("-", 2)[1]
-            button_id = button_id.rsplit("-", 2)[0]
-            current_user.second_last_pressed_button_id = button_id
-            current_user.last_pressed_button_id = cfmm2tar_file_id
-        else:
-            current_user.last_pressed_button_id = button_id
-            current_user.second_last_pressed_button_id = None
+    submitter_answer = Answer.query.get(answer_id)
+    if current_user.get_task_in_progress("get_info_from_cfmm2tar"):
+        flash("An Cfmm2tar run is currently in progress")
+    else:
+        current_user.launch_task(
+            "get_info_from_cfmm2tar", ("Running cfmm2tar-")
+        )
         db.session.commit()
-        submitter_answer = db.session.query(Answer).filter(
-            Answer.submitter_id == button_id
-        )[0]
-        if current_user.get_task_in_progress("get_info_from_cfmm2tar"):
-            flash("An Cfmm2tar run is currently in progress")
+    if current_app.config["MAIL_ENABLED"]:
+        if submitter_answer.principal_other is None:
+            principal_actual = submitter_answer.principal
         else:
-            current_user.launch_task(
-                "get_info_from_cfmm2tar", ("Running cfmm2tar-")
-            )
-            db.session.commit()
-        cfmm2tar_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running cfmm2tar-"
-        ).all()
-        cfmm2tar_files = Cfmm2tar.query.filter_by(
-            task_button_id=button_id
-        ).all()
-        tar2bids_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running tar2bids-"
-        ).all()
-        tar2bids_files = Tar2bids.query.filter_by(
-            task_button_id=button_id
-        ).all()
+            principal_actual = submitter_answer.principal_other
+        subject = "A Cfmm2tar run for %s^%s has been submitted by %s" % (
+            principal_actual,
+            submitter_answer.project_name,
+            submitter_answer.submitter.name,
+        )
+        body = "A Cfmm2tar run for %s^%s has been submitted." % (
+            principal_actual,
+            submitter_answer.project_name,
+        )
+        sender = current_app.config["MAIL_USERNAME"]
+        recipients = current_app.config["MAIL_RECIPIENTS"]
 
-        if current_app.config["MAIL_ENABLED"]:
-            try:
-                if submitter_answer.principal_other is None:
-                    subject = (
-                        "A Cfmm2tar run for %s^%s has been submitted by %s"
-                        % (
-                            submitter_answer.principal,
-                            submitter_answer.project_name,
-                            submitter_answer.submitter.name,
-                        )
-                    )
-                    body = "A Cfmm2tar run for %s^%s has been submitted." % (
-                        submitter_answer.principal,
-                        submitter_answer.project_name,
-                    )
-                    sender = current_app.config["MAIL_USERNAME"]
-                    recipients = current_app.config["MAIL_RECIPIENTS"]
+        msg = Message(
+            subject=subject,
+            body=body,
+            sender=sender,
+            recipients=recipients.split(),
+        )
+        try:
+            mail.send(msg)
+        except SMTPAuthenticationError as err:
+            print(err)
 
-                    msg = Message(
-                        subject=subject,
-                        body=body,
-                        sender=sender,
-                        recipients=recipients.split(),
-                    )
-                    mail.send(msg)
-                else:
-                    subject = (
-                        "A Cfmm2tar run for %s^%s has been submitted by %s"
-                        % (
-                            submitter_answer.principal_other,
-                            submitter_answer.project_name,
-                            submitter_answer.submitter.name,
-                        )
-                    )
-                    body = "A Cfmm2tar run for %s^%s has been submitted." % (
-                        submitter_answer.principal_other,
-                        submitter_answer.project_name,
-                    )
-                    sender = current_app.config["MAIL_USERNAME"]
-                    recipients = current_app.config["MAIL_RECIPIENTS"]
-
-                    msg = Message(
-                        subject=subject,
-                        body=body,
-                        sender=sender,
-                        recipients=recipients.split(),
-                    )
-                    mail.send(msg)
-            except SMTPAuthenticationError as err:
-                print(err)
+    cfmm2tar_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running cfmm2tar-"
+    ).all()
+    cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id=answer_id).all()
+    tar2bids_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running tar2bids-"
+    ).all()
+    tar2bids_files = Tar2bids.query.filter_by(task_button_id=answer_id).all()
 
     return render_template(
         "answer_info.html",
         title="Response",
         submitter_answer=submitter_answer,
         cfmm2tar_tasks=cfmm2tar_tasks,
-        button_id=current_user.last_pressed_button_id,
+        button_id=answer_id,
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
@@ -410,31 +354,19 @@ def run_cfmm2tar():
     )
 
 
-@portal_blueprint.route("/results/user/tar2bids", methods=["GET", "POST"])
+@portal_blueprint.route("/results/<int:answer_id>/tar2bids", methods=["POST"])
 @login_required
-def run_tar2bids():
+def run_tar2bids(answer_id):
     """Launch tar2bids task and refresh answer_info.html"""
     form = HeuristicForm()
-    if form.validate_on_submit() and request.method == "POST":
+    if form.validate_on_submit():
         current_user.selected_heuristic = form.heuristic.data
         all_options = dict(form.heuristic.choices)
         options = list(all_options.values())
         options.remove(form.heuristic.data)
         current_user.other_heuristic = " ".join(options)
 
-        button_id = list(request.form.keys())[2]
-        if "-" in button_id:
-            cfmm2tar_file_id = button_id.rsplit("-", 2)[1]
-            button_id = button_id.rsplit("-", 2)[0]
-            current_user.second_last_pressed_button_id = button_id
-            current_user.last_pressed_button_id = cfmm2tar_file_id
-        else:
-            current_user.last_pressed_button_id = button_id
-            current_user.second_last_pressed_button_id = None
-        db.session.commit()
-        submitter_answer = db.session.query(Answer).filter(
-            Answer.submitter_id == button_id
-        )[0]
+        submitter_answer = Answer.query.get(answer_id)
         if current_user.get_task_in_progress("get_info_from_tar2bids"):
             flash("An Tar2bids run is currently in progress")
         else:
@@ -442,78 +374,51 @@ def run_tar2bids():
                 "get_info_from_tar2bids", ("Running tar2bids-")
             )
             db.session.commit()
-        cfmm2tar_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running cfmm2tar-"
-        ).all()
-        cfmm2tar_files = Cfmm2tar.query.filter_by(
-            task_button_id=button_id
-        ).all()
-        tar2bids_tasks = Task.query.filter_by(
-            task_button_id=button_id, description="Running tar2bids-"
-        ).all()
-        tar2bids_files = Tar2bids.query.filter_by(
-            task_button_id=button_id
-        ).all()
 
         if current_app.config["MAIL_ENABLED"]:
+            if submitter_answer.principal_other is None:
+                principal_actual = submitter_answer.principal
+            else:
+                principal_actual = submitter_answer.principal_other
+            subject = "A Tar2bids run for %s^%s has been submitted by %s" % (
+                principal_actual,
+                submitter_answer.project_name,
+                submitter_answer.submitter.name,
+            )
+            body = "A Tar2bids run for %s^%s has been submitted." % (
+                principal_actual,
+                submitter_answer.project_name,
+            )
+            sender = current_app.config["MAIL_USERNAME"]
+            recipients = current_app.config["MAIL_RECIPIENTS"]
+
             try:
-                if submitter_answer.principal_other is None:
-                    subject = (
-                        "A Tar2bids run for %s^%s has been submitted by %s"
-                        % (
-                            submitter_answer.principal,
-                            submitter_answer.project_name,
-                            submitter_answer.submitter.name,
-                        )
+                mail.send(
+                    Message(
+                        subject=subject,
+                        body=body,
+                        sender=sender,
+                        recipients=recipients.split(),
                     )
-                    body = "A Tar2bids run for %s^%s has been submitted." % (
-                        submitter_answer.principal,
-                        submitter_answer.project_name,
-                    )
-                    sender = current_app.config["MAIL_USERNAME"]
-                    recipients = current_app.config["MAIL_RECIPIENTS"]
-
-                    mail.send(
-                        Message(
-                            subject=subject,
-                            body=body,
-                            sender=sender,
-                            recipients=recipients.split(),
-                        )
-                    )
-                else:
-                    subject = (
-                        "A Tar2bids run for %s^%s has been submitted by %s"
-                        % (
-                            submitter_answer.principal_other,
-                            submitter_answer.project_name,
-                            submitter_answer.submitter.name,
-                        )
-                    )
-                    body = "A Tar2bids run for %s^%s has been submitted." % (
-                        submitter_answer.principal_other,
-                        submitter_answer.project_name,
-                    )
-                    sender = current_app.config["MAIL_USERNAME"]
-                    recipients = current_app.config["MAIL_RECIPIENTS"]
-
-                    mail.send(
-                        Message(
-                            subject=subject,
-                            body=body,
-                            sender=sender,
-                            recipients=recipients.split(),
-                        )
-                    )
+                )
             except SMTPAuthenticationError as err:
                 print(err)
+
+    cfmm2tar_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running cfmm2tar-"
+    ).all()
+    cfmm2tar_files = Cfmm2tar.query.filter_by(task_button_id=answer_id).all()
+    tar2bids_tasks = Task.query.filter_by(
+        task_button_id=answer_id, description="Running tar2bids-"
+    ).all()
+    tar2bids_files = Tar2bids.query.filter_by(task_button_id=answer_id).all()
 
     return render_template(
         "answer_info.html",
         title="Response",
         submitter_answer=submitter_answer,
         cfmm2tar_tasks=cfmm2tar_tasks,
-        button_id=current_user.last_pressed_button_id,
+        button_id=answer_id,
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
@@ -612,14 +517,13 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
-@portal_blueprint.route("/results/user/dicom", methods=["GET", "POST"])
+@portal_blueprint.route(
+    "/results/<int:answer_id>/dicom/<string:method>", methods=["GET"]
+)
 @login_required
-def dicom_verify():
+def dicom_verify(answer_id, method):
     """Gets all DICOM results for a specific study."""
-    button_id = list(request.form.keys())[0]
-    submitter_answer = db.session.query(Answer).filter(
-        Answer.submitter_id == button_id
-    )[0]
+    submitter_answer = Answer.query.get(answer_id)
     if submitter_answer.principal_other != "":
         study_info = (
             f"{submitter_answer.principal_other}^"
@@ -631,58 +535,34 @@ def dicom_verify():
         )
     # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime',
     # 'EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
+    if method.lower() == "both":
+        description = study_info
+        date = submitter_answer.sample.date()
+    elif method.lower() == "date":
+        description = None
+        date = submitter_answer.sample.date()
+    elif method.lower() == "description":
+        description = study_info
+        date = None
+    else:
+        abort(404)
     try:
-        if list(request.form.values())[0] == "Config":
-            dicom_response = gen_utils().query_single_study(
-                study_description=study_info,
-                study_date=submitter_answer.sample.date(),
-                output_fields=[
-                    "00100010",
-                    "0008103E",
-                    "00200011",
-                    "00180080",
-                    "00180081",
-                    "00181030",
-                    "00100020",
-                    "00180024",
-                    "00100040",
-                ],
-                retrieve_level="SERIES",
-            )
-        elif list(request.form.values())[0] == "Config-Study Date":
-            dicom_response = gen_utils().query_single_study(
-                study_description=None,
-                study_date=submitter_answer.sample.date(),
-                output_fields=[
-                    "00100010",
-                    "0008103E",
-                    "00200011",
-                    "00180080",
-                    "00180081",
-                    "00181030",
-                    "00100020",
-                    "00180024",
-                    "00100040",
-                ],
-                retrieve_level="SERIES",
-            )
-        else:
-            dicom_response = gen_utils().query_single_study(
-                study_description=study_info,
-                study_date=None,
-                output_fields=[
-                    "00100010",
-                    "0008103E",
-                    "00200011",
-                    "00180080",
-                    "00180081",
-                    "00181030",
-                    "00100020",
-                    "00180024",
-                    "00100040",
-                ],
-                retrieve_level="SERIES",
-            )
+        dicom_response = gen_utils().query_single_study(
+            study_description=description,
+            study_date=date,
+            output_fields=[
+                "00100010",
+                "0008103E",
+                "00200011",
+                "00180080",
+                "00180081",
+                "00181030",
+                "00100020",
+                "00180024",
+                "00100040",
+            ],
+            retrieve_level="SERIES",
+        )
         return render_template(
             "dicom.html",
             title="Dicom Result",
