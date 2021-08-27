@@ -30,9 +30,7 @@
                 {% if r.submission_date > last %}
                 <tr class="new">
                     <td>
-                        <form method="POST" action="{{ url_for('portal_blueprint.answer_info') }}">
-                            <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.answer_info', answer_id=r.id) }}" role="button">View more</a>
                     </td>
                     <td>{{ r.submitter.name }}</td>
                     <td>{{ r.submitter.email }}</td>
@@ -61,9 +59,7 @@
                 {% else %}
                 <tr>
                     <td>
-                        <form method="POST" action="{{ url_for('portal_blueprint.answer_info') }}">
-                            <input name={{r.submitter.id}} class="btn btn-default" type="submit" value="View more"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.answer_info', answer_id=r.id) }}" role="button">View more</a>
                     </td>
                     <td>{{ r.submitter.name }}</td>
                     <td>{{ r.submitter.email }}</td>

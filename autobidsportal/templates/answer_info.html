@@ -75,17 +75,11 @@
 
                 <tr>
                     <td>
-                        <form method="POST" action="{{ url_for('portal_blueprint.dicom_verify') }}">
-                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config" class="btn btn-default"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
                         <br>
-                        <form method="POST" action="{{ url_for('portal_blueprint.dicom_verify') }}">
-                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Date" class="btn btn-default"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
                         <br>
-                        <form method="POST" action="{{ url_for('portal_blueprint.dicom_verify') }}">
-                            <input type="submit" name={{submitter_answer.submitter.id}} value="Config-Study Description" class="btn btn-default"></input>
-                        </form> 
+                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
                     </td>
                     <td>{{ submitter_answer.submitter.name }}</td>
                     <td>{{ submitter_answer.submitter.email }}</td>
@@ -265,8 +259,8 @@
 
 <div class="col-xs-12 text-center">
     <div class="text-center">
-        <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar') }}">
-            <input type="submit" name={{submitter_answer.submitter.id}} value="Run cfmm2tar" class="btn btn-default"></input>
+        <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', answer_id=submitter_answer.id) }}">
+            <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-default"></input>
         </form>
     </div>
 </div>
@@ -317,12 +311,12 @@
                 {% for f in cfmm2tar_files %}
                 <tr>
                     <td class="col-md-1">
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids') }}">
+                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', answer_id=submitter_answer.id) }}">
                             {{ form.csrf_token }}
                             {{ form.heuristic.label }}
                             {{ form.heuristic(class="form-control", style="width: 200px") }} 
                             <br>
-                            <input type="submit" name={{submitter_answer.submitter.id}}-{{f.id}} value="Run tar2bids" class="btn btn-default"></input>
+                            <input type="submit" name="tar2bids" value="Run tar2bids" class="btn btn-default"></input>
                         </form>
                     </td>
                     <td class="col-md-2">{{ f.uid_file }}</td>
