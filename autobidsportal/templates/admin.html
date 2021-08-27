@@ -1,33 +1,35 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <div class="col-xs-12">
-        <div class="table-responsive">
-            <table class="table">
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">Admin</th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Has access to the following studies</th>
-                </tr>
-    
-                {% for u in users %}
-                <tr>
-                    <td>
-                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.admin', user_id=u.id) }}" role="button">View more</a>
-                    </td>
-                    <td>{% if u.admin==True %}Yes{% else %}No{% endif %}</td>
-                    <td>{{ u.email }}</td>
-                    <td>{{ u.email }}</td>
-                    <td>
-                        {% for a in u.access_to %}
-                            <div>{{ a.desc.replace(" ", "^") }}</div>
-                        {% endfor %}   
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+    <div class="container">
+        <div class="row my-3">
+            <div class="col">
+                <table class="table table-light">
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">Admin</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Has access to the following studies</th>
+                    </tr>
+        
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <a class="btn btn-primary" href="{{ url_for('portal_blueprint.admin', user_id=u.id) }}" role="button">View more</a>
+                        </td>
+                        <td>{% if u.admin==True %}Yes{% else %}No{% endif %}</td>
+                        <td>{{ u.email }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            {% for a in u.access_to %}
+                                <div>{{ a.desc.replace(" ", "^") }}</div>
+                            {% endfor %}   
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
     </div>             
 {% endblock %}

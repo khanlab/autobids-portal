@@ -1,11 +1,17 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-<div class="panel panel-default">
-    <div class="panel-body">
-        <h1>{{ err }}</h1>
-        <p>{{ err_cause }}</p>
-        <p><a href="{{ url_for('portal_blueprint.results') }}">Back</a></p>
+<div class="container">
+    <div class="row my-3">
+        <div class="col">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title">{{ err }}</h1>
+                    <p class="card-text">{{ err_cause }}</p>
+                    <a class="card-link" href="{{ url_for('portal_blueprint.results') }}">Back</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

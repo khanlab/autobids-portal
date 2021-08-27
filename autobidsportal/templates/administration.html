@@ -1,80 +1,80 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <div class="col-xs-12">
-        <div class="table-responsive">
-            <table class="table">
-                <tr>
-                    <th scope="col">Administrator</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Access to which studies?</th>
-                    <th scope="col">Grant access to the following studies?</th>
-                    <th scope="col">Remove access to the following studies?</th>
-                </tr>
+    <div class="container">
+        <div class="row my-3">
+            <div class="col">
+                <table class="table table-light">
+                    <tr>
+                        <th scope="col">Administrator</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Access to which studies?</th>
+                        <th scope="col">Grant access to the following studies?</th>
+                        <th scope="col">Remove access to the following studies?</th>
+                    </tr>
 
-                <tr>
-                    <td>
-                        {% if user.admin == True %}
-                            <div>Yes</div>
-                            <br>
-                            <form id="form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                                <button class="btn btn-default" type="submit" name="admin" value="False">Remove Admin</button>
-                            </form>
-                        {% else %}
-                            <div>No</div>
-                            <br>
-                            <form id="form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                                <button class="btn btn-default" type="submit" name="admin" value="True">Make Admin</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>{{ user.email }}</td>
-                    <td>
-                        {% for a in user.access_to %}
-                            <div>{{ a.desc.replace(" ", "^") }}</div>
-                        {% endfor %}
-                    </td>
-                    <td>
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                            <fieldset class="form-group">
-                                {{ form.csrf_token }}
-                                {% for choice in form.choices %}
-                                    <div class="form-check">
-                                        {{ choice(class="form-check-input") }}
-                                        {{ choice.label(class="form-check-label") }}
-                                    </div>
-                                {% endfor %}
-                            </fieldset>
+                    <tr>
+                        <td>
                             {% if user.admin == True %}
-                                <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default" disabled="disabled"></input>
+                                <div>Yes</div>
+                                <br>
+                                <form id="form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                                    <button class="btn btn-primary" type="submit" name="admin" value="False">Remove Admin</button>
+                                </form>
                             {% else %}
-                                <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-default"></input>
+                                <div>No</div>
+                                <br>
+                                <form id="form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                                    <button class="btn btn-primary" type="submit" name="admin" value="True">Make Admin</button>
+                                </form>
                             {% endif %}
-                        </form>
-                    </td>
-
-                    <td>
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                            <fieldset class="form-group">
-                                {{ removal_form.csrf_token }}
-                                {% for choice in removal_form.choices_to_remove %}
-                                    {% if choice not in user.access_to %}
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% for a in user.access_to %}
+                                <div>{{ a.desc.replace(" ", "^") }}</div>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                                <fieldset class="form-group">
+                                    {{ form.csrf_token }}
+                                    {% for choice in form.choices %}
                                         <div class="form-check">
                                             {{ choice(class="form-check-input") }}
                                             {{ choice.label(class="form-check-label") }}
                                         </div>
-                                    {% endif %}
-                                {% endfor %}
-                            </fieldset>
-                            {% if user.admin == True %}
-                                <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-default" disabled="disabled"></input>
-                            {% else %}
-                                <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-default"></input>
-                            {% endif %}
-                        </form>
-                    </td>
-                </tr>
-            </table>
+                                    {% endfor %}
+                                </fieldset>
+                                <br>
+                                <input type="submit" name=access-{{user.id}} value="Grant Access" class="btn btn-primary" {% if user.admin %} disabled="disabled" {% endif %}></input>
+                            </form>
+                        </td>
+
+                        <td>
+                            <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                                <fieldset class="form-group">
+                                    {{ removal_form.csrf_token }}
+                                    {% for choice in removal_form.choices_to_remove %}
+                                        {% if choice not in user.access_to %}
+                                            <div class="form-check">
+                                                {{ choice(class="form-check-input") }}
+                                                {{ choice.label(class="form-check-label") }}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </fieldset>
+                                <br>
+                                {% if user.admin == True %}
+                                    <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-primary" disabled="disabled"></input>
+                                {% else %}
+                                    <input type="submit" name=remove-{{user.id}} value="Remove Access" class="btn btn-primary"></input>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>             
 {% endblock %}

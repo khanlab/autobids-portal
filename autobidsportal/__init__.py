@@ -5,7 +5,6 @@ import os
 from flask import Flask
 from sqlalchemy import MetaData
 from flask_migrate import Migrate
-from flask_bootstrap import Bootstrap
 import flask_excel as excel
 from redis import Redis
 import rq
@@ -40,6 +39,5 @@ def create_app(config_object=None):
     login.init_app(app)
     login.login_view = "login"
     mail.init_app(app)
-    bootstrap = Bootstrap(app)
 
     return app
