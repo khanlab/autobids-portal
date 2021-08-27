@@ -6,8 +6,9 @@ import os
 
 from rq import get_current_job
 
-from autobidsportal import app, db
+from autobidsportal import create_app
 from autobidsportal.models import (
+    db,
     User,
     Answer,
     Task,
@@ -19,6 +20,10 @@ from autobidsportal.dcm4cheutils import (
     Cfmm2tarError,
     Tar2bidsError,
 )
+
+
+app = create_app()
+app.app_context().push()
 
 
 def _set_task_progress(progress, error):
