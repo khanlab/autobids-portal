@@ -1,246 +1,193 @@
 {% extends "base.html" %}
-​
 {% block app_content %}
 <div class="container">
-    <form id="survey-form" action="" method="post">
+    <form action="" method="post">
         {{ form.csrf_token }}
-        <div class="panel panel-default">
-            <div class="panel-body" style="text-align: center">
-                <h1 id="title">New study request: autobids-cfmm </h1>
-                <h4 id="description">Please use this form to submit information for initiating a new autobids project</h3>
+        <div class="card text-center my-3">
+            <div class="card-body">
+                <h1 class="card-title" id="title">New study request: autobids-cfmm </h1>
+                <h4 class="card-subtitle" id="description">Please use this form to submit information for initiating a new autobids project</h3>
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.name.label }}
-                {{ form.name(class="form-control", style="width: 400px", placeholder="Please enter your name") }} 
+                {{ form.name(class="form-control w-25", placeholder="Please enter your name") }} 
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.email.label }}
-                {{ form.email(class="form-control", style="width: 400px", placeholder="Please enter a valid email address") }}
+                {{ form.email(class="form-control w-25",placeholder="Please enter a valid email address") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <h4>General Information</h4>
-                <p>The following questions are used to better understand resource requirements and needs of users.</p>
+        <div class="card my-3">
+            <div class="card-body">
+                <h4 class="card-title">General Information</h4>
+                <p class="card-text">The following questions are used to better understand resource requirements and needs of users.</p>
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.status.label }}
                 {% for status in form.status %}
-                    <div class="radio">
-                        <label style="padding: 0px">
-                            {{ status(style="margin-left: 0") }}
-                            {{ status.label(style="margin: 0") }}
-                        </label>
+                    <div class="form-check">
+                        {{ status(class="form-check-input") }}
+                        {{ status.label(class="form-check-label") }}
                     </div>
                 {% endfor %}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.scanner.label }}
                 {% for scanner in form.scanner %}
-                <div class="radio">
-                    <label style="padding: 0px">
-                        {{ scanner(style="margin-left: 0") }}
-                        {{ scanner.label(style="margin: 0") }}
-                    </label>
+                <div class="form-check">
+                    {{ scanner(class="form-check-input") }}
+                    {{ scanner.label(class="form-check-label") }}
                 </div>
                 {% endfor %}
             </div>
             </div>
-    ​
-            <div class="panel panel-default">
-            <div class="panel-body">
+            <div class="card my-3">
+            <div class="card-body">
                 {{ form.scan_number.label }}
-                {{ form.scan_number(class="form-control", style="width: 200px", placeholder="Insert number of scans") }}
+                {{ form.scan_number(class="form-control w-25", placeholder="Insert number of scans") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.study_type.label }}
-                <div class="checkbox">
-                    <label>
-                        {{ form.study_type }}Yes
-                    </label>
+                <div class="form-check">
+                    {{ form.study_type(class="form-check-input") }}
+                    <label class="form-check-label" for="study_type">Yes</label>
                 </div>
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body container">
+        <div class="card my-3">
+            <div class="card-body container">
                 <div class="row">
-                    <label for="familiarity" class="col-xs-12">How familiar are you with the following?</label>
+                    <label for="familiarity" class="col-12">How familiar are you with the following?</label>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_bids.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_bids.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_bids(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_bidsapp.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_bidsapp.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_bidsapp(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_python.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_python.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_python(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_linux.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_linux.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_linux(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_bash.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_bash.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_bash(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_hpc.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_hpc.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_hpc(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_openneuro.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_openneuro.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_openneuro(class="form-control") }}
                     </div>
                 </div>
                 <div class="row">
-                    {{ form.familiarity_cbrain.label(class="col-xs-2 control-label") }}
-                    <div class="col-xs-5">
+                    {{ form.familiarity_cbrain.label(class="col-2 control-label") }}
+                    <div class="col-5">
                         {{ form.familiarity_cbrain(class="form-control") }}
                     </div>
                 </div>
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <h4>CFMM DICOM Server Project Information</h4>
-                <p>The following questions require study information from the CFMM dicom server. Please open the CFMM DICOM Management website (https://dicom.cfmm.robarts.ca/dm/index) in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
+        <div class="card my-3">
+            <div class="card-body">
+                <h4 class="card-title">CFMM DICOM Server Project Information</h4>
+                <p class="card-text">The following questions require study information from the CFMM dicom server. Please open the <a href="https://dicom.cfmm.robarts.ca/dm/index">CFMM DICOM Management website</a> in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.</p>
             </div>
         </div>  
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.principal.label }}
-                {{ form.principal(class="form-control", style="width: 400px", placeholder="Please enter the Principal/PI") }}
-            </div>
-        </div>
-
-        <div class="panel panel-default">
-            <div class="panel-body">
+                {{ form.principal(class="form-control w-25 mb-3", placeholder="Please enter the Principal/PI") }}
                 {{ form.principal_other.label }}
-                {{ form.principal_other(class="form-control", style="width: 400px", placeholder="Please enter the Principal/PI") }}
+                {{ form.principal_other(class="form-control w-25", placeholder="Please enter the Principal/PI") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.project_name.label }}
-                {{ form.project_name(class="form-control", style="width: 400px", placeholder="Please enter the Project Name") }}
+                {{ form.project_name(class="form-control w-25", placeholder="Please enter the Project Name") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
                 {{ form.dataset_name.label }}
-                {{ form.dataset_name(class="form-control", style="width: 400px", placeholder="Please enter the Dataset Name") }}
+                {{ form.dataset_name(class="form-control w-25", placeholder="Please enter the Dataset Name") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <h4>Test BIDS Conversion</h4>
-                <p>We require an example session to optimize and test BIDS conversion.</p>
-            </div>
-        </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
+                <h4 class="card-title">Test BIDS Conversion</h4>
+                <p class="card-text">We require an example session to optimize and test BIDS conversion.</p>
                 {{ form.sample.label }}
-                {{ form.sample(class="form-control", style="width: 175px") }}
+                {{ form.sample(class="form-control w-25") }}
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                    <h4>Retrospective BIDS Conversion</h4>
-                    <p>Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
-            </div>
-        </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
+                <h4 class="card-title">Retrospective BIDS Conversion</h4>
+                <p class="card-text">Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.</p>
                 {{ form.retrospective_data.label }}
-                <div class="checkbox">
-                    <label>
-                        {{ form.retrospective_data }}Yes
-                    </label>
+                <div class="form-check">
+                    {{ form.retrospective_data(class="form-check-input") }}
+                    <label class="form-check-label" for="retrospective_data">Yes</label>
                 </div>
-            </div>
-        </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
                 {{ form.retrospective_start.label }}
-                {{ form.retrospective_start(class="form-control", style="width: 175px") }}
-            </div>
-        </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+                {{ form.retrospective_start(class="form-control w-25") }}
                 {{ form.retrospective_end.label }}
-                {{ form.retrospective_end(class="form-control", style="width: 175px") }}
+                {{ form.retrospective_end(class="form-control w-25") }}
+
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                    <h4>Consent & Feedback</h4>
-                    <p>This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service. By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.</p>
-            </div>
-        </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
+        <div class="card my-3">
+            <div class="card-body">
+                <h4 class="card-title">Consent & Feedback</h4>
+                <p class="card-text">This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service. By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.</p>
                 {{ form.consent.label }}
-                <div class="checkbox">
-                    <label>
-                        {{ form.consent }}Yes
-                    </label>
+                <div class="form-check">
+                    {{ form.consent(class="form-check-input") }}
+                    <label class="form-check-label">Yes</label>
                 </div>
             </div>
         </div>
-    ​
-        <div class="panel panel-default">
-            <div class="panel-body">
-                <h4>Optional: Please feel free to leave any feedback regarding this form or autobids in general.</h4>
+        <div class="card my-3">
+            <div class="card-body">
+                <p class="card-text">Optional: Please feel free to leave any feedback regarding this form or autobids in general.</p>
                 {{ form.comment(cols=77, rows=5) }}
             </div>
         </div>
-        <div id="btn">
-            {{ form.submit(class="btn btn-default") }}
+        <div class="text-center">
+            {{ form.submit(class="btn btn-light") }}
         </div>
     </form>
 </div>

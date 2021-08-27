@@ -1,22 +1,27 @@
 {% extends "base.html" %}
 
 {% block app_content %}
+<div class="container">
     {% if current_user.is_authenticated %}
         {% with current_tasks_in_progress = current_user.get_tasks_in_progress() %}
             {% if current_tasks_in_progress %}
                 {% for task in current_tasks_in_progress %}
                     {% if task.task_button_id == button_id %}
-                        {% if task.error == None %}
-                            <div class="alert alert-warning" role="alert">
-                                {{ task.description }}
-                                <span id="{{ task.id }}-progress">In Progress</span>
+                        <div class="row my-3">
+                            <div class="col">
+                            {% if task.error == None %}
+                                <div class="alert alert-warning" role="alert">
+                                    {{ task.description }}
+                                    <span id="{{ task.id }}-progress">In Progress</span>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-danger" role="alert">
+                                    {{ task.description }}
+                                    <span id="{{ task.id }}-progress">Failed</span>
+                                </div>
+                            {% endif %}
                             </div>
-                        {% else %}
-                            <div class="alert alert-danger" role="alert">
-                                {{ task.description }}
-                                <span id="{{ task.id }}-progress">Failed</span>
-                            </div>
-                        {% endif %}
+                        </div>
                     {% endif %}
                 {% endfor %}
             {% endif %}
@@ -26,17 +31,21 @@
                 {% for task in completed_tasks %}
                     {% if task.task_button_id == button_id %}
                         {% if task.end_time>=current_user.last_seen %}
-                            {% if task.error == None %}
-                                <div class="alert alert-success" role="alert">
-                                    {{ task.description }}
-                                    <span id="{{ task.id }}-progress">Complete</span>
+                            <div class="row my-3">
+                                <div class="col">
+                                {% if task.error == None %}
+                                    <div class="alert alert-success" role="alert">
+                                        {{ task.description }}
+                                        <span id="{{ task.id }}-progress">Complete</span>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ task.description }}
+                                        <span id="{{ task.id }}-progress">Failed</span>
+                                    </div>
+                                {% endif %}
                                 </div>
-                            {% else %}
-                                <div class="alert alert-danger" role="alert">
-                                    {{ task.description }}
-                                    <span id="{{ task.id }}-progress">Failed</span>
-                                </div>
-                            {% endif %}
+                            </div>
                         {% endif %}
                     {% endif %}
                 {% endfor %}
@@ -44,14 +53,10 @@
         {% endwith %}
     {% endif %}
 
-<form method="POST" action="{{ url_for('portal_blueprint.results') }}">
-    <input type="submit" class="btn btn-default" value="Back" style="margin-left:10px"></input>
-</form> 
-
-<div class="col-xs-12">
-    <h2 class="sub-header">DICOM Result</h2>
-        <div class="table-responsive">
-            <table class="table"></p>
+    <div class="row">
+        <div class="col-12">
+            <h2 class="sub-header">DICOM Result</h2>
+            <table class="table table-light"></p>
                 <tr>
                     <th scope="col"></th>
                     <th scope="col">Name</th>
@@ -75,11 +80,11 @@
 
                 <tr>
                     <td>
-                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
                         <br>
-                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
                         <br>
-                        <a class="btn btn-default" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
                     </td>
                     <td>{{ submitter_answer.submitter.name }}</td>
                     <td>{{ submitter_answer.submitter.email }}</td>
@@ -255,20 +260,20 @@
                 </tr>
             </table>
         </div>
-</div>
-
-<div class="col-xs-12 text-center">
-    <div class="text-center">
-        <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', answer_id=submitter_answer.id) }}">
-            <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-default"></input>
-        </form>
     </div>
-</div>
 
-<div class="col-xs-6">
-     <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
-        <div class="table-responsive">
-            <table class="table">
+    <div class="row mb-2">
+        <div class="col text-center">
+            <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', answer_id=submitter_answer.id) }}">
+                <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary"></input>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-6">
+             <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
+            <table class="table table-light">
                 <tr>
                     <th class="col-md-1">Task ID</th>
                     <th class="col-md-2">Start Date and Time</th>
@@ -296,11 +301,9 @@
                 {% endfor %}
             </table>
         </div>
-</div>
-<div class="col-xs-6">
-    <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
-        <div class="table-responsive">
-            <table class="table">
+        <div class="col-6">
+            <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
+            <table class="table table-light">
                 <tr>
                     <th class="col-md-1"></th>
                     <th class="col-md-2">UID</th>
@@ -326,14 +329,11 @@
                 {% endfor %}
             </table>
         </div>
-</div>
 
-<div class="col-xs-12 text-center"></div>
-
-<div class="col-xs-6">
-    <h2 class="sub-header">Previous Tar2bids Runs</h2>
-        <div class="table-responsive">
-            <table class="table">
+    <div class="row">
+        <div class="col-6">
+            <h2 class="sub-header">Previous Tar2bids Runs</h2>
+            <table class="table table-light">
                 <tr>
                     <th class="col-md-1">Task ID</th>
                     <th class="col-md-2">Start Date and Time</th>
@@ -361,11 +361,9 @@
                 {% endfor %}
             </table>
         </div>
-</div>
-<div class="col-xs-6">
-    <h2 class="sub-header">Most Recent Tar2bids Results</h2>
-        <div class="table-responsive">
-            <table class="table">
+        <div class="col-6">
+            <h2 class="sub-header">Most Recent Tar2bids Results</h2>
+            <table class="table table-light">
                 <tr>
                     <th class="col-md-1">Tar File Path</th>
                     <th class="col-md-2">Heuristic</th>
@@ -381,5 +379,6 @@
                 {% endfor %}
             </table>
         </div>
+    </div>
 </div>
 {% endblock %}

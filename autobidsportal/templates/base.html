@@ -1,72 +1,51 @@
-{% extends 'bootstrap/base.html' %}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{% block title %}{% endblock %} - Autobids Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
+    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-expand-md navbar-light bg-light">
+      <div class="container-fluid">
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <a class="navbar-brand" href="{{ url_for('portal_blueprint.index') }}">Home</a>
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="navbar-nav navbar-right">
+            {% if current_user.is_anonymous %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.login') }}">Login</a></li>
+            {% else %}
+              {% if current_user.admin == True %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.user_list') }}">Admin</a></li>
+              {% endif %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Results</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.logout') }}">Logout</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-{% block styles %}
-{{super()}}
-<link rel="icon" href="data:,">
-<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
-<link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
-{% endblock %}
-
-{% block title %}
-  New study request: autobids-cfmm
-{% endblock %}
-
-{% block navbar %}
-  <nav class="navbar navbar-default">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a class="navbar-brand" href="{{ url_for('portal_blueprint.index') }}">Home</a>
+    {% block content %}
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="container">
+              <div class="row my-3">
+                  <div class="col">
+                      <div class="alert alert-info" role="alert">{{ message }}</div>
+                  </div>
+              </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block app_content %}{% endblock %}
     </div>
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-      <ul class="nav navbar-nav navbar-right">
-        {% if current_user.is_anonymous %}
-          <li><a href="{{ url_for('portal_blueprint.login') }}">Login</a></li>
-        {% else %}
-          {% if current_user.admin == True %}
-            <li><a href="{{ url_for('portal_blueprint.user_list') }}">Admin</a></li>
-            <li><a href="{{ url_for('portal_blueprint.results') }}">Results</a></li>
-            <li><a href="{{ url_for('portal_blueprint.logout') }}">Logout</a></li>
-          {% else %}
-            <li><a href="{{ url_for('portal_blueprint.results') }}">Results</a></li>
-            <li><a href="{{ url_for('portal_blueprint.logout') }}">Logout</a></li>
-          {% endif %}
-        {% endif %}
-      </ul>
-    </div>
-  </nav>
-{% endblock %}
-
-{% block content %}
-  <div>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert alert-info" role="alert">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-  {% if form %}
-    {% if form.email %}
-      {% for error in form.email.errors %}
-        <div class="alert alert-info" role="alert">{{ error }}</div>
-      {% endfor %}
-    {% endif %}
-    {% if form.password %}
-      {% for error in form.password.errors %}
-          <div class="alert alert-info" role="alert">{{ error }}</div>
-      {% endfor %}
-    {% endif %}
-    {% if form.password2 %}
-      {% for error in form.password2.errors %}
-          <div class="alert alert-info" role="alert">{{ error }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endif %}
-  {% block app_content %}{% endblock %}
-  </div>
-{% endblock %}
+    {% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+  </body>
+</html>
