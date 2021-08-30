@@ -56,9 +56,7 @@ def get_info_from_cfmm2tar(study_id):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    study_info = (
-        f"{study.principal}^{study.project_name}"
-    )
+    study_info = f"{study.principal}^{study.project_name}"
     out_dir = "%s/%s/%s" % (
         app.config["CFMM2TAR_DOWNLOAD_DIR"],
         study.id,
@@ -137,9 +135,7 @@ def get_info_from_tar2bids(study_id, tar_file_id):
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
     selected_heuristic = study.heuristic
-    study_info = (
-        f"{study.principal}^{study.project_name}"
-    )
+    study_info = f"{study.principal}^{study.project_name}"
     tar_file = Cfmm2tarOutput.query.get(tar_file_id).tar_file
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
     data = "%s/%s/%s" % (prefix, study_info, study.dataset_name)
