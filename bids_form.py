@@ -5,14 +5,12 @@ from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
     db,
     User,
-    Answer,
-    Submitter,
+    Study,
     Principal,
     Notification,
     Task,
-    Cfmm2tar,
-    Tar2bids,
-    Choice,
+    Cfmm2tarOutput,
+    Tar2bidsOutput,
 )
 
 
@@ -25,14 +23,12 @@ def make_shell_context():
     return {
         "db": db,
         "User": User,
-        "Answer": Answer,
-        "Submitter": Submitter,
+        "Study": Study,
         "Principal": Principal,
         "Notification": Notification,
         "Task": Task,
-        "Cfmm2tar": Cfmm2tar,
-        "Tar2bids": Tar2bids,
-        "Choice": Choice,
+        "Cfmm2tarOutput": Cfmm2tarOutput,
+        "Tar2bidsOutput": Tar2bidsOutput,
     }
 
 

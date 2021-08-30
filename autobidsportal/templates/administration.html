@@ -31,8 +31,8 @@
                         </td>
                         <td>{{ user.email }}</td>
                         <td>
-                            {% for a in user.access_to %}
-                                <div>{{ a.desc.replace(" ", "^") }}</div>
+                            {% for study in user.studies %}
+                                <div>{{ study.principal }}^{{ study.project_name }}</div>
                             {% endfor %}
                         </td>
                         <td>

@@ -3,7 +3,7 @@
 {% block app_content %}
 <div class="container">
     {% if current_user.is_authenticated %}
-        {% with current_tasks_in_progress = current_user.get_tasks_in_progress() %}
+        {% with current_tasks_in_progress = submitter_answer.get_tasks_in_progress() %}
             {% if current_tasks_in_progress %}
                 {% for task in current_tasks_in_progress %}
                     {% if task.task_button_id == button_id %}
@@ -80,14 +80,14 @@
 
                 <tr>
                     <td>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
                         <br>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
                         <br>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', answer_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
+                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
                     </td>
-                    <td>{{ submitter_answer.submitter.name }}</td>
-                    <td>{{ submitter_answer.submitter.email }}</td>
+                    <td>{{ submitter_answer.submitter_name }}</td>
+                    <td>{{ submitter_answer.submitter_email }}</td>
                     <td>{{ submitter_answer.status.capitalize() }}</td>
                     <td>
                         {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
@@ -264,7 +264,7 @@
 
     <div class="row mb-2">
         <div class="col text-center">
-            <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', answer_id=submitter_answer.id) }}">
+            <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
                 <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary"></input>
             </form>
         </div>
@@ -314,12 +314,12 @@
                 {% for f in cfmm2tar_files %}
                 <tr>
                     <td class="col-md-1">
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', answer_id=submitter_answer.id) }}">
+                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
                             {{ form.csrf_token }}
                             {{ form.heuristic.label }}
                             {{ form.heuristic(class="form-control", style="width: 200px") }} 
                             <br>
-                            <input type="submit" name="tar2bids" value="Run tar2bids" class="btn btn-default"></input>
+                            <input type="submit" name="tar2bids" value="f.id" class="btn btn-default">Run tar2bids with this file</input>
                         </form>
                     </td>
                     <td class="col-md-2">{{ f.uid_file }}</td>
