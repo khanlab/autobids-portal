@@ -5,6 +5,11 @@ from flask import render_template
 from autobidsportal.models import db
 
 
+def bad_request(_):
+    """400 error template."""
+    return render_template("400.html"), 400
+
+
 def not_found_error(_):
     """404 error template."""
     return render_template("404.html"), 404

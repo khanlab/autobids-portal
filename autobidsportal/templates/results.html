@@ -35,10 +35,10 @@
                     {% if r.submission_date > last %}
                     <tr class="new">
                         <td>
-                            <a class="btn btn-link" href="{{ url_for('portal_blueprint.answer_info', answer_id=r.id) }}" role="button">View more</a>
+                            <a class="btn btn-link" href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}" role="button">View more</a>
                         </td>
-                        <td>{{ r.submitter.name }}</td>
-                        <td>{{ r.submitter.email }}</td>
+                        <td>{{ r.submitter_name }}</td>
+                        <td>{{ r.submitter_email }}</td>
                         <td>
                             {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
                         </td>
@@ -64,10 +64,10 @@
                     {% else %}
                     <tr>
                         <td>
-                            <a class="btn btn-default" href="{{ url_for('portal_blueprint.answer_info', answer_id=r.id) }}" role="button">View more</a>
+                            <a class="btn btn-default" href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}" role="button">View more</a>
                         </td>
-                        <td>{{ r.submitter.name }}</td>
-                        <td>{{ r.submitter.email }}</td>
+                        <td>{{ r.submitter_name }}</td>
+                        <td>{{ r.submitter_email }}</td>
                         <td>
                             {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
                         </td>

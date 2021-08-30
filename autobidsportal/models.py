@@ -6,6 +6,7 @@ import json
 
 from flask import current_app
 from flask_login import LoginManager, UserMixin
+from sqlalchemy import MetaData
 from werkzeug.security import generate_password_hash, check_password_hash
 import redis
 import rq
@@ -13,15 +14,23 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 login = LoginManager()
-db = SQLAlchemy()
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+metadata = MetaData(naming_convention=convention)
+db = SQLAlchemy(metadata=metadata)
 
-user_choices = db.Table(
-    "user_choices",
+accessible_studies = db.Table(
+    "accessible_studies",
     db.Column(
         "user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True
     ),
     db.Column(
-        "choice_id", db.Integer, db.ForeignKey("choice.id"), primary_key=True
+        "study_id", db.Integer, db.ForeignKey("study.id"), primary_key=True
     ),
 )
 
@@ -29,35 +38,16 @@ user_choices = db.Table(
 class User(UserMixin, db.Model):
     """Information related to registered users."""
 
-    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
-    admin = db.Column(db.Boolean)
-    email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    admin = db.Column(db.Boolean, nullable=False)
+    email = db.Column(db.String(120), index=True, unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    last_pressed_button_id = db.Column(db.Integer)
-    second_last_pressed_button_id = db.Column(db.Integer)
-    selected_heuristic = db.Column(db.String(128))
-    other_heuristic = db.Column(db.String(128))
-    access_to = db.relationship(
-        "Choice",
-        secondary=user_choices,
-        lazy="subquery",
-        backref=db.backref("users_choice", lazy=True),
-    )
-    notifications = db.relationship(
-        "Notification", backref="user", lazy="dynamic"
-    )
-    tasks = db.relationship("Task", backref="user", lazy="dynamic")
-    cfmm2tar_results = db.relationship(
-        "Cfmm2tar", backref="user", lazy="dynamic"
-    )
-    tar2bids_results = db.relationship(
-        "Tar2bids", backref="user", lazy="dynamic"
-    )
+    tasks = db.relationship("Task", backref="user", lazy=True)
+    notifications = db.relationship("Notification", backref="user", lazy=True)
 
     def __repr__(self):
-        return f"<User {self.admin, self.email, self.last_seen, self.last_pressed_button_id}>"
+        return f"<User ID {self.id} {self.admin, self.email, self.last_seen}>"
 
     def set_password(self, password):
         """Generate a hash for a password and assign it to the user."""
@@ -78,12 +68,9 @@ class User(UserMixin, db.Model):
 
     def launch_task(self, name, description, *args, **kwargs):
         """Enqueue a task with rq and record it in the DB."""
-        if description == "Running tar2bids-":
+        if name == "get_info_from_cfmm2tar":
             rq_job = current_app.task_queue.enqueue(
                 "autobidsportal.tasks." + name,
-                self.id,
-                self.second_last_pressed_button_id,
-                self.last_pressed_button_id,
                 *args,
                 **kwargs,
                 job_timeout=100000,
@@ -95,14 +82,12 @@ class User(UserMixin, db.Model):
                 user_id=self.id,
                 user=self,
                 start_time=datetime.utcnow(),
-                task_button_id=self.second_last_pressed_button_id,
+                study_id=args[0],
             )
-        else:
+        elif name == "get_info_from_tar2bids":
             rq_job = current_app.task_queue.enqueue(
                 "autobidsportal.tasks." + name,
                 self.id,
-                self.second_last_pressed_button_id,
-                self.last_pressed_button_id,
                 *args,
                 **kwargs,
                 job_timeout=100000,
@@ -115,13 +100,15 @@ class User(UserMixin, db.Model):
                 user=self,
                 start_time=datetime.utcnow(),
                 task_button_id=self.last_pressed_button_id,
+                study_id=args[0],
             )
         db.session.add(task)
+        db.session.commit()
         return task
 
-    def get_tasks_in_progress(self):
-        """Return all active tasks associated with this user."""
-        return Task.query.filter_by(user=self, complete=False).all()
+    def get_completed_tasks(self):
+        """Get all completed tasks associated with this user."""
+        return Task.query.filter_by(user=self, complete=True).all()
 
     def get_task_in_progress(self, name):
         """Get this user's active task with the given name."""
@@ -132,10 +119,6 @@ class User(UserMixin, db.Model):
             task_button_id=self.last_pressed_button_id,
         ).first()
 
-    def get_completed_tasks(self):
-        """Get all completed tasks associated with this user."""
-        return Task.query.filter_by(user=self, complete=True).all()
-
 
 @login.user_loader
 def load_user(user_id):
@@ -143,54 +126,51 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-class Submitter(db.Model):
-    """Describe someone who has submitted a given answer.
+class Study(db.Model):
+    """One study on the DICOM server."""
 
-    A submitter does not necessarily need a user account.
-    """
-
-    __tablename__ = "submitter"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(40))
-    email = db.Column(db.String(40))
-    answers = db.relationship("Answer", backref="submitter", lazy="dynamic")
-
-    def __repr__(self):
-        return f"<Submitter {self.name, self.email}>"
-
-
-class Answer(db.Model):
-    """One answer to the new study form."""
-
-    __tablename__ = "answer"
-    id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String(20))
-    scanner = db.Column(db.String(20))
-    scan_number = db.Column(db.Integer)
-    study_type = db.Column(db.Boolean)
-    familiarity_bids = db.Column(db.String(20))
-    familiarity_bidsapp = db.Column(db.String(20))
-    familiarity_python = db.Column(db.String(20))
-    familiarity_linux = db.Column(db.String(20))
-    familiarity_bash = db.Column(db.String(20))
-    familiarity_hpc = db.Column(db.String(20))
-    familiarity_openneuro = db.Column(db.String(20))
-    familiarity_cbrain = db.Column(db.String(20))
-    principal = db.Column(db.String(20))
-    principal_other = db.Column(db.String(20))
-    project_name = db.Column(db.String(20))
-    dataset_name = db.Column(db.String(20))
-    sample = db.Column(db.DateTime)
-    retrospective_data = db.Column(db.Boolean)
-    retrospective_start = db.Column(db.DateTime)
-    retrospective_end = db.Column(db.DateTime)
-    consent = db.Column(db.Boolean)
-    comment = db.Column(db.String(200))
+    submitter_name = db.Column(db.String(100), nullable=False)
+    submitter_email = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(20), nullable=False)
+    scanner = db.Column(db.String(20), nullable=False)
+    scan_number = db.Column(db.Integer, nullable=False)
+    study_type = db.Column(db.Boolean, nullable=False)
+    familiarity_bids = db.Column(db.String(20), nullable=False)
+    familiarity_bidsapp = db.Column(db.String(20), nullable=False)
+    familiarity_python = db.Column(db.String(20), nullable=False)
+    familiarity_linux = db.Column(db.String(20), nullable=False)
+    familiarity_bash = db.Column(db.String(20), nullable=False)
+    familiarity_hpc = db.Column(db.String(20), nullable=False)
+    familiarity_openneuro = db.Column(db.String(20), nullable=False)
+    familiarity_cbrain = db.Column(db.String(20), nullable=False)
+    principal = db.Column(db.String(20), nullable=False)
+    project_name = db.Column(db.String(20), nullable=False)
+    dataset_name = db.Column(db.String(20), nullable=False)
+    sample = db.Column(db.DateTime, nullable=False)
+    retrospective_data = db.Column(db.Boolean, nullable=False)
+    retrospective_start = db.Column(db.DateTime, nullable=True)
+    retrospective_end = db.Column(db.DateTime, nullable=True)
+    consent = db.Column(db.Boolean, nullable=False)
+    comment = db.Column(db.String(200), nullable=True)
     submission_date = db.Column(
-        db.DateTime, index=True, default=datetime.utcnow
+        db.DateTime, index=True, default=datetime.utcnow, nullable=False
+    )
+    heuristic = db.Column(db.String(200), nullable=True)
+    users_authorized = db.relationship(
+        "User",
+        secondary=accessible_studies,
+        lazy="subquery",
+        backref=db.backref("studies", lazy=True),
     )
 
-    submitter_id = db.Column(db.Integer, db.ForeignKey("submitter.id"))
+    tasks = db.relationship("Task", backref="study", lazy=True)
+    cfmm2tar_outputs = db.relationship(
+        "Cfmm2tarOutput", backref="study", lazy=True
+    )
+    tar2bids_outputs = db.relationship(
+        "Tar2bidsOutput", backref="study", lazy=True
+    )
 
     def __repr__(self):
         answer_cols = (
@@ -207,7 +187,6 @@ class Answer(db.Model):
             self.familiarity_openneuro,
             self.familiarity_cbrain,
             self.principal,
-            self.principal_other,
             self.project_name,
             self.dataset_name,
             self.sample,
@@ -220,16 +199,19 @@ class Answer(db.Model):
         )
         return f"<Answer {answer_cols}>"
 
+    def get_tasks_in_progress(self):
+        """Return all active tasks associated with this study."""
+        return Task.query.filter_by(study=self, complete=False).all()
+
 
 class Notification(db.Model):
     """An active notification for an active user."""
 
-    __tablename__ = "notification"
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    name = db.Column(db.String(128), index=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     timestamp = db.Column(db.Float, index=True, default=time)
-    payload_json = db.Column(db.Text)
+    payload_json = db.Column(db.Text, nullable=False)
 
     def get_data(self):
         """Get the notification contents."""
@@ -239,17 +221,16 @@ class Notification(db.Model):
 class Task(db.Model):
     """A task deferred to the task queue."""
 
-    __tablename__ = "task"
     id = db.Column(db.String(36), primary_key=True)
-    name = db.Column(db.String(128), index=True)
-    description = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    task_button_id = db.Column(db.Integer)
-    complete = db.Column(db.Boolean, default=False)
-    success = db.Column(db.Boolean, default=False)
-    error = db.Column(db.String(128))
-    start_time = db.Column(db.DateTime)
-    end_time = db.Column(db.DateTime)
+    name = db.Column(db.String(128), index=True, nullable=False)
+    description = db.Column(db.String(128), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    complete = db.Column(db.Boolean, default=False, nullable=False)
+    success = db.Column(db.Boolean, default=False, nullable=True)
+    error = db.Column(db.String(128), nullable=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
         task_cols = (
@@ -275,54 +256,42 @@ class Task(db.Model):
         return job.meta.get("progress", 0) if job is not None else 100
 
 
-class Cfmm2tar(db.Model):
+class Cfmm2tarOutput(db.Model):
     """One completed cfmm2tar run."""
 
-    __tablename__ = "cfmm2tar"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    task_button_id = db.Column(db.Integer)
-    tar_file = db.Column(db.String(200), index=True)
-    uid_file = db.Column(db.String(200), index=True)
-    date = db.Column(db.DateTime)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    tar_file = db.Column(db.String(200), index=True, nullable=False)
+    uid = db.Column(db.String(200), index=True, nullable=False)
+    date = db.Column(db.DateTime, nullable=False)
+    tar2bids_outputs = db.relationship(
+        "Tar2bidsOutput", backref="cfmm2tar_output", lazy=True
+    )
 
     def __repr__(self):
         return f"<Cfmm2tar {self.tar_file, self.uid_file, self.date}>"
 
 
-class Tar2bids(db.Model):
+class Tar2bidsOutput(db.Model):
     """One completed tar2bids run."""
 
-    __tablename__ = "tar2bids"
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    task_button_id = db.Column(db.Integer)
-    tar_file_id = db.Column(db.Integer)
-    tar_file = db.Column(db.String(200), index=True)
-    bids_file = db.Column(db.String(200), index=True)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    bids_dir = db.Column(db.String(200), index=True)
     heuristic = db.Column(db.String(200), index=True)
+    cfmm2tar_output_id = db.Column(
+        db.Integer, db.ForeignKey("cfmm2tar_output.id"), nullable=False
+    )
 
     def __repr__(self):
-        return f"<Tar2bids {self.tar_file, self.bids_file, self.heuristic}>"
+        return f"<Tar2bids {self.tar_file, self.bids_dir, self.heuristic}>"
 
 
 class Principal(db.Model):
     """One PI name known on the DICOM scanner."""
 
-    __tablename__ = "principal"
     id = db.Column(db.Integer, primary_key=True)
     principal_name = db.Column(db.String(200))
 
     def __repr__(self):
         return f"<Prinicpal {self.principal_name}>"
-
-
-class Choice(db.Model):
-    """One study that a user can have access to."""
-
-    __tablename__ = "choice"
-    id = db.Column(db.Integer, primary_key=True)
-    desc = db.Column(db.String(200))
-
-    def __repr__(self):
-        return f"<Choice {self.desc}>"
