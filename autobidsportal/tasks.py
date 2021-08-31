@@ -31,7 +31,7 @@ def _set_task_progress(job_id, progress):
     if job:
         job.meta["progress"] = progress
         job.save_meta()
-    task = Task.query.get(job_id())
+    task = Task.query.get(job_id)
     task.user.add_notification(
         "task_progress", {"task_id": job_id, "progress": progress}
     )
