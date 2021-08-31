@@ -106,7 +106,7 @@ def get_new_cfmm2tar_results(study_info, out_dir, study_id):
     already_there = []
     if cfmm2tar_result == []:
         err = "Invalid Principal or Project Name"
-        _set_task_progress(50, err)
+        _set_task_error(get_current_job().id, err)
         return []
     for result in cfmm2tar_result:
         if cfmm2tar_results_in_db == []:
@@ -153,6 +153,6 @@ def get_info_from_tar2bids(study_id, tar_file_id):
         )
         db.session.add(tar2bids)
         db.session.commit()
-        _set_task_progress(100, "None")
+        _set_task_progress(job.id, 100)
     except Tar2bidsError as err:
-        _set_task_progress(job.id, err.__cause__.stderr)
+        _set_task_error(job.id, err.__cause__.stderr)
