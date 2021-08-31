@@ -56,7 +56,7 @@
                                 <fieldset class="form-group">
                                     {{ removal_form.csrf_token }}
                                     {% for choice in removal_form.choices_to_remove %}
-                                        {% if choice not in user.access_to %}
+                                        {% if choice not in user.studies %}
                                             <div class="form-check">
                                                 {{ choice(class="form-check-input") }}
                                                 {{ choice.label(class="form-check-label") }}
