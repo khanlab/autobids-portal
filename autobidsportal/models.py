@@ -59,7 +59,7 @@ class User(UserMixin, db.Model):
 
     def add_notification(self, name, data):
         """Set the user's active notification."""
-        self.notifications.filter_by(name=name).delete()
+        Notification.query.filter_by(name=name, user_id=self.id).delete()
         notification = Notification(
             name=name, payload_json=json.dumps(data), user=self
         )
