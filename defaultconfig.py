@@ -18,6 +18,7 @@ class Config(object):
     # e.g. "singularity exec dcm4che.simg"
     DCM4CHE_PREFIX = ""
     TAR2BIDS_PREFIX = ""
+    TAR2BIDS_TEMP_DIR = "/tmp"
 
     # List of PIs accessible on the DICOM server that shouldn't be presented
     # as options in the study form.

@@ -1,6 +1,7 @@
 """Utilities to handle tasks put on the queue."""
 
 from datetime import datetime
+import tempfile
 import os
 
 from rq import get_current_job
@@ -142,9 +143,15 @@ def get_info_from_tar2bids(study_id, tar_file_id):
     if not os.path.isdir(data):
         os.makedirs(data)
     try:
-        tar2bids_results = gen_utils().run_tar2bids(
-            output_dir=data, tar_files=[tar_file], heuristic=selected_heuristic
-        )
+        with tempfile.TemporaryDirectory(
+            dir=app.config["TAR2BIDS_TEMP_DIR"]
+        ) as temp_dir:
+            tar2bids_results = gen_utils().run_tar2bids(
+                output_dir=data,
+                tar_files=[tar_file],
+                heuristic=selected_heuristic,
+                temp_dir=temp_dir,
+            )
         tar2bids = Tar2bidsOutput(
             study_id=study_id,
             cfmm2tar_output_id=tar_file_id,
