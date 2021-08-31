@@ -235,7 +235,7 @@ class Task(db.Model):
     def __repr__(self):
         task_cols = (
             self.user_id,
-            self.task_button_id,
+            self.study_id,
             self.complete,
             self.success,
             self.error,
