@@ -38,6 +38,7 @@ class Config(object):
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
     TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
+    CUSTOM_HEURISTIC_DIR = "custom-heuristics"
 
 
 class Config_test(object):

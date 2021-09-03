@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from smtplib import SMTPAuthenticationError
+from pathlib import Path
 
 from flask import (
     current_app,
@@ -32,6 +33,7 @@ from autobidsportal.forms import (
     BidsForm,
     RegistrationForm,
     HeuristicForm,
+    DEFAULT_HEURISTICS,
     AccessForm,
     RemoveAccessForm,
 )
@@ -385,6 +387,12 @@ def run_tar2bids(study_id):
         abort(404)
     form = HeuristicForm()
     if form.validate_on_submit():
+        chosen_heuristic = form.heuristic.data
+        if chosen_heuristic not in DEFAULT_HEURISTICS:
+            # Use pathlib here
+            chosen_heuristic = Path(
+                current_app.config["CUSTOM_HEURISTIC_DIR"]
+            ) / Path(chosen_heuristic)
         study.heuristic = form.heuristic.data
         tar_file = Cfmm2tarOutput.query.get_or_404(request.form["tar_file"])
         all_options = dict(form.heuristic.choices)
