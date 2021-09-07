@@ -4,35 +4,43 @@
 <div class="container">
     <div class="row my-3">
         <div class="col">
-            <form>
-                <div>
-                    {{form.pi_name.label(class="form-label")}}
-                    {{form.pi_name(class="form-select")}}
-                    {{form.project_name.label(class="form-label")}}
-                    {{form.project_name(class="form-control")}}
-                    {{form.dataset_name.label(class="form-label")}}
-                    <div class="form-check">
-                        {{form.retrospective_data(class="form-check-input")}}
-                        {{form.retrospective_data.label(class="form-check-label")}}
-                    </div>
-                    {{form.retrospective_start.label(class="form-label")}}
-                    {{form.retrospective_start(class="form-control")}}
-                    {{form.retrospective_end.label(class="form-label")}}
-                    {{form.retrospective_end(class="form-control")}}
-                    {{form.dataset_name.label(class="form-label")}}
-                    {{form.dataset_name(class="form-control")}}
-                    {{form.heuristic.label(class="form-label")}}
-                    {{form.heuristic(class="form-select")}}
-                    {{form.subj_expr.label(class="form-label")}}
-                    {{form.subj_expr(class="form-control")}}
-                    {{form.users_authorized.label(class="form-label")}}
-                    {% for choice in form.users_authorized %}
-                        <div class="form-check">
-                            {{choice(class="form-check-input")}}
-                            {{choice.label(class="form-check-label")}}
+            <form action="{{url_for('portal_blueprint.study_config', study_id=study.id)}}" method="post">
+                <div class="card">
+                    <h3 class="card-header">Study Config: {{study.principal}}^{{study.project_name}}</h3>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            {{form.pi_name.label(class="form-label")}}
+                            {{form.pi_name(class="form-select")}}
+                        </li>
+                        <li class="list-group-item">{{form.project_name.label(class="form-label")}}
+                        {{form.project_name(class="form-control")}}</li>
+                        <li class="list-group-item">{{form.dataset_name.label(class="form-label")}}
+                        {{form.dataset_name(class="form-control")}}</li>
+                        <li class="list-group-item">
+                            <div class="form-check">
+                            {{form.retrospective_data(class="form-check-input")}}
+                            {{form.retrospective_data.label(class="form-check-label")}}
                         </div>
-                    {% endfor %}
-                    <input type="submit" name="study-config" value="Update Config" class="btn btn-primary"></input>
+                        {{form.retrospective_start.label(class="form-label")}}
+                        {{form.retrospective_start(class="form-control")}}
+                        {{form.retrospective_end.label(class="form-label")}}
+                        {{form.retrospective_end(class="form-control")}}</li>
+                        <li class="list-group-item">{{form.heuristic.label(class="form-label")}}
+                        {{form.heuristic(class="form-select")}}</li>
+                        <li class="list-group-item">{{form.subj_expr.label(class="form-label")}}
+                        {{form.subj_expr(class="form-control")}}</li>
+                        <li class="list-group-item">{{form.users_authorized.label(class="form-label")}}
+                        {% for choice in form.users_authorized %}
+                            <div class="form-check">
+                                {{choice(class="form-check-input")}}
+                                {{choice.label(class="form-check-label")}}
+                            </div>
+                        {% endfor %}</li>
+                    </ul>
+                    <div class="card-body">
+                        <input type="submit" name="study-config" value="Update Config" class="btn btn-primary"></input>
+                        <a href={{url_for('portal_blueprint.answer_info', study_id=study.id)}} class="btn btn-link" role="button">Back to study</a>
+                    </div>
                 </div>
             </form>
         </div>

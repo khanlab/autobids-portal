@@ -301,7 +301,9 @@ def answer_info(study_id):
     )
 
 
-@portal_blueprint.route("/results/<int:study_id>/config", methods=["GET"])
+@portal_blueprint.route(
+    "/results/<int:study_id>/config", methods=["GET", "POST"]
+)
 @login_required
 def study_config(study_id):
     """Page to display and edit study config."""
@@ -311,12 +313,31 @@ def study_config(study_id):
     ):
         abort(404)
 
+    form = StudyConfigForm()
+    if request.method == "POST":
+        study.principal = form.pi_name.data
+        study.project_name = form.project_name.data
+        study.dataset_name = form.dataset_name.data
+        if form.retrospective_data.data:
+            study.retrospective_data = True
+            study.retrospective_start = form.retrospective_start.data
+            study.retrospective_end = form.retrospective_end.data
+        else:
+            study.retrospective_data = False
+            study.retrospective_start = None
+            study.retrospective_end = None
+        study.heuristic = form.heuristic.data
+        study.subj_expr = form.subj_expr.data
+        study.users_authorized = [
+            User.query.get(id) for id in form.users_authorized.data
+        ]
+        db.session.commit()
+
     principal_names = [
         p.principal_name for p in db.session.query(Principal).all()
     ]
     if study.principal not in principal_names:
         principal_names.insert(0, study.principal)
-    form = StudyConfigForm()
     form.pi_name.choices = principal_names
     form.pi_name.defaults = study.principal
     form.project_name.default = study.project_name
@@ -338,10 +359,13 @@ def study_config(study_id):
     form.users_authorized.choices = [
         (user.id, user.email) for user in User.query.all()
     ]
+    form.users_authorized.default = [
+        user.id for user in study.users_authorized
+    ]
 
     form.process()
 
-    return render_template("study_config.html", form=form)
+    return render_template("study_config.html", form=form, study=study)
 
 
 @portal_blueprint.route("/results/<int:study_id>/cfmm2tar", methods=["POST"])

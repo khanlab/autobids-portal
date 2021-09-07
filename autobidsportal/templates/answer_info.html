@@ -264,6 +264,12 @@
 
     <div class="row mb-2">
         <div class="col text-center">
+            <a href="{{url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}" class="btn btn-link" role="button">Study Config</a>
+        </div>
+    </div>
+
+    <div class="row mb-2">
+        <div class="col text-center">
             <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
                 <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary"></input>
             </form>
