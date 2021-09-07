@@ -264,6 +264,12 @@
 
     <div class="row mb-2">
         <div class="col text-center">
+            <a href="{{url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}" class="btn btn-link" role="button">Study Config</a>
+        </div>
+    </div>
+
+    <div class="row mb-2">
+        <div class="col text-center">
             <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
                 <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary"></input>
             </form>
@@ -315,11 +321,7 @@
                 <tr>
                     <td class="col-md-1">
                         <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                            {{ form.csrf_token }}
-                            {{ form.heuristic.label }}
-                            {{ form.heuristic(class="form-control", style="width: 200px") }} 
-                            <br>
-                            <input type="submit" name="tar2bids" value="f.id" class="btn btn-default">Run tar2bids with this file</input>
+                            <input type="submit" name="tar2bids" value="f.id" class="btn btn-primary">Run tar2bids with this file</input>
                         </form>
                     </td>
                     <td class="col-md-2">{{ f.uid_file }}</td>

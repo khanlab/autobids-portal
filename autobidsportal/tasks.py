@@ -134,7 +134,6 @@ def get_info_from_tar2bids(study_id, tar_file_id):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    selected_heuristic = study.heuristic
     study_info = f"{study.principal}^{study.project_name}"
     tar_file = Cfmm2tarOutput.query.get(tar_file_id).tar_file
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
@@ -143,13 +142,16 @@ def get_info_from_tar2bids(study_id, tar_file_id):
         os.makedirs(data)
     try:
         tar2bids_results = gen_utils().run_tar2bids(
-            output_dir=data, tar_files=[tar_file], heuristic=selected_heuristic
+            output_dir=data,
+            tar_files=[tar_file],
+            heuristic=study.heuristic,
+            patient_str=study.subj_expr,
         )
         tar2bids = Tar2bidsOutput(
             study_id=study_id,
             cfmm2tar_output_id=tar_file_id,
             bids_dir=tar2bids_results,
-            heuristic=selected_heuristic,
+            heuristic=study.heuristic,
         )
         db.session.add(tar2bids)
         db.session.commit()
