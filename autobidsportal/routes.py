@@ -380,7 +380,9 @@ def run_cfmm2tar(study_id):
     if (
         len(
             Task.query.filter_by(
-                study_id=study_id, name="get_info_from_cfmm2tar"
+                study_id=study_id,
+                name="get_info_from_cfmm2tar",
+                complete=False,
             ).all()
         )
         > 0

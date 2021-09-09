@@ -87,11 +87,11 @@ def get_info_from_cfmm2tar(study_id):
             db.session.add(cfmm2tar)
         db.session.commit()
         _set_task_progress(job.id, 100)
-
     except Cfmm2tarError as err:
         _set_task_error(job.id, err.__cause__.stderr)
-        if "cfmm2tar_intermediate_dicoms" in os.listdir(out_dir):
-            os.listdir(out_dir)
+    finally:
+        if not Task.query.get(job.id).complete:
+            _set_task_error(job.id, "Unknown uncaught exception")
 
 
 def get_new_cfmm2tar_results(study_info, out_dir, study_id):
@@ -158,3 +158,6 @@ def get_info_from_tar2bids(study_id, tar_file_id):
         _set_task_progress(job.id, 100)
     except Tar2bidsError as err:
         _set_task_error(job.id, err.__cause__.stderr)
+    finally:
+        if not Task.query.get(job.id).complete:
+            _set_task_error(job.id, "Unknown uncaught exception.")
