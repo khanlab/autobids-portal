@@ -81,7 +81,7 @@ def get_info_from_cfmm2tar(study_id):
             with open(result[1], "r", encoding="utf-8") as uid_file:
                 uid = uid_file.read()
             cfmm2tar = Cfmm2tarOutput(
-                study_id,
+                study_id=study_id,
                 tar_file=result[0],
                 uid=uid,
                 date=datetime(
