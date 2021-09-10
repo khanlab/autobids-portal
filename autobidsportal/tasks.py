@@ -1,6 +1,8 @@
 """Utilities to handle tasks put on the queue."""
 
 from datetime import datetime
+import pathlib
+import re
 import os
 
 from rq import get_current_job
@@ -66,23 +68,27 @@ def get_info_from_cfmm2tar(study_id):
         for result in get_new_cfmm2tar_results(
             study_info=study_info, out_dir=out_dir, study_id=study_id
         ):
-            day = (
-                result[0].rsplit("/", 3)[3].rsplit("_", 5)[0].rsplit("_", 5)[5]
-            )
-            month = (
-                result[0].rsplit("/", 3)[3].rsplit("_", 5)[0].rsplit("_", 5)[4]
-            )
-            year = (
-                result[0].rsplit("/", 3)[3].rsplit("_", 5)[0].rsplit("_", 5)[3]
-            )
-            date = datetime(int(year), int(month), int(day))
+            tar_file = pathlib.PurePath(result[0]).name
+            try:
+                date_match = re.fullmatch(
+                    r"[a-zA-Z]+_\w+_(\d{8})_\w+_[\.a-zA-Z\d]+\.tar", tar_file
+                ).group(1)
+            except AttributeError as err:
+                raise Cfmm2tarError(
+                    f"Output {tar_file} could not be parsed."
+                ) from err
+
             with open(result[1], "r", encoding="utf-8") as uid_file:
                 uid = uid_file.read()
             cfmm2tar = Cfmm2tarOutput(
-                study_id,
+                study_id=study_id,
                 tar_file=result[0],
                 uid=uid,
-                date=date,
+                date=datetime(
+                    int(date_match[0:4]),
+                    int(date_match[4:6]),
+                    int(date_match[6:8]),
+                ),
             )
             db.session.add(cfmm2tar)
         db.session.commit()
@@ -99,34 +105,21 @@ def get_new_cfmm2tar_results(study_info, out_dir, study_id):
     cfmm2tar_result = gen_utils().run_cfmm2tar(
         out_dir=out_dir, project=study_info
     )
-    cfmm2tar_results_in_db = Cfmm2tarOutput.query.filter_by(
-        study_id=study_id
-    ).all()
-    new_results = []
-    already_there = []
     if cfmm2tar_result == []:
         err = "Invalid Principal or Project Name"
         _set_task_error(get_current_job().id, err)
         return []
-    for result in cfmm2tar_result:
-        if cfmm2tar_results_in_db == []:
-            new_results.append(result)
-            continue
-        for db_result in cfmm2tar_results_in_db:
-            if (
-                result[0].rsplit("/", 3)[3]
-                == db_result.tar_file.rsplit("/", 3)[3]
-            ):
-                already_there.append(result)
-            elif result not in already_there and result not in new_results:
-                new_results.append(result)
 
-    if already_there != []:
-        for new in list(new_results):
-            if new in already_there:
-                new_results.remove(new)
+    tar_files_existing = [
+        pathlib.PurePath(output.tar_file).name
+        for output in Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
+    ]
 
-    return new_results
+    return [
+        result
+        for result in cfmm2tar_result
+        if pathlib.PurePath(result[0]).name not in tar_files_existing
+    ]
 
 
 def get_info_from_tar2bids(study_id, tar_file_id):
