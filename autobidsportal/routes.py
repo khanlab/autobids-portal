@@ -453,8 +453,17 @@ def run_tar2bids(study_id, cfmm2tar_id):
         abort(404)
     tar_file = Cfmm2tarOutput.query.get_or_404(cfmm2tar_id)
 
-    if len(study.get_task_in_progress("get_info_from_tar2bids")) > 0:
-        flash("An Tar2bids run is currently in progress")
+    if (
+        len(
+            Task.query.filter_by(
+                study_id=study_id,
+                name="get_info_from_tar2bids",
+                complete=False,
+            ).all()
+        )
+        > 0
+    ):
+        flash("An tar2bids run is currently in progress")
     else:
         current_user.launch_task(
             "get_info_from_tar2bids",
