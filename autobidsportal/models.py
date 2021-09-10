@@ -99,7 +99,6 @@ class User(UserMixin, db.Model):
                 user_id=self.id,
                 user=self,
                 start_time=datetime.utcnow(),
-                task_button_id=self.last_pressed_button_id,
                 study_id=args[0],
             )
         db.session.add(task)
