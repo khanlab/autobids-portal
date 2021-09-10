@@ -31,9 +31,10 @@ from autobidsportal.forms import (
     LoginForm,
     BidsForm,
     RegistrationForm,
-    HeuristicForm,
     AccessForm,
     RemoveAccessForm,
+    StudyConfigForm,
+    DEFAULT_HEURISTICS,
 )
 
 portal_blueprint = Blueprint(
@@ -275,7 +276,6 @@ def results():
 @login_required
 def answer_info(study_id):
     """Obtains complete survey response based on the submission id"""
-    form = HeuristicForm()
     study = Study.query.get_or_404(study_id)
     if (not current_user.admin) and (
         current_user not in study.users_authorized
@@ -298,8 +298,74 @@ def answer_info(study_id):
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
-        form=form,
     )
+
+
+@portal_blueprint.route(
+    "/results/<int:study_id>/config", methods=["GET", "POST"]
+)
+@login_required
+def study_config(study_id):
+    """Page to display and edit study config."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+
+    form = StudyConfigForm()
+    if request.method == "POST":
+        study.principal = form.pi_name.data
+        study.project_name = form.project_name.data
+        study.dataset_name = form.dataset_name.data
+        if form.retrospective_data.data:
+            study.retrospective_data = True
+            study.retrospective_start = form.retrospective_start.data
+            study.retrospective_end = form.retrospective_end.data
+        else:
+            study.retrospective_data = False
+            study.retrospective_start = None
+            study.retrospective_end = None
+        study.heuristic = form.heuristic.data
+        study.subj_expr = form.subj_expr.data
+        study.users_authorized = [
+            User.query.get(id) for id in form.users_authorized.data
+        ]
+        db.session.commit()
+
+    principal_names = [
+        p.principal_name for p in db.session.query(Principal).all()
+    ]
+    if study.principal not in principal_names:
+        principal_names.insert(0, study.principal)
+    form.pi_name.choices = principal_names
+    form.pi_name.defaults = study.principal
+    form.project_name.default = study.project_name
+    if study.dataset_name is not None:
+        form.dataset_name.default = study.dataset_name
+    form.retrospective_data.default = study.retrospective_data
+    if study.retrospective_data:
+        form.retrospective_start.default = study.retrospective_start
+        form.retrospective_end.default = study.retrospective_end
+    form.heuristic.choices = DEFAULT_HEURISTICS
+    if study.heuristic is None:
+        form.heuristic.default = "cfmm_base.py"
+    else:
+        form.heuristic.default = study.heuristic
+    if study.subj_expr is None:
+        form.subj_expr.default = "*_{subject}"
+    else:
+        form.subj_expr.default = study.subj_expr
+    form.users_authorized.choices = [
+        (user.id, user.email) for user in User.query.all()
+    ]
+    form.users_authorized.default = [
+        user.id for user in study.users_authorized
+    ]
+
+    form.process()
+
+    return render_template("study_config.html", form=form, study=study)
 
 
 @portal_blueprint.route("/results/<int:study_id>/cfmm2tar", methods=["POST"])
@@ -311,11 +377,12 @@ def run_cfmm2tar(study_id):
         current_user not in study.users_authorized
     ):
         abort(404)
-    form = HeuristicForm()
     if (
         len(
             Task.query.filter_by(
-                study_id=study_id, name="get_info_from_cfmm2tar"
+                study_id=study_id,
+                name="get_info_from_cfmm2tar",
+                complete=False,
             ).all()
         )
         > 0
@@ -370,7 +437,6 @@ def run_cfmm2tar(study_id):
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
-        form=form,
     )
 
 
@@ -383,23 +449,17 @@ def run_tar2bids(study_id):
         current_user not in study.users_authorized
     ):
         abort(404)
-    form = HeuristicForm()
-    if form.validate_on_submit():
-        study.heuristic = form.heuristic.data
-        tar_file = Cfmm2tarOutput.query.get_or_404(request.form["tar_file"])
-        all_options = dict(form.heuristic.choices)
-        options = list(all_options.values())
-        options.remove(form.heuristic.data)
+    tar_file = Cfmm2tarOutput.query.get_or_404(request.form["tar_file"])
 
-        if len(study.get_task_in_progress("get_info_from_tar2bids")) > 0:
-            flash("An Tar2bids run is currently in progress")
-        else:
-            current_user.launch_task(
-                "get_info_from_tar2bids",
-                f"tar2bids for study {study_id}",
-                tar_file.id,
-            )
-            db.session.commit()
+    if len(study.get_task_in_progress("get_info_from_tar2bids")) > 0:
+        flash("An Tar2bids run is currently in progress")
+    else:
+        current_user.launch_task(
+            "get_info_from_tar2bids",
+            f"tar2bids for study {study_id}",
+            tar_file.id,
+        )
+        db.session.commit()
 
         if current_app.config["MAIL_ENABLED"]:
             subject = "A Tar2bids run for %s^%s has been submitted by %s" % (
@@ -444,7 +504,6 @@ def run_tar2bids(study_id):
         cfmm2tar_files=cfmm2tar_files,
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
-        form=form,
     )
 
 
