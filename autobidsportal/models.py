@@ -99,7 +99,6 @@ class User(UserMixin, db.Model):
                 user_id=self.id,
                 user=self,
                 start_time=datetime.utcnow(),
-                task_button_id=self.last_pressed_button_id,
                 study_id=args[0],
             )
         db.session.add(task)
@@ -129,6 +128,7 @@ def load_user(user_id):
 class Study(db.Model):
     """One study on the DICOM server."""
 
+    # Survey answers
     id = db.Column(db.Integer, primary_key=True)
     submitter_name = db.Column(db.String(100), nullable=False)
     submitter_email = db.Column(db.String(100), nullable=False)
@@ -156,7 +156,10 @@ class Study(db.Model):
     submission_date = db.Column(
         db.DateTime, index=True, default=datetime.utcnow, nullable=False
     )
+
+    # Study config
     heuristic = db.Column(db.String(200), nullable=True)
+    subj_expr = db.Column(db.String(50), nullable=True)
     users_authorized = db.relationship(
         "User",
         secondary=accessible_studies,
@@ -164,6 +167,7 @@ class Study(db.Model):
         backref=db.backref("studies", lazy=True),
     )
 
+    # Study outputs
     tasks = db.relationship("Task", backref="study", lazy=True)
     cfmm2tar_outputs = db.relationship(
         "Cfmm2tarOutput", backref="study", lazy=True

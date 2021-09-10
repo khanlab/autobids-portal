@@ -1,8 +1,5 @@
 """Forms to be used in some views."""
 
-from pathlib import Path
-
-from flask import current_app
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -29,19 +26,26 @@ from autobidsportal.models import User
 
 
 DEFAULT_HEURISTICS = [
-    ("cfmm_baron.py", "cfmm_baron.py"),
-    ("cfmm_base.py", "cfmm_base.py"),
-    ("cfmm_bold_rest.py", "cfmm_bold_rest.py"),
-    ("cfmm_bruker.py", "cfmm_bruker.py"),
-    ("cfmm_PS_PRC_3T.py", "cfmm_PS_PRC_3T.py"),
-    ("clinicalDBS.py", "clinicalDBS.py"),
-    ("cmrr_ANNA_OBJCAT_MTL_3T.py", "cmrr_ANNA_OBJCAT_MTL_3T.py"),
-    ("EPL14A_GE_3T.py", "EPL14A_GE_3T.py"),
-    ("EPL14B_3T.py", "EPL14B_3T.py"),
-    ("GEvSE.py", "GEvSE.py"),
-    ("Kohler_HcECT.py", "Kohler_HcECT.py"),
-    ("Menon_CogMS.py", "Menon_CogMS.py"),
+    "cfmm_baron.py",
+    "cfmm_base.py",
+    "cfmm_bold_rest.py",
+    "cfmm_bruker.py",
+    "cfmm_PS_PRC_3T.py",
+    "clinicalDBS.py",
+    "cmrr_ANNA_OBJCAT_MTL_3T.py",
+    "EPL14A_GE_3T.py",
+    "EPL14B_3T.py",
+    "GEvSE.py",
+    "Kohler_HcECT.py",
+    "Menon_CogMS.py",
 ]
+
+
+class MultiCheckboxField(SelectMultipleField):
+    """Generic field for multiple checkboxes."""
+
+    widget = widgets.ListWidget(prefix_label=False)
+    option_widget = widgets.CheckboxInput()
 
 
 class LoginForm(FlaskForm):
@@ -265,27 +269,18 @@ class BidsForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
-class HeuristicForm(FlaskForm):
-    """Form for selecting one of the default heuristics."""
+class StudyConfigForm(FlaskForm):
+    """Form for editing an existing study."""
 
-    heuristic = SelectField(
-        "Heuristic:",
-        choices=DEFAULT_HEURISTICS
-        + [
-            (heuristic, heuristic)
-            for heuristic in Path(
-                current_app.config["CUSTOM_HEURISTIC_DIR"]
-            ).iterdir()
-        ],
-        validators=[InputRequired()],
-    )
-
-
-class MultiCheckboxField(SelectMultipleField):
-    """Generic field for multiple checkboxes."""
-
-    widget = widgets.ListWidget(prefix_label=False)
-    option_widget = widgets.CheckboxInput()
+    pi_name = SelectField("PI", choices=[])
+    project_name = StringField("Project Name")
+    dataset_name = StringField("Dataset Name")
+    retrospective_data = BooleanField("Retrospective?")
+    retrospective_start = DateField("Start Date")
+    retrospective_end = DateField("End Date")
+    heuristic = SelectField("Heuristic", choices=[])
+    subj_expr = StringField("Patient Name Search String")
+    users_authorized = MultiCheckboxField("Users With Access", coerce=int)
 
 
 class AccessForm(FlaskForm):
