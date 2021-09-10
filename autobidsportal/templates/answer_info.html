@@ -321,7 +321,7 @@
                 <tr>
                     <td class="col-md-1">
                         <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                            <input type="submit" name="tar2bids" value="f.id" class="btn btn-primary">Run tar2bids with this file</input>
+                            <input type="submit" name="tar2bids" value="{{ f.id }}" class="btn btn-primary">Run tar2bids with this file</input>
                         </form>
                     </td>
                     <td class="col-md-2">{{ f.uid_file }}</td>
