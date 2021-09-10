@@ -320,8 +320,8 @@
                 {% for f in cfmm2tar_files %}
                 <tr>
                     <td class="col-md-1">
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                            <input type="submit" name="tar2bids" value="{{ f.id }}" class="btn btn-primary">Run tar2bids with this file</input>
+                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id, cfmm2tar_id=f.id) }}">
+                            <input type="submit" value="Run tar2bids with this file" class="btn btn-primary">
                         </form>
                     </td>
                     <td class="col-md-2">{{ f.uid_file }}</td>

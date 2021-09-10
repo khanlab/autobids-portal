@@ -440,16 +440,18 @@ def run_cfmm2tar(study_id):
     )
 
 
-@portal_blueprint.route("/results/<int:study_id>/tar2bids", methods=["POST"])
+@portal_blueprint.route(
+    "/results/<int:study_id>/tar2bids/<int:cfmm2tar_id>", methods=["POST"]
+)
 @login_required
-def run_tar2bids(study_id):
+def run_tar2bids(study_id, cfmm2tar_id):
     """Launch tar2bids task and refresh answer_info.html"""
     study = Study.query.get_or_404(study_id)
     if (not current_user.admin) and (
         current_user not in study.users_authorized
     ):
         abort(404)
-    tar_file = Cfmm2tarOutput.query.get_or_404(request.form["tar_file"])
+    tar_file = Cfmm2tarOutput.query.get_or_404(cfmm2tar_id)
 
     if len(study.get_task_in_progress("get_info_from_tar2bids")) > 0:
         flash("An Tar2bids run is currently in progress")
