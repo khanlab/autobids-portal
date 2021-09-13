@@ -87,7 +87,6 @@ class User(UserMixin, db.Model):
         elif name == "get_info_from_tar2bids":
             rq_job = current_app.task_queue.enqueue(
                 "autobidsportal.tasks." + name,
-                self.id,
                 *args,
                 **kwargs,
                 job_timeout=100000,

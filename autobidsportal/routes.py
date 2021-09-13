@@ -468,6 +468,7 @@ def run_tar2bids(study_id, cfmm2tar_id):
         current_user.launch_task(
             "get_info_from_tar2bids",
             f"tar2bids for study {study_id}",
+            study_id,
             tar_file.id,
         )
         db.session.commit()
