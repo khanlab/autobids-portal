@@ -104,7 +104,6 @@ class User(UserMixin, db.Model):
         elif name == "update_heuristics":
             rq_job = current_app.task_queue.enqueue(
                 "autobidsportal.tasks." + name,
-                "self.id",
                 *args,
                 **kwargs,
                 job_timeout=1000,

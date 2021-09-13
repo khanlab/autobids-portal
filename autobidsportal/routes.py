@@ -205,7 +205,7 @@ def update_heuristics():
         "update_heuristics", "Manually triggered heuristic update"
     )
     flash("Currently updating heuristics... Give it a minute or two.")
-    user_list()
+    return user_list()
 
 
 @portal_blueprint.route("/admin/<int:user_id>", methods=["GET", "POST"])
