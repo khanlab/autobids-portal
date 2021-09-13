@@ -421,6 +421,7 @@ def run_cfmm2tar(study_id):
 
     return answer_info(study_id)
 
+
 @portal_blueprint.route(
     "/results/<int:study_id>/tar2bids/<int:cfmm2tar_id>", methods=["POST"]
 )
@@ -480,6 +481,7 @@ def run_tar2bids(study_id, cfmm2tar_id):
                 print(err)
 
     return answer_info(study_id)
+
 
 @portal_blueprint.route("/results/download", methods=["GET"])
 @login_required
