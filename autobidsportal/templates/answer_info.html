@@ -367,16 +367,16 @@
             <h2 class="sub-header">Most Recent Tar2bids Results</h2>
             <table class="table table-light">
                 <tr>
-                    <th class="col-md-1">Tar File Path</th>
+                    <th class="col-md-1">Tar File</th>
                     <th class="col-md-2">Heuristic</th>
-                    <th class="col-md-3">Bids File Path</th>
+                    <th class="col-md-3">Bids Directory</th>
                 </tr>
 
                 {% for f in tar2bids_files %}
                 <tr>
-                    <td class="col-md-1">{{ f.tar_file }}</td>
+                    <td class="col-md-1">{{ f.cfmm2tar_output.tar_file }}</td>
                     <td class="col-md-2">{{ f.heuristic }}</td>
-                    <td class="col-md-3">{{ f.bids_file }}</td>
+                    <td class="col-md-3">{{ f.bids_dir }}</td>
                 </tr>
                 {% endfor %}
             </table>
