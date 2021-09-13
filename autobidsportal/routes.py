@@ -419,26 +419,7 @@ def run_cfmm2tar(study_id):
         except SMTPAuthenticationError as err:
             print(err)
 
-    cfmm2tar_tasks = Task.query.filter_by(
-        study_id=study_id, name="get_info_from_cfmm2tar"
-    ).all()
-    cfmm2tar_files = study.cfmm2tar_outputs
-    tar2bids_tasks = Task.query.filter_by(
-        study_id=study_id, name="get_info_from_tar2bids"
-    ).all()
-    tar2bids_files = study.tar2bids_outputs
-
-    return render_template(
-        "answer_info.html",
-        title="Response",
-        submitter_answer=study,
-        cfmm2tar_tasks=cfmm2tar_tasks,
-        button_id=study_id,
-        cfmm2tar_files=cfmm2tar_files,
-        tar2bids_tasks=tar2bids_tasks,
-        tar2bids_files=tar2bids_files,
-    )
-
+    return answer_info(study_id)
 
 @portal_blueprint.route(
     "/results/<int:study_id>/tar2bids/<int:cfmm2tar_id>", methods=["POST"]
@@ -498,26 +479,7 @@ def run_tar2bids(study_id, cfmm2tar_id):
             except SMTPAuthenticationError as err:
                 print(err)
 
-    cfmm2tar_tasks = Task.query.filter_by(
-        study=study, description="Running cfmm2tar-"
-    ).all()
-    cfmm2tar_files = study.cfmm2tar_outputs
-    tar2bids_tasks = Task.query.filter_by(
-        study=study, description="Running tar2bids-"
-    ).all()
-    tar2bids_files = study.tar2bids_outputs
-
-    return render_template(
-        "answer_info.html",
-        title="Response",
-        submitter_answer=study,
-        cfmm2tar_tasks=cfmm2tar_tasks,
-        button_id=study_id,
-        cfmm2tar_files=cfmm2tar_files,
-        tar2bids_tasks=tar2bids_tasks,
-        tar2bids_files=tar2bids_files,
-    )
-
+    return answer_info(study_id)
 
 @portal_blueprint.route("/results/download", methods=["GET"])
 @login_required
