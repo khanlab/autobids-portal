@@ -158,8 +158,10 @@ class Study(db.Model):
     )
 
     # Study config
-    heuristic = db.Column(db.String(200), nullable=True)
-    subj_expr = db.Column(db.String(50), nullable=True)
+    heuristic = db.Column(
+        db.String(200), nullable=False, default="cfmm_base.py"
+    )
+    subj_expr = db.Column(db.String(50), nullable=False, default="*_{subject}")
     users_authorized = db.relationship(
         "User",
         secondary=accessible_studies,
