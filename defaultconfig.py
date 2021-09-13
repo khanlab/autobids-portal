@@ -39,7 +39,14 @@ class Config(object):
 
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
     TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
-    CUSTOM_HEURISTIC_DIR = "custom-heuristics"
+
+    # Git repo containing custom heuristic files
+    HEURISTIC_GIT_URL = "git@github.com:example/heuristics.git"
+    # Local path to which to clone from HEURISTIC_GIT_URL
+    HEURISTIC_REPO_PATH = "/home/debian/custom-heuristics"
+    # Path (relative to HEURISTIC_REPO_PATH) to directory containing custom
+    # heuristic files.
+    HEURISTIC_DIR_PATH = "heuristics"
 
 
 class Config_test(object):

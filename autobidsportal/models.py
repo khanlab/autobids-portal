@@ -101,6 +101,22 @@ class User(UserMixin, db.Model):
                 start_time=datetime.utcnow(),
                 study_id=args[0],
             )
+        elif name == "update_heuristics":
+            rq_job = current_app.task_queue.enqueue(
+                "autobidsportal.tasks." + name,
+                "self.id",
+                *args,
+                **kwargs,
+                job_timeout=1000,
+            )
+            task = Task(
+                id=rq_job.get_id(),
+                name=name,
+                description=description,
+                user_id=self.id,
+                user=self,
+                start_time=datetime.utcnow(),
+            )
         db.session.add(task)
         db.session.commit()
         return task
@@ -229,7 +245,7 @@ class Task(db.Model):
     name = db.Column(db.String(128), index=True, nullable=False)
     description = db.Column(db.String(128), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=True)
     complete = db.Column(db.Boolean, default=False, nullable=False)
     success = db.Column(db.Boolean, default=False, nullable=True)
     error = db.Column(db.String(128), nullable=True)

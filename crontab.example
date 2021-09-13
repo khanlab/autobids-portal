@@ -2,3 +2,5 @@ min hour day week year cd {location of app} && venv/bin/flask scheduled >>schedu
 
 Example:
 * 0 * * * cd ~/Desktop/sb_bids_form && venv/bin/flask scheduled >>scheduled.log 2>&1
+
+* 0 * * * cd ~/Desktop/sb_bids_form && venv/bin/flask update-heuristics

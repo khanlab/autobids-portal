@@ -31,5 +31,17 @@
                 </table>
             </div>
         </div>
+        <div class="row my-3">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Actions</h3>
+                        <form method="POST" action="{{ url_for('portal_blueprint.update_heuristics') }}" >
+                            <input type="submit" name="update-heuristics" value="Update custom heuristics" class="btn btn-primary"></input>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>             
 {% endblock %}

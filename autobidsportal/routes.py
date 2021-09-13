@@ -1,6 +1,7 @@
 """All routes in the portal are defined here."""
 
 from datetime import datetime
+from pathlib import Path
 from smtplib import SMTPAuthenticationError
 
 from flask import (
@@ -193,6 +194,20 @@ def user_list():
     return render_template("admin.html", title="Administration", users=users)
 
 
+@portal_blueprint.route("/admin/update_heuristics", methods=["POST"])
+@login_required
+def update_heuristics():
+    """Launch an update heuristics task."""
+    if not current_user.admin:
+        abort(404)
+
+    current_user.launch_task(
+        "update_heuristics", "Manually triggered heuristic update"
+    )
+    flash("Currently updating heuristics... Give it a minute or two.")
+    user_list()
+
+
 @portal_blueprint.route("/admin/<int:user_id>", methods=["GET", "POST"])
 @login_required
 def admin(user_id):
@@ -333,6 +348,18 @@ def study_config(study_id):
         ]
         db.session.commit()
 
+    available_heuristics = sorted(
+        [
+            (str(heuristic_path), heuristic_path.name)
+            for heuristic_path in (
+                Path(current_app.config["HEURISTIC_REPO_PATH"])
+                / current_app.config["HEURISTIC_DIR_PATH"]
+            ).iterdir()
+        ]
+        + [(heuristic, heuristic) for heuristic in DEFAULT_HEURISTICS],
+        key=lambda option: option[1].lower(),
+    )
+
     principal_names = [
         p.principal_name for p in db.session.query(Principal).all()
     ]
@@ -347,7 +374,7 @@ def study_config(study_id):
     if study.retrospective_data:
         form.retrospective_start.default = study.retrospective_start
         form.retrospective_end.default = study.retrospective_end
-    form.heuristic.choices = DEFAULT_HEURISTICS
+    form.heuristic.choices = available_heuristics
     if study.heuristic is None:
         form.heuristic.default = "cfmm_base.py"
     else:

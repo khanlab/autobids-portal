@@ -5,6 +5,7 @@ import tempfile
 import pathlib
 import re
 import os
+import subprocess
 
 from rq import get_current_job
 from rq.job import Job
@@ -158,4 +159,38 @@ def get_info_from_tar2bids(study_id, tar_file_id):
         _set_task_error(job.id, err.__cause__.stderr)
     finally:
         if not Task.query.get(job.id).complete:
+            _set_task_error(job.id, "Unknown uncaught exception.")
+
+
+def update_heuristics():
+    """Clone the heuristic repo if it doesn't exist, then pull from it."""
+    job = get_current_job()
+    if job is not None:
+        _set_task_progress(job.id, 0)
+    if (
+        subprocess.run(
+            ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "status"],
+            check=False,
+        ).returncode
+        != 0
+    ):
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                app.config["HEURISTIC_GIT_URL"],
+                app.config["HEURISTIC_REPO_PATH"],
+            ],
+            check=True,
+        )
+
+    try:
+        subprocess.run(
+            ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "pull"],
+            check=True,
+        )
+        if job is not None:
+            _set_task_progress(job.id, 100)
+    finally:
+        if (job is not None) and not Task.query.get(job.id).complete:
             _set_task_error(job.id, "Unknown uncaught exception.")
