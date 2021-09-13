@@ -288,7 +288,8 @@ class Tar2bidsOutput(db.Model):
     )
 
     def __repr__(self):
-        return f"<Tar2bids {self.tar_file, self.bids_dir, self.heuristic}>"
+        out_fields = (self.cfmm2tar_output_id, self.bids_dir, self.heuristic)
+        return f"<Tar2bids {out_fields}>"
 
 
 class Principal(db.Model):
