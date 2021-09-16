@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 
-{% block app_content %}
+{% block title %}Studies{% endblock %}
 
+{% block app_content %}
 <div class="container">
     <div class="row my-3">
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    <h1>Results</h1>
-                    <p>Want to export answers? <a class="download" href="{{ url_for('portal_blueprint.download') }}">Click to download!</a></p>
+                    <h1>Studies</h1>
+                    <p>Want to export survey answers? <a class="download" href="{{ url_for('portal_blueprint.download') }}">Click to download!</a></p>
                 </div>
             </div>
         </div>
