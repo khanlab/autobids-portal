@@ -67,7 +67,6 @@ def test_login_already_logged_in(
         ),
         follow_redirects=True,
     )
-    print(response.data)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
@@ -189,7 +188,7 @@ def test_valid_login_complete_survey_logout(test_client, init_database):
             familiarity_hpc="1",
             familiarity_openneuro="1",
             familiarity_cbrain="1",
-            principal="Khan",
+            principal="Apple",
             project_name="Autobids",
             dataset_name="",
             sample="2021-01-10",
@@ -203,11 +202,11 @@ def test_valid_login_complete_survey_logout(test_client, init_database):
         follow_redirects=True,
     )
     assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
+    assert b"Thanks, the survey has been submitted!" in response.data
     assert b"Name" in response.data
     assert b"johnsmith@gmail.com" not in response.data
-    assert b"Thanks, the survey has been submitted!" in response.data
+    assert b"Logout" in response.data
+    assert b"Login" not in response.data
     assert b"Results" in response.data
 
     response = test_client.get("/logout", follow_redirects=True)
@@ -237,7 +236,7 @@ def test_valid_survey(test_client, init_database):
             familiarity_hpc="1",
             familiarity_openneuro="1",
             familiarity_cbrain="1",
-            principal="Khan",
+            principal="Apple",
             project_name="Autobids",
             dataset_name="",
             sample="2021-01-10",
@@ -278,7 +277,7 @@ def test_invalid_survey(test_client, init_database):
             familiarity_hpc="1",
             familiarity_openneuro="1",
             familiarity_cbrain="1",
-            principal="Khan",
+            principal="Apple",
             project_name="Autobids",
             dataset_name="",
             sample="2021-01-10",
@@ -317,7 +316,7 @@ def test_valid_login_access_results(test_client, init_database):
     assert b"Name" in response.data
     assert b"Results" in response.data
 
-    response = test_client.post("/results", follow_redirects=True)
+    response = test_client.get("/results", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
@@ -342,7 +341,7 @@ def test_valid_login_access_results_download(test_client, init_database):
     assert b"Name" in response.data
     assert b"Results" in response.data
 
-    response = test_client.post("/results", follow_redirects=True)
+    response = test_client.get("/results", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
@@ -389,7 +388,7 @@ def test_valid_login_complete_survey_access_results_view_more(
             familiarity_hpc="1",
             familiarity_openneuro="1",
             familiarity_cbrain="1",
-            principal="Khan",
+            principal="Apple",
             project_name="Autobids",
             dataset_name="",
             sample="2021-01-10",
@@ -410,15 +409,15 @@ def test_valid_login_complete_survey_access_results_view_more(
     assert b"Thanks, the survey has been submitted!" in response.data
     assert b"Results" in response.data
 
-    response = test_client.post("/results", follow_redirects=True)
+    response = test_client.get("/results", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
     assert b"Name" in response.data
     assert b"Results" in response.data
 
-    response = test_client.post(
-        "/results/user", data={"1": "View+more"}, follow_redirects=True
+    response = test_client.get(
+        "/results/1", follow_redirects=True
     )
     assert response.status_code == 200
     assert b"Logout" in response.data

@@ -1,7 +1,7 @@
 """Unit tests of the database models."""
 
 import datetime
-from autobidsportal.models import User, Submitter, Answer
+from autobidsportal.models import User, Study
 
 
 def test_new_user():
@@ -10,7 +10,6 @@ def test_new_user():
     user.set_password(password="Password123")
     assert user.email == "johnsmith@gmail.com"
     assert user.password_hash != "Password123"
-    assert user.__repr__() == "<User ('johnsmith@gmail.com', None)>"
 
 
 def test_new_user_with_fixture(new_user):
@@ -19,19 +18,9 @@ def test_new_user_with_fixture(new_user):
     assert new_user.password_hash != "Password123"
 
 
-def test_new_submitter():
-    """Test submitter columns."""
-    submitter = Submitter(email="johnsmith@gmail.com", name="John")
-    assert submitter.email == "johnsmith@gmail.com"
-    assert submitter.name == "John"
-    assert (
-        submitter.__repr__() == "<Submitter ('John', 'johnsmith@gmail.com')>"
-    )
-
-
-def test_new_answer():
-    """Test answer columns."""
-    answer = Answer(
+def test_new_study():
+    """Test study columns."""
+    study = Study(
         status="undergraduate",
         scanner="type2",
         scan_number=4,
@@ -56,31 +45,31 @@ def test_new_answer():
         submission_date=datetime.datetime(2021, 1, 1, 10, 10, 10, 100000),
     )
 
-    assert answer.status == "undergraduate"
-    assert answer.scanner == "type2"
-    assert answer.scan_number == 4
-    assert answer.study_type
-    assert answer.familiarity_bids == "1"
-    assert answer.familiarity_bidsapp == "1"
-    assert answer.familiarity_python == "1"
-    assert answer.familiarity_linux == "1"
-    assert answer.familiarity_bash == "1"
-    assert answer.familiarity_hpc == "1"
-    assert answer.familiarity_openneuro == "1"
-    assert answer.familiarity_cbrain == "1"
-    assert answer.principal == "Khan"
-    assert answer.project_name == "Autobids"
-    assert answer.dataset_name == ""
-    assert answer.sample == datetime.datetime(2021, 1, 10, 0, 0)
-    assert answer.retrospective_data
-    assert answer.retrospective_start == datetime.datetime(2021, 1, 1, 0, 0)
-    assert answer.retrospective_end == datetime.datetime(2021, 1, 5, 0, 0)
-    assert answer.consent
-    assert answer.comment == ""
-    assert answer.submission_date == datetime.datetime(
+    assert study.status == "undergraduate"
+    assert study.scanner == "type2"
+    assert study.scan_number == 4
+    assert study.study_type
+    assert study.familiarity_bids == "1"
+    assert study.familiarity_bidsapp == "1"
+    assert study.familiarity_python == "1"
+    assert study.familiarity_linux == "1"
+    assert study.familiarity_bash == "1"
+    assert study.familiarity_hpc == "1"
+    assert study.familiarity_openneuro == "1"
+    assert study.familiarity_cbrain == "1"
+    assert study.principal == "Khan"
+    assert study.project_name == "Autobids"
+    assert study.dataset_name == ""
+    assert study.sample == datetime.datetime(2021, 1, 10, 0, 0)
+    assert study.retrospective_data
+    assert study.retrospective_start == datetime.datetime(2021, 1, 1, 0, 0)
+    assert study.retrospective_end == datetime.datetime(2021, 1, 5, 0, 0)
+    assert study.consent
+    assert study.comment == ""
+    assert study.submission_date == datetime.datetime(
         2021, 1, 1, 10, 10, 10, 100000
     )
-    answers = (
+    studys = (
         "undergraduate",
         "type2",
         4,
@@ -104,4 +93,4 @@ def test_new_answer():
         "",
         datetime.datetime(2021, 1, 1, 10, 10, 10, 100000),
     )
-    assert answer.__repr__() == f"<Answer {answers}>"
+    assert study.__repr__() == f"<Answer {studys}>"
