@@ -12,6 +12,7 @@ from autobidsportal.models import db, User, Principal
 @dataclass
 class TestConfig:
     """Minimal config class with variables needed for testing."""
+
     SECRET_KEY = "test_secret"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

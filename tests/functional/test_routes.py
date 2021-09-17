@@ -416,9 +416,7 @@ def test_valid_login_complete_survey_access_results_view_more(
     assert b"Name" in response.data
     assert b"Results" in response.data
 
-    response = test_client.get(
-        "/results/1", follow_redirects=True
-    )
+    response = test_client.get("/results/1", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
