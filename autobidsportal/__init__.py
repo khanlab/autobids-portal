@@ -13,12 +13,25 @@ from autobidsportal.models import db, login
 from autobidsportal.errors import bad_request, not_found_error, internal_error
 
 
-def create_app(config_object=None):
+def create_app(config_object=None, override_dict=None):
+    """Application factory for the Autobids Portal.
+
+    Parameters
+    ----------
+    config_object : str or object reference
+        Reference to an object with config vars to update. If no
+        config_object is provided, the environment variable
+        AUTOBIDSPORTAL_CONFIG is used.
+    override_dict : dict
+        Dictionary of config vars to update.
+    """
     app = Flask(__name__)
     if config_object is None:
         app.config.from_object(os.environ["AUTOBIDSPORTAL_CONFIG"])
     else:
         app.config.from_object(config_object)
+    if override_dict is not None:
+        app.config.update(override_dict)
     app.register_blueprint(portal_blueprint, url_prefix="/")
     app.register_error_handler(400, bad_request)
     app.register_error_handler(404, not_found_error)
