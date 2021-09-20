@@ -362,15 +362,15 @@ def test_complete_survey_access_study_info(test_client, login_admin):
     assert b"Name" in response.data
     assert b"Familiarity" in response.data
     assert b"Results" in response.data
-    assert b'John' in response.data
-    assert b'johnsmith@gmail.com' in response.data
+    assert b"John" in response.data
+    assert b"johnsmith@gmail.com" in response.data
 
-    response = test_client.get('results/1/config', follow_redirects=True)
+    response = test_client.get("results/1/config", follow_redirects=True)
     assert response.status_code == 200
-    assert b'Logout' in response.data
-    assert b'Login' not in response.data
-    assert b'Study Config: Apple^Autobids' in response.data
-    assert b'*_{subject}' in response.data
+    assert b"Logout" in response.data
+    assert b"Login" not in response.data
+    assert b"Study Config: Apple^Autobids" in response.data
+    assert b"*_{subject}" in response.data
 
 
 def test_admin_index(test_client, login_admin):
