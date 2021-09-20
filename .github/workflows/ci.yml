@@ -42,4 +42,48 @@ jobs:
           black_args: "-l 79"
           black_extensions: py
           auto_fix: true
+  test:
+    name: Set up environment and run tests
+    if: github.event.pull_request.draft == False
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+        redis-version: [6]
+
+    steps:
+      - name: Check out PR branch
+        uses: actions/checkout@master
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Select Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache environment
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('**/setup.cfg') }}
+
+      - name: Set up environment
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@latest
+        with:
+          redis-version: ${{ matrix.redis-version }}
+
+      - name: Run pytest
+        shell: bash
+        run: |
+          pytest
 
