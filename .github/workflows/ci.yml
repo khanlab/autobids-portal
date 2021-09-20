@@ -78,7 +78,7 @@ jobs:
           pip install pytest
 
       - name: Start Redis
-        uses: supercharge/redis-github-action@latest
+        uses: supercharge/redis-github-action@1.1.0
         with:
           redis-version: ${{ matrix.redis-version }}
 
