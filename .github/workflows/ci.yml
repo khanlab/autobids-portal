@@ -44,7 +44,7 @@ jobs:
           auto_fix: true
   test:
     name: Set up environment and run tests
-    if: github.event.pull_request.draft == False
+    if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     strategy:
       matrix:
