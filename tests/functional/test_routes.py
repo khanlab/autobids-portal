@@ -55,7 +55,7 @@ def test_invalid_login(test_client, init_database):
 
 
 def test_login_already_logged_in(
-    test_client, init_database, login_default_user
+    test_client, init_database, login_normal_user
 ):
     """Test that a login fails when a user is already logs in."""
     response = test_client.post(
@@ -299,23 +299,8 @@ def test_invalid_survey(test_client, init_database):
     assert b"Results" not in response.data
 
 
-def test_valid_login_access_results(test_client, init_database):
+def test_results_page(test_client, login_normal_user):
     """Test that results can be accessed."""
-    response = test_client.post(
-        "/login",
-        data=dict(
-            email="johnsmith@gmail.com",
-            password="Password123",
-            submit="Sign In",
-        ),
-        follow_redirects=True,
-    )
-    assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
-
     response = test_client.get("/results", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
@@ -324,53 +309,14 @@ def test_valid_login_access_results(test_client, init_database):
     assert b"Results" in response.data
 
 
-def test_valid_login_access_results_download(test_client, init_database):
+def test_results_download(test_client, init_database, login_normal_user):
     """Test that results can be downloaded."""
-    response = test_client.post(
-        "/login",
-        data=dict(
-            email="johnsmith@gmail.com",
-            password="Password123",
-            submit="Sign In",
-        ),
-        follow_redirects=True,
-    )
-    assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
-
-    response = test_client.get("/results", follow_redirects=True)
-    assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
-
     response = test_client.get("/results/download", follow_redirects=True)
     assert response.status_code == 200
 
 
-def test_valid_login_complete_survey_access_results_view_more(
-    test_client, init_database
-):
+def test_complete_survey_access_study_info(test_client, login_admin):
     """Test that a survey's results are viewable."""
-    response = test_client.post(
-        "/login",
-        data=dict(
-            email="johnsmith@gmail.com",
-            password="Password123",
-            submit="Sign In",
-        ),
-        follow_redirects=True,
-    )
-    assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
-
     response = test_client.post(
         "/index",
         data=dict(
@@ -409,13 +355,6 @@ def test_valid_login_complete_survey_access_results_view_more(
     assert b"Thanks, the survey has been submitted!" in response.data
     assert b"Results" in response.data
 
-    response = test_client.get("/results", follow_redirects=True)
-    assert response.status_code == 200
-    assert b"Logout" in response.data
-    assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
-
     response = test_client.get("/results/1", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
@@ -423,3 +362,37 @@ def test_valid_login_complete_survey_access_results_view_more(
     assert b"Name" in response.data
     assert b"Familiarity" in response.data
     assert b"Results" in response.data
+    assert b"John" in response.data
+    assert b"johnsmith@gmail.com" in response.data
+
+    response = test_client.get("results/1/config", follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Logout" in response.data
+    assert b"Login" not in response.data
+    assert b"Study Config: Apple^Autobids" in response.data
+    assert b"*_{subject}" in response.data
+
+
+def test_admin_index(test_client, login_admin):
+    """Test that the admin index lists users."""
+    response = test_client.get("/admin")
+    assert response.status_code == 200
+    assert b"Logout" in response.data
+    assert b"Login" not in response.data
+    assert b"Admin" in response.data
+    assert b"johnsmith@gmail.com" in response.data
+    assert b"janedoe@gmail.com" in response.data
+    assert b"Actions" in response.data
+
+
+def test_admin_user(test_client, login_admin):
+    """Test that the detailed user page works."""
+    response = test_client.get("/admin/1")
+    assert response.status_code == 200
+    assert b"Logout" in response.data
+    assert b"Login" not in response.data
+    assert b"Admin" in response.data
+    assert b"Administrator" in response.data
+    assert b"Access to which studies?" in response.data
+    assert b"johnsmith@gmail.com" in response.data
+    assert b"janedoe@gmail.com" not in response.data
