@@ -60,7 +60,8 @@ def get_info_from_cfmm2tar(study_id):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    study_info = f"{study.principal}^{study.project_name}"
+    study_description = f"{study.principal}^{study.project_name}"
+    patient_str = study.patient_str
     out_dir = "%s/%s/%s" % (
         app.config["CFMM2TAR_DOWNLOAD_DIR"],
         study.id,
@@ -68,7 +69,10 @@ def get_info_from_cfmm2tar(study_id):
     )
     try:
         for result in get_new_cfmm2tar_results(
-            study_info=study_info, out_dir=out_dir, study_id=study_id
+            study_description=study_description,
+            patient_str=patient_str,
+            out_dir=out_dir,
+            study_id=study_id,
         ):
             tar_file = pathlib.PurePath(result[0]).name
             try:
@@ -102,10 +106,12 @@ def get_info_from_cfmm2tar(study_id):
             _set_task_error(job.id, "Unknown uncaught exception")
 
 
-def get_new_cfmm2tar_results(study_info, out_dir, study_id):
+def get_new_cfmm2tar_results(
+    study_description, patient_str, out_dir, study_id
+):
     """Run cfmm2tar and parse new results."""
     cfmm2tar_result = gen_utils().run_cfmm2tar(
-        out_dir=out_dir, project=study_info
+        out_dir=out_dir, patient_name=patient_str, project=study_description
     )
     if cfmm2tar_result == []:
         err = "Invalid Principal or Project Name"
@@ -129,10 +135,15 @@ def get_info_from_tar2bids(study_id, tar_file_id):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    study_info = f"{study.principal}^{study.project_name}"
     tar_file = Cfmm2tarOutput.query.get(tar_file_id).tar_file
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
-    data = "%s/%s/%s" % (prefix, study_info, study.dataset_name)
+    data = "%s/%s/%s" % (
+        prefix,
+        study.id,
+        study.dataset_name
+        if study.dataset_name not in [None, ""]
+        else study.project_name,
+    )
     if not os.path.isdir(data):
         os.makedirs(data)
     try:

@@ -92,6 +92,7 @@ class Dcm4cheUtils:
         output_fields,
         study_description=None,
         study_date=None,
+        patient_name=None,
         retrieve_level="STUDY",
     ):
         """Queries a DICOM server for specified tags from one study.
@@ -105,6 +106,8 @@ class Dcm4cheUtils:
         study_date : date, optional
             The date of the study to query. Converted to "YYYYMMDD" format and
             queries the "StudyDate" tag.
+        patient_name : str, optional
+            Search string for the patient names to retrieve.
         retrieve_level : str
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
@@ -129,6 +132,8 @@ class Dcm4cheUtils:
             cmd = '{} -m StudyDate="{}"'.format(
                 cmd, study_date.strftime("%Y%m%d")
             )
+        if patient_name is not None:
+            cmd = '{} -m PatientName="{}"'.format(cmd, patient_name)
 
         cmd = " ".join(
             [cmd] + ["-r {}".format(field) for field in output_fields]
