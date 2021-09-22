@@ -175,6 +175,7 @@ class Study(db.Model):
     heuristic = db.Column(
         db.String(200), nullable=False, default="cfmm_base.py"
     )
+    patient_str = db.Column(db.String(50), nullable=False, default="*")
     subj_expr = db.Column(db.String(50), nullable=False, default="*_{subject}")
     users_authorized = db.relationship(
         "User",

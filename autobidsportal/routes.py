@@ -343,6 +343,7 @@ def study_config(study_id):
             study.retrospective_end = None
         study.heuristic = form.heuristic.data
         study.subj_expr = form.subj_expr.data
+        study.patient_str = form.patient_str.data
         study.users_authorized = [
             User.query.get(id) for id in form.users_authorized.data
         ]
@@ -383,6 +384,7 @@ def study_config(study_id):
         form.subj_expr.default = "*_{subject}"
     else:
         form.subj_expr.default = study.subj_expr
+    form.patient_str.default = study.patient_str
     form.users_authorized.choices = [
         (user.id, user.email) for user in User.query.all()
     ]
@@ -614,6 +616,7 @@ def dicom_verify(study_id, method):
     ):
         abort(404)
     study_info = f"{study.principal}^{study.project_name}"
+    patient_str = study.patient_str
     # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime',
     # 'EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
     if method.lower() == "both":
@@ -631,6 +634,7 @@ def dicom_verify(study_id, method):
         dicom_response = gen_utils().query_single_study(
             study_description=description,
             study_date=date,
+            patient_name=patient_str,
             output_fields=[
                 "00100010",
                 "0008103E",

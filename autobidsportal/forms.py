@@ -279,7 +279,8 @@ class StudyConfigForm(FlaskForm):
     retrospective_start = DateField("Start Date")
     retrospective_end = DateField("End Date")
     heuristic = SelectField("Heuristic", choices=[])
-    subj_expr = StringField("Patient Name Search String")
+    subj_expr = StringField("Tar2bids Patient Name Search String")
+    patient_str = StringField("DICOM PatientName Identifier")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
 
 
