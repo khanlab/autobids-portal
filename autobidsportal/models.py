@@ -290,7 +290,7 @@ class Cfmm2tarOutput(db.Model):
     )
 
     def __repr__(self):
-        return f"<Cfmm2tar {self.tar_file, self.uid_file, self.date}>"
+        return f"<Cfmm2tar {self.tar_file, self.uid, self.date}>"
 
 
 class Tar2bidsOutput(db.Model):
@@ -316,4 +316,4 @@ class Principal(db.Model):
     principal_name = db.Column(db.String(200))
 
     def __repr__(self):
-        return f"<Prinicpal {self.principal_name}>"
+        return f"<Principal {self.principal_name}>"
