@@ -110,24 +110,34 @@ def get_new_cfmm2tar_results(
     study_description, patient_str, out_dir, study_id
 ):
     """Run cfmm2tar and parse new results."""
-    cfmm2tar_result = gen_utils().run_cfmm2tar(
-        out_dir=out_dir, patient_name=patient_str, project=study_description
+    existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
+
+    utils = gen_utils()
+    dicom_studies = utils.query_single_study(
+        ["PatientName"],
+        study_description=study_description,
+        patient_name=patient_str,
     )
-    if cfmm2tar_result == []:
-        err = "Invalid Principal or Project Name"
-        _set_task_error(get_current_job().id, err)
-        return []
-
-    tar_files_existing = [
-        pathlib.PurePath(output.tar_file).name
-        for output in Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
+    studies_to_download = [
+        study[0]["tag_value"]
+        for study in dicom_studies
+        if not any(
+            study[0]["tag_value"] in pathlib.Path(output.tar_file).name
+            for output in existing_outputs
+        )
     ]
+    all_results = []
+    for target in studies_to_download:
+        cfmm2tar_result = gen_utils().run_cfmm2tar(
+            out_dir=out_dir, patient_name=target, project=study_description
+        )
+        if cfmm2tar_result == []:
+            err = "Invalid Principal or Project Name"
+            _set_task_error(get_current_job().id, err)
+            return []
+        all_results.extend(cfmm2tar_result)
 
-    return [
-        result
-        for result in cfmm2tar_result
-        if pathlib.PurePath(result[0]).name not in tar_files_existing
-    ]
+    return all_results
 
 
 def get_info_from_tar2bids(study_id, tar_file_id):
