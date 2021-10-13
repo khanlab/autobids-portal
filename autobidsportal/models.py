@@ -245,7 +245,7 @@ class Task(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True, nullable=False)
     description = db.Column(db.String(128), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=True)
     complete = db.Column(db.Boolean, default=False, nullable=False)
     success = db.Column(db.Boolean, default=False, nullable=True)

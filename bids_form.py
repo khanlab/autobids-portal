@@ -1,5 +1,7 @@
 """Flask entry point with extra CLI commands."""
 
+import datetime
+
 from autobidsportal import create_app
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
@@ -56,3 +58,38 @@ def run_update_heuristics():
     """
 
     update_heuristics()
+
+
+@app.cli.command()
+def run_all_cfmm2tar():
+    """Run cfmm2tar on all studies.
+
+    This won't run cfmm2tar on studies that currently have cfmm2tar runs in
+    progress.
+    """
+    for study in Study.query.all():
+        if (
+            len(
+                Task.query.filter_by(
+                    study_id=study.id,
+                    name="get_info_from_cfmm2tar",
+                    complete=False,
+                ).all()
+            )
+            > 0
+        ):
+            continue
+        rq_job = app.task_queue.enqueue(
+            "autobidsportal.tasks.get_info_from_cfmm2tar",
+            study.id,
+            job_timeout=100000,
+        )
+        task = Task(
+            id=rq_job.get_id(),
+            name="get_info_from_cfmm2tar",
+            description=f"Study {study.id} from CLI",
+            start_time=datetime.datetime.utcnow(),
+            study_id=study.id,
+        )
+        db.session.add(task)
+        db.session.commit()

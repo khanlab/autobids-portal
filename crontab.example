@@ -4,3 +4,5 @@ Example:
 * 0 * * * cd ~/Desktop/sb_bids_form && venv/bin/flask scheduled >>scheduled.log 2>&1
 
 * 0 * * * cd ~/Desktop/sb_bids_form && venv/bin/flask run-update-heuristics
+
+* 0 * * * cd ~/Desktop/sb_bids_form && venv/bin/flask run-all-cfmm2tar

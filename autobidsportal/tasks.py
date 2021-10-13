@@ -35,9 +35,10 @@ def _set_task_progress(job_id, progress):
         job.meta["progress"] = progress
         job.save_meta()
     task = Task.query.get(job_id)
-    task.user.add_notification(
-        "task_progress", {"task_id": job_id, "progress": progress}
-    )
+    if task.user is not None:
+        task.user.add_notification(
+            "task_progress", {"task_id": job_id, "progress": progress}
+        )
     if progress == 100:
         task.complete = True
         task.success = True
