@@ -141,12 +141,26 @@ def get_new_cfmm2tar_results(
     return all_results
 
 
-def get_info_from_tar2bids(study_id, tar_file_id):
-    """Run tar2bids for a specific study."""
+def get_info_from_tar2bids(study_id, tar_file_ids):
+    """Run tar2bids for a specific study.
+
+    Parameters
+    ----------
+    study_id : int
+        ID of the study the tar files are associated with.
+
+    tar_file_ids : list of int
+        IDs of the tar files to be included in the tar2bids run.
+    """
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    tar_file = Cfmm2tarOutput.query.get(tar_file_id).tar_file
+    cfmm2tar_outputs = [
+        Cfmm2tarOutput.query.get(tar_file_id) for tar_file_id in tar_file_ids
+    ]
+    tar_files = [
+        cfmm2tar_output.tar_file for cfmm2tar_output in cfmm2tar_outputs
+    ]
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
     data = "%s/%s/%s" % (
         prefix,
@@ -163,14 +177,14 @@ def get_info_from_tar2bids(study_id, tar_file_id):
         ) as temp_dir:
             tar2bids_results = gen_utils().run_tar2bids(
                 output_dir=data,
-                tar_files=[tar_file],
+                tar_files=tar_files,
                 heuristic=study.heuristic,
                 patient_str=study.subj_expr,
                 temp_dir=temp_dir,
             )
         tar2bids = Tar2bidsOutput(
             study_id=study_id,
-            cfmm2tar_output_id=tar_file_id,
+            cfmm2tar_outputs=cfmm2tar_outputs,
             bids_dir=tar2bids_results,
             heuristic=study.heuristic,
         )

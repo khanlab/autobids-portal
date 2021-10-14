@@ -284,6 +284,12 @@ class StudyConfigForm(FlaskForm):
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
 
 
+class Tar2bidsRunForm(FlaskForm):
+    """Form for choosing which tar files to BIDSify."""
+
+    tar_files = MultiCheckboxField("Tar files to use", coerce=int)
+
+
 class AccessForm(FlaskForm):
     """A field to pick new studies for access."""
 

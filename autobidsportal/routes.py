@@ -35,6 +35,7 @@ from autobidsportal.forms import (
     AccessForm,
     RemoveAccessForm,
     StudyConfigForm,
+    Tar2bidsRunForm,
     DEFAULT_HEURISTICS,
 )
 
@@ -300,17 +301,27 @@ def answer_info(study_id):
         study_id=study_id, name="get_info_from_cfmm2tar"
     ).all()
     cfmm2tar_files = study.cfmm2tar_outputs
+    cfmm2tar_file_names = [
+        Path(cfmm2tar_file.tar_file).name for cfmm2tar_file in cfmm2tar_files
+    ]
     tar2bids_tasks = Task.query.filter_by(
         study_id=study_id, name="get_info_from_tar2bids"
     ).all()
     tar2bids_files = study.tar2bids_outputs
+
+    form = Tar2bidsRunForm()
+    form.tar_files.choices = [
+        (tar_file.id, "Yes") for tar_file in cfmm2tar_files
+    ]
+    form.tar_files.default = []
+    form.process()
     return render_template(
         "answer_info.html",
         title="Response",
         submitter_answer=study,
         cfmm2tar_tasks=cfmm2tar_tasks,
         button_id=study_id,
-        cfmm2tar_files=cfmm2tar_files,
+        form_data=zip(form.tar_files, cfmm2tar_file_names, cfmm2tar_files),
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
     )
@@ -451,18 +462,23 @@ def run_cfmm2tar(study_id):
     return answer_info(study_id)
 
 
-@portal_blueprint.route(
-    "/results/<int:study_id>/tar2bids/<int:cfmm2tar_id>", methods=["POST"]
-)
+@portal_blueprint.route("/results/<int:study_id>/tar2bids", methods=["POST"])
 @login_required
-def run_tar2bids(study_id, cfmm2tar_id):
+def run_tar2bids(study_id):
     """Launch tar2bids task and refresh answer_info.html"""
     study = Study.query.get_or_404(study_id)
     if (not current_user.admin) and (
         current_user not in study.users_authorized
     ):
         abort(404)
-    tar_file = Cfmm2tarOutput.query.get_or_404(cfmm2tar_id)
+    form = Tar2bidsRunForm()
+    tar_files = [
+        Cfmm2tarOutput.query.get_or_404(tar_file_id)
+        for tar_file_id in form.tar_files.data
+    ]
+    tar_files = [
+        tar_file for tar_file in tar_files if tar_file.study_id == study_id
+    ]
 
     if (
         len(
@@ -480,7 +496,7 @@ def run_tar2bids(study_id, cfmm2tar_id):
             "get_info_from_tar2bids",
             f"tar2bids for study {study_id}",
             study_id,
-            tar_file.id,
+            [tar_file.id for tar_file in tar_files],
         )
         db.session.commit()
 

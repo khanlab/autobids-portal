@@ -34,6 +34,22 @@ accessible_studies = db.Table(
     ),
 )
 
+tar2bids_runs = db.Table(
+    "tar2bids_runs",
+    db.Column(
+        "cfmm2tar_output_id",
+        db.Integer,
+        db.ForeignKey("cfmm2tar_output.id"),
+        primary_key=True,
+    ),
+    db.Column(
+        "tar2bids_output_id",
+        db.Integer,
+        db.ForeignKey("tar2bids_output.id"),
+        primary_key=True,
+    ),
+)
+
 
 class User(UserMixin, db.Model):
     """Information related to registered users."""
@@ -286,7 +302,10 @@ class Cfmm2tarOutput(db.Model):
     uid = db.Column(db.String(200), index=True, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     tar2bids_outputs = db.relationship(
-        "Tar2bidsOutput", backref="cfmm2tar_output", lazy=True
+        "Tar2bidsOutput",
+        secondary=tar2bids_runs,
+        lazy=True,
+        backref=db.backref("cfmm2tar_outputs", lazy=True),
     )
 
     def __repr__(self):
@@ -300,9 +319,6 @@ class Tar2bidsOutput(db.Model):
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
     bids_dir = db.Column(db.String(200), index=True)
     heuristic = db.Column(db.String(200), index=True)
-    cfmm2tar_output_id = db.Column(
-        db.Integer, db.ForeignKey("cfmm2tar_output.id"), nullable=False
-    )
 
     def __repr__(self):
         out_fields = (self.cfmm2tar_output_id, self.bids_dir, self.heuristic)
