@@ -462,6 +462,36 @@ def run_cfmm2tar(study_id):
     return answer_info(study_id)
 
 
+@portal_blueprint.route(
+    "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>/delete",
+    methods=["GET"],
+)
+@portal_blueprint.route(
+    "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>", methods=["DELETE"]
+)
+@login_required
+def delete_cfmm2tar(study_id, cfmm2tar_id):
+    """Delete a single tar file."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+    cfmm2tar_output = Cfmm2tarOutput.query.get(cfmm2tar_id)
+    if (cfmm2tar_output is not None) and (
+        cfmm2tar_output.study_id == study_id
+    ):
+        cfmm2tar_file = Path(cfmm2tar_output.tar_file).resolve()
+        cfmm2tar_dir = cfmm2tar_file.parent
+        cfmm2tar_file.unlink()
+        if len(list(cfmm2tar_dir.iterdir())) == 0:
+            cfmm2tar_dir.rmdir()
+        db.session.delete(cfmm2tar_output)
+        db.session.commit()
+
+    return answer_info(study_id)
+
+
 @portal_blueprint.route("/results/<int:study_id>/tar2bids", methods=["POST"])
 @login_required
 def run_tar2bids(study_id):

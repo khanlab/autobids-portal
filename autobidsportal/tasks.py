@@ -98,6 +98,7 @@ def get_info_from_cfmm2tar(study_id):
                 ),
             )
             db.session.add(cfmm2tar)
+            pathlib.Path(result[1]).unlink()
         db.session.commit()
         _set_task_progress(job.id, 100)
     except Cfmm2tarError as err:
