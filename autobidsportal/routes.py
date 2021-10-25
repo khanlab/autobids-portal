@@ -461,6 +461,7 @@ def run_cfmm2tar(study_id):
 
     return answer_info(study_id)
 
+
 @portal_blueprint.route(
     "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>/delete",
     methods=["GET"],
