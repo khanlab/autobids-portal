@@ -311,27 +311,32 @@
         </div>
         <div class="col-6">
             <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
-            <table class="table table-light">
-                <tr>
-                    <th class="col-md-1"></th>
-                    <th class="col-md-2">UID</th>
-                    <th class="col-md-3">Tar File Path</th>
-                    <th class="col-md-4">Date</th>
-                </tr>
 
-                {% for f in cfmm2tar_files %}
-                <tr>
-                    <td class="col-md-1">
-                        <form id="survey-form" method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id, cfmm2tar_id=f.id) }}">
-                            <input type="submit" value="Run tar2bids with this file" class="btn btn-primary">
-                        </form>
-                    </td>
-                    <td class="col-md-2">{{ f.uid_file }}</td>
-                    <td class="col-md-3">{{ f.tar_file }}</td>
-                    <td class="col-md-4">{% if f.date != None %} {{ f.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ f.date }} {% endif %}</td>
-                </tr>
-                {% endfor %}
-            </table>
+            <form method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
+                <table class="table table-light">
+                    <tr>
+                        <th class="col-md-1">Include in tar2bids</th>
+                        <th class="col-md-2">Tar File</th>
+                        <th class="col-md-3">UID</th>
+                        <th class="col-md-4">Date</th>
+                    </tr>
+
+                    {% for choice, name, out in form_data %}
+                    <tr>
+                        <td class="col-md-1">
+                            <div class="form-check">
+                                {{ choice(class="form-check-input") }}
+                                {{ choice.label(class="form-check-label") }}
+                            </div>
+                        </td>
+                        <td class="col-md-2">{{ name }}</td>
+                        <td class="col-md-3">{{ out.uid }}</td>
+                        <td class="col-md-4">{% if out.date != None %} {{ out.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ out.date }} {% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
+            </form>
         </div>
 
     <div class="row">
@@ -376,7 +381,12 @@
 
                 {% for f in tar2bids_files %}
                 <tr>
-                    <td class="col-md-1">{{ f.cfmm2tar_output.tar_file }}</td>
+                    <td class="col-md-1">
+                    {% for out in f.cfmm2tar_outputs %}
+                        {{ out.tar_file  }}
+                        <br>
+                    {% endfor %}
+                    </td>
                     <td class="col-md-2">{{ f.heuristic }}</td>
                     <td class="col-md-3">{{ f.bids_dir }}</td>
                 </tr>
