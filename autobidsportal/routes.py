@@ -482,7 +482,7 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
     ):
         cfmm2tar_file = Path(cfmm2tar_output.tar_file).resolve()
         cfmm2tar_dir = cfmm2tar_file.parent
-        cfmm2tar_file.unlink(missing_ok=True)
+        cfmm2tar_file.unlink()
         if len(list(cfmm2tar_dir.iterdir())) == 0:
             cfmm2tar_dir.rmdir()
         db.session.delete(cfmm2tar_output)
