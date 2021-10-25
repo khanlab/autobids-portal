@@ -319,6 +319,7 @@
                         <th class="col-md-2">Tar File</th>
                         <th class="col-md-3">UID</th>
                         <th class="col-md-4">Date</th>
+                        <th class="col-md-5">Delete</th>
                     </tr>
 
                     {% for choice, name, out in form_data %}
@@ -332,6 +333,9 @@
                         <td class="col-md-2">{{ name }}</td>
                         <td class="col-md-3">{{ out.uid }}</td>
                         <td class="col-md-4">{% if out.date != None %} {{ out.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ out.date }} {% endif %}</td>
+                        <td class="col-md-4">
+                            <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}" role="button">Delete</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </table>
