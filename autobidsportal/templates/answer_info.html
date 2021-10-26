@@ -396,6 +396,7 @@
                 </tr>
                 {% endfor %}
             </table>
+            <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}", role="button">Delete BIDS dataset</a>
         </div>
     </div>
 </div>
