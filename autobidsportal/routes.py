@@ -3,6 +3,7 @@
 from datetime import datetime
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
+import shutil
 
 from flask import (
     current_app,
@@ -26,6 +27,7 @@ from autobidsportal.models import (
     Principal,
     Task,
     Cfmm2tarOutput,
+    Tar2bidsOutput,
 )
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.forms import (
@@ -488,6 +490,31 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
             cfmm2tar_dir.rmdir()
         db.session.delete(cfmm2tar_output)
         db.session.commit()
+
+    return answer_info(study_id)
+
+
+@portal_blueprint.route(
+    "/results/<int:study_id>/tar2bids/delete",
+    methods=["GET"],
+)
+@portal_blueprint.route("/results/<int:study_id>/tar2bids", methods=["DELETE"])
+@login_required
+def delete_tar2bids(study_id):
+    """Delete a study's BIDS directory."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+    tar2bids_outputs = Tar2bidsOutput.query.filter_by(study_id=study_id).all()
+    if len(tar2bids_outputs) > 0:
+        for tar2bids_output in tar2bids_outputs:
+            tar2bids_path = Path(tar2bids_output.bids_dir).resolve()
+            if tar2bids_path.exists():
+                shutil.rmtree(str(tar2bids_path))
+            db.session.delete(tar2bids_output)
+            db.session.commit()
 
     return answer_info(study_id)
 
