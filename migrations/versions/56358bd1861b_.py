@@ -23,6 +23,7 @@ def upgrade():
             "id",
             existing_type=sa.VARCHAR(length=36),
             type_=sa.Integer(),
+            postgresql_using="id::integer",
             existing_nullable=False,
             autoincrement=True,
         )

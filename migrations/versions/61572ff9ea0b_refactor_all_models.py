@@ -130,6 +130,7 @@ def upgrade():
             unique=False,
         )
 
+    op.drop_table("user_choices")
     op.drop_table("choice")
     with op.batch_alter_table("cfmm2tar", schema=None) as batch_op:
         batch_op.drop_index("ix_cfmm2tar_tar_file")
@@ -140,7 +141,6 @@ def upgrade():
         batch_op.drop_index("ix_answer_submission_date")
 
     op.drop_table("answer")
-    op.drop_table("user_choices")
     op.drop_table("submitter")
     with op.batch_alter_table("tar2bids", schema=None) as batch_op:
         batch_op.drop_index("ix_tar2bids_bids_file")
@@ -302,22 +302,6 @@ def downgrade():
         sa.PrimaryKeyConstraint("id", name="pk_submitter"),
     )
     op.create_table(
-        "user_choices",
-        sa.Column("user_id", sa.INTEGER(), nullable=False),
-        sa.Column("choice_id", sa.INTEGER(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["choice_id"],
-            ["choice.id"],
-            name="fk_user_choices_choice_id_choice",
-        ),
-        sa.ForeignKeyConstraint(
-            ["user_id"], ["user.id"], name="fk_user_choices_user_id_user"
-        ),
-        sa.PrimaryKeyConstraint(
-            "user_id", "choice_id", name="pk_user_choices"
-        ),
-    )
-    op.create_table(
         "answer",
         sa.Column("id", sa.INTEGER(), nullable=False),
         sa.Column("status", sa.VARCHAR(length=20), nullable=True),
@@ -388,6 +372,23 @@ def downgrade():
     with op.batch_alter_table("tar2bids_output", schema=None) as batch_op:
         batch_op.drop_index(batch_op.f("ix_tar2bids_output_heuristic"))
         batch_op.drop_index(batch_op.f("ix_tar2bids_output_bids_dir"))
+    op.create_table(
+        "user_choices",
+        sa.Column("user_id", sa.INTEGER(), nullable=False),
+        sa.Column("choice_id", sa.INTEGER(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["choice_id"],
+            ["choice.id"],
+            name="fk_user_choices_choice_id_choice",
+        ),
+        sa.ForeignKeyConstraint(
+            ["user_id"], ["user.id"], name="fk_user_choices_user_id_user"
+        ),
+        sa.PrimaryKeyConstraint(
+            "user_id", "choice_id", name="pk_user_choices"
+        ),
+    )
+
 
     op.drop_table("tar2bids_output")
     with op.batch_alter_table("cfmm2tar_output", schema=None) as batch_op:
