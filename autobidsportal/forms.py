@@ -57,24 +57,27 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Sign In")
 
 
+def unique_email(_, email):
+    """Check that no user with this email address exists."""
+    user = User.query.filter_by(email=email.data).one()
+    if user is not None:
+        raise ValidationError(
+            "There is already an account using this email address. "
+            + "Please use a different email address."
+        )
+
+
 class RegistrationForm(FlaskForm):
     """A form for registering new users."""
 
-    email = StringField("Email", validators=[DataRequired(), Email()])
+    email = StringField(
+        "Email", validators=[DataRequired(), Email(), unique_email]
+    )
     password = PasswordField("Password", validators=[DataRequired()])
     password2 = PasswordField(
         "Repeat Password", validators=[DataRequired(), EqualTo("password")]
     )
     submit = SubmitField("Register")
-
-    def validate_email(self, email):
-        """Check that no user with this email address exists."""
-        user = User.query.filter_by(email=email.data).first()
-        if user is not None:
-            raise ValidationError(
-                "There is already an account using this email address. "
-                + "Please use a different email address."
-            )
 
 
 class BidsForm(FlaskForm):
@@ -254,13 +257,19 @@ class BidsForm(FlaskForm):
     )
 
     retrospective_end = DateField(
-        "Please enter end date of retrospective conversion (or leave blank if ongoing).:",
+        (
+            "Please enter end date of retrospective conversion (or leave"
+            "blank if ongoing).:"
+        ),
         format="%Y-%m-%d",
         validators=[Optional()],
     )
 
     consent = BooleanField(
-        "By checking the box below, you are agreeing with these general terms.",
+        (
+            "By checking the box below, you are agreeing with these general"
+            "terms."
+        ),
         validators=[DataRequired()],
     )
 
