@@ -3,11 +3,14 @@
 from dataclasses import dataclass
 import tempfile
 import pathlib
+import datetime
 
 import pytest
+import pydicom
 
 from autobidsportal import create_app
-from autobidsportal.models import db, User, Principal
+from autobidsportal.models import db, User, Principal, Study
+import testdicomserver
 
 
 @dataclass
@@ -21,7 +24,14 @@ class TestConfig:
 
     REDIS_URL = "redis://localhost:6379"
 
+    DICOM_SERVER_URL = "PYNETDICOM@127.0.0.1:11112"
+    DICOM_SERVER_USERNAME = "username"
+    DICOM_SERVER_PASSWORD = "password"
+    DICOM_SERVER_TLS = False
     DICOM_PI_BLACKLIST = []
+
+    DCM4CHE_PREFIX = "singularity exec -B /tmp:/tmp /home/tk/Code/western_ossd/singularity_containers/khanlab_cfmm2tar_v0.0.3.sif"
+    TAR2BIDS_PREFIX = ""
 
     MAIL_ENABLED = False
 
@@ -76,6 +86,35 @@ def init_database(test_client):
 
 
 @pytest.fixture()
+def example_study(init_database):
+    study = Study(
+        submitter_name="Test",
+        submitter_email="test@test.com",
+        status="staff",
+        scanner="type1",
+        scan_number=1,
+        study_type=False,
+        familiarity_bids="1",
+        familiarity_bidsapp="1",
+        familiarity_python="1",
+        familiarity_linux="1",
+        familiarity_bash="1",
+        familiarity_hpc="1",
+        familiarity_openneuro="1",
+        familiarity_cbrain="1",
+        principal="TestPi",
+        project_name="MyStudy",
+        dataset_name="MyStudy",
+        sample=datetime.datetime(2004, 8, 26),
+        retrospective_data=False,
+        consent=True,
+        submission_date=datetime.datetime(2021, 11, 12),
+    )
+    db.session.add(study)
+    db.session.commit()
+
+
+@pytest.fixture()
 def login_normal_user(test_client, init_database):
     """Log the default user in."""
     test_client.post(
@@ -97,3 +136,21 @@ def login_admin(test_client, init_database):
     )
     yield
     test_client.get("/logout", follow_redirects=True)
+
+
+@pytest.fixture()
+def dicom_server():
+    """Run a DICOM server for cfmm2tar to interact with."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        application_entity, handlers = testdicomserver.gen_application_entity(
+            temp_dir
+        )
+        mr_file = pathlib.Path(pydicom.data.get_testdata_file("MR_small.dcm"))
+        with pydicom.dcmread(mr_file) as dcm_file:
+            dcm_file.StudyDescription = "TestPi^MyStudy"
+            dcm_file.save_as(pathlib.Path(temp_dir) / mr_file.name)
+        instance = application_entity.start_server(
+            ("", 11112), evt_handlers=handlers, block=False
+        )
+        yield
+    instance.shutdown()

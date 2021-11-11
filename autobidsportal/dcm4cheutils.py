@@ -37,7 +37,13 @@ class Dcm4cheUtils:
     """
 
     def __init__(
-        self, connect, username, password, dcm4che_path="", tar2bids_path=""
+        self,
+        connect,
+        username,
+        password,
+        dcm4che_path="",
+        tar2bids_path="",
+        use_tls=True,
     ):
         self.logger = logging.getLogger(__name__)
         self.connect = connect
@@ -50,9 +56,11 @@ class Dcm4cheUtils:
             + " --bind  DEFAULT"
             + " --connect {}".format(self.connect)
             + " --accept-timeout 10000 "
-            + """ --tls-aes --user {} """.format(pipes.quote(self.username))
+            + """ --user {} """.format(pipes.quote(self.username))
             + """ --user-pass {} """.format(pipes.quote(self.password))
         )
+        if use_tls:
+            self._findscu_str += " --tls-aes "
         self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
 
     def get_all_pi_names(self):
@@ -308,6 +316,7 @@ def gen_utils():
         current_app.config["DICOM_SERVER_PASSWORD"],
         current_app.config["DCM4CHE_PREFIX"],
         current_app.config["TAR2BIDS_PREFIX"],
+        use_tls=current_app.config["DICOM_SERVER_TLS"],
     )
 
 
