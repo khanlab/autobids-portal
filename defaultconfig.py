@@ -13,6 +13,7 @@ class Config(object):
     DICOM_SERVER_URL = "0.0.0.0:11112"
     DICOM_SERVER_USERNAME = "username"
     DICOM_SERVER_PASSWORD = "password"
+    DICOM_SERVER_TLS = True
 
     # String to be inserted before dcm4che utilities are invoked.
     # e.g. "singularity exec dcm4che.simg"
