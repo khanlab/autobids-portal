@@ -389,7 +389,6 @@ def downgrade():
         ),
     )
 
-
     op.drop_table("tar2bids_output")
     with op.batch_alter_table("cfmm2tar_output", schema=None) as batch_op:
         batch_op.drop_index(batch_op.f("ix_cfmm2tar_output_uid"))
