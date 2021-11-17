@@ -741,7 +741,10 @@ def dicom_verify(study_id, method):
 def logout():
     """Logs out current user."""
     if current_user.is_authenticated:
+        # pylint doesn't like werkzeug proxies
+        # pylint: disable=assigning-non-slot
         current_user.last_seen = datetime.utcnow()
+        # pylint: enable=assigning-non-slot
         db.session.commit()
     logout_user()
     return redirect(url_for("portal_blueprint.index"))

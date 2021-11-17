@@ -1,5 +1,8 @@
 """Define SQL models."""
 
+# pylint: disable=too-few-public-methods
+# Table classes are useful without public methods
+
 from datetime import datetime
 from time import time
 import json
@@ -253,6 +256,9 @@ class Notification(db.Model):
     def get_data(self):
         """Get the notification contents."""
         return json.loads(str(self.payload_json))
+
+    def __repr__(self):
+        return f"<Notification {self.name}, {self.timestamp}>"
 
 
 class Task(db.Model):
