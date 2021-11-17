@@ -11,6 +11,8 @@ import subprocess
 import logging
 import re
 import tempfile
+from dataclasses import dataclass
+from datetime import date
 
 # for quote python strings for safe use in posix shells
 import pipes
@@ -25,10 +27,72 @@ def _get_stdout_stderr_returncode(cmd):
         cmd,
         capture_output=True,
         check=True,
-        shell=True,  # This is kind of unsafe in a webcurrent_app, should rethink
+        shell=True,  # This is kind of unsafe in a webapp, should rethink
     )
 
     return proc.stdout, proc.stderr, proc.returncode
+
+
+@dataclass
+class DicomCredentials:
+    """Class for keeping track of a DICOM user's credentials."""
+
+    username: str
+    password: str
+
+
+@dataclass
+class DicomQueryAttributes:
+    """Class containing attributes to be queried in a C-FIND request.
+
+    At least one of the attributes must be assigned.
+
+    Attributes
+    ----------
+    study_description : str, optional
+        The StudyDescription to query. Passed to `findscu -m {}`.
+    study_date : date, optional
+        The date of the study to query. Converted to "YYYYMMDD" format and
+        queries the "StudyDate" tag.
+    patient_name : str, optional
+        Search string for the patient names to retrieve.
+    """
+
+    study_description: str = None
+    study_date: date = None
+    patient_name: str = None
+
+    def __post_init__(self):
+        if all(
+            [
+                self.study_description is None,
+                self.study_date is None,
+                self.patient_name is None,
+            ]
+        ):
+            raise Dcm4cheError(
+                "You must specify at least one of study_description, "
+                "study_date, or patient_name"
+            )
+
+
+@dataclass
+class Tar2bidsArgs:
+    """A set of arguments for an invocation of tar2bids.
+
+    Attributes
+    ----------
+    tar_files : list of str
+        Tar files on which to run tar2bids
+    output_dir : str
+        Directory for the output BIDS dataset
+    """
+
+    tar_files: list[str]
+    output_dir: str
+    patient_str: str = None
+    heuristic: str = None
+    temp_dir: str = None
 
 
 class Dcm4cheUtils:
@@ -37,12 +101,12 @@ class Dcm4cheUtils:
     """
 
     def __init__(
-        self, connect, username, password, dcm4che_path="", tar2bids_path=""
+        self, connect, credentials, dcm4che_path="", tar2bids_path=""
     ):
         self.logger = logging.getLogger(__name__)
         self.connect = connect
-        self.username = username
-        self.password = password
+        self.username = credentials.username
+        self.password = credentials.password
         self.dcm4che_path = dcm4che_path
 
         self._findscu_str = (
@@ -90,9 +154,7 @@ class Dcm4cheUtils:
     def query_single_study(
         self,
         output_fields,
-        study_description=None,
-        study_date=None,
-        patient_name=None,
+        attributes,
         retrieve_level="STUDY",
     ):
         """Queries a DICOM server for specified tags from one study.
@@ -101,13 +163,8 @@ class Dcm4cheUtils:
         output_fields : list of str
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
-        study_description : str, optional
-            The StudyDescription to query. Passed to `findscu -m {}`.
-        study_date : date, optional
-            The date of the study to query. Converted to "YYYYMMDD" format and
-            queries the "StudyDate" tag.
-        patient_name : str, optional
-            Search string for the patient names to retrieve.
+        attributes : DicomQueryAttributes
+            A set of attributes to search for.
         retrieve_level : str
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
@@ -118,22 +175,18 @@ class Dcm4cheUtils:
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
         """
-        if study_description is None and study_date is None:
-            raise Dcm4cheError(
-                "You must specify at least one of study_description and "
-                "study_date"
-            )
-
         cmd = self._findscu_str
 
-        if study_description is not None:
-            cmd = '{} -m StudyDescription="{}"'.format(cmd, study_description)
-        if study_date is not None:
-            cmd = '{} -m StudyDate="{}"'.format(
-                cmd, study_date.strftime("%Y%m%d")
+        if attributes.study_description is not None:
+            cmd = '{} -m StudyDescription="{}"'.format(
+                cmd, attributes.study_description
             )
-        if patient_name is not None:
-            cmd = '{} -m PatientName="{}"'.format(cmd, patient_name)
+        if attributes.study_date is not None:
+            cmd = '{} -m StudyDate="{}"'.format(
+                cmd, attributes.study_date.strftime("%Y%m%d")
+            )
+        if attributes.patient_name is not None:
+            cmd = '{} -m PatientName="{}"'.format(cmd, attributes.patient_name)
 
         cmd = " ".join(
             [cmd] + ["-r {}".format(field) for field in output_fields]
@@ -257,17 +310,7 @@ class Dcm4cheUtils:
 
     def run_tar2bids(
         self,
-        tar_files,
-        output_dir,
-        patient_str=None,
-        tar_str=None,
-        num_cores=None,
-        heuristic=None,
-        temp_dir=None,
-        heudiconv_options=None,
-        copy_tarfiles=False,
-        deface_t1w=False,
-        no_heuristics=False,
+        args,
     ):
         """Run tar2bids with the given arguments.
         Returns
@@ -276,36 +319,32 @@ class Dcm4cheUtils:
         """
         arg_list = (
             self._tar2bids_list
-            + (["-P", patient_str] if patient_str is not None else [])
-            + (["-T", tar_str] if tar_str is not None else [])
-            + (["-o", output_dir])
-            + (["-N", num_cores] if num_cores is not None else [])
-            + (["-h", heuristic] if heuristic is not None else [])
-            + (["-w", temp_dir] if temp_dir is not None else [])
             + (
-                ["-o", f'"{heudiconv_options}"']
-                if heudiconv_options is not None
+                ["-P", args.patient_str]
+                if args.patient_str is not None
                 else []
             )
-            + (["-C"] if copy_tarfiles else [])
-            + (["-D"] if deface_t1w else [])
-            + (["-x"] if no_heuristics else [])
-            + tar_files
+            + (["-o", args.output_dir])
+            + (["-h", args.heuristic] if args.heuristic is not None else [])
+            + (["-w", args.temp_dir] if args.temp_dir is not None else [])
+            + args.tar_files
         )
         try:
             subprocess.run(arg_list, check=True)
         except subprocess.CalledProcessError as err:
             raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
 
-        return output_dir
+        return args.output_dir
 
 
 def gen_utils():
     """Generate a Dcm4cheUtils with values from the current_app config."""
     return Dcm4cheUtils(
         current_app.config["DICOM_SERVER_URL"],
-        current_app.config["DICOM_SERVER_USERNAME"],
-        current_app.config["DICOM_SERVER_PASSWORD"],
+        DicomCredentials(
+            current_app.config["DICOM_SERVER_USERNAME"],
+            current_app.config["DICOM_SERVER_PASSWORD"],
+        ),
         current_app.config["DCM4CHE_PREFIX"],
         current_app.config["TAR2BIDS_PREFIX"],
     )

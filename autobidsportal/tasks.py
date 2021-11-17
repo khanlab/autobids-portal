@@ -20,6 +20,8 @@ from autobidsportal.models import (
 )
 from autobidsportal.dcm4cheutils import (
     gen_utils,
+    DicomQueryAttributes,
+    Tar2bidsArgs,
     Cfmm2tarError,
     Tar2bidsError,
 )
@@ -117,8 +119,10 @@ def get_new_cfmm2tar_results(
     utils = gen_utils()
     dicom_studies = utils.query_single_study(
         ["PatientName"],
-        study_description=study_description,
-        patient_name=patient_str,
+        DicomQueryAttributes(
+            study_description=study_description,
+            patient_name=patient_str,
+        ),
     )
     studies_to_download = [
         study[0]["tag_value"]
@@ -177,11 +181,13 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
             dir=app.config["TAR2BIDS_TEMP_DIR"]
         ) as temp_dir:
             tar2bids_results = gen_utils().run_tar2bids(
-                output_dir=data,
-                tar_files=tar_files,
-                heuristic=study.heuristic,
-                patient_str=study.subj_expr,
-                temp_dir=temp_dir,
+                Tar2bidsArgs(
+                    output_dir=data,
+                    tar_files=tar_files,
+                    heuristic=study.heuristic,
+                    patient_str=study.subj_expr,
+                    temp_dir=temp_dir,
+                )
             )
         tar2bids = Tar2bidsOutput(
             study_id=study_id,
