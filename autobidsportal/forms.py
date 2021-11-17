@@ -59,7 +59,7 @@ class LoginForm(FlaskForm):
 
 def unique_email(_, email):
     """Check that no user with this email address exists."""
-    user = User.query.filter_by(email=email.data).one()
+    user = User.query.filter_by(email=email.data).one_or_none()
     if user is not None:
         raise ValidationError(
             "There is already an account using this email address. "
