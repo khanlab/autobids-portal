@@ -13,6 +13,7 @@ import re
 import tempfile
 from dataclasses import dataclass
 from datetime import date
+from typing import Sequence
 
 # for quote python strings for safe use in posix shells
 import pipes
@@ -96,7 +97,7 @@ class Tar2bidsArgs:
         Directory for the output BIDS dataset
     """
 
-    tar_files: list[str]
+    tar_files: Sequence[str]
     output_dir: str
     patient_str: str = None
     heuristic: str = None
