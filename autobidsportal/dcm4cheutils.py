@@ -34,6 +34,14 @@ def _get_stdout_stderr_returncode(cmd):
 
 
 @dataclass
+class DicomConnectionDetails:
+    """Class for keeping track of details for connecting to a DICOM server."""
+
+    connect: str
+    use_tls: bool = True
+
+
+@dataclass
 class DicomCredentials:
     """Class for keeping track of a DICOM user's credentials."""
 
@@ -101,10 +109,14 @@ class Dcm4cheUtils:
     """
 
     def __init__(
-        self, connect, credentials, dcm4che_path="", tar2bids_path=""
+        self,
+        connection_details,
+        credentials,
+        dcm4che_path="",
+        tar2bids_path="",
     ):
         self.logger = logging.getLogger(__name__)
-        self.connect = connect
+        self.connect = connection_details.connect
         self.username = credentials.username
         self.password = credentials.password
         self.dcm4che_path = dcm4che_path
@@ -114,9 +126,11 @@ class Dcm4cheUtils:
             + " --bind  DEFAULT"
             + " --connect {}".format(self.connect)
             + " --accept-timeout 10000 "
-            + """ --tls-aes --user {} """.format(pipes.quote(self.username))
+            + """ --user {} """.format(pipes.quote(self.username))
             + """ --user-pass {} """.format(pipes.quote(self.password))
         )
+        if connection_details.use_tls:
+            self._findscu_str += " --tls-aes "
         self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
 
     def get_all_pi_names(self):
@@ -340,7 +354,10 @@ class Dcm4cheUtils:
 def gen_utils():
     """Generate a Dcm4cheUtils with values from the current_app config."""
     return Dcm4cheUtils(
-        current_app.config["DICOM_SERVER_URL"],
+        DicomConnectionDetails(
+            connect=current_app.config["DICOM_SERVER_URL"],
+            use_tls=current_app.config["DICOM_SERVER_TLS"],
+        ),
         DicomCredentials(
             current_app.config["DICOM_SERVER_USERNAME"],
             current_app.config["DICOM_SERVER_PASSWORD"],
