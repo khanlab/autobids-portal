@@ -11,7 +11,8 @@ import pytest
 
 from autobidsportal import create_app
 from autobidsportal.models import db, User, Principal, Study
-import testdicomserver
+
+# import testdicomserver
 
 
 @dataclass
