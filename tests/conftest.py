@@ -6,7 +6,7 @@ import pathlib
 import datetime
 
 import pytest
-import pydicom
+# import pydicom
 
 from autobidsportal import create_app
 from autobidsportal.models import db, User, Principal, Study
