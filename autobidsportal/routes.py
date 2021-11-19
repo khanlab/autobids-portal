@@ -442,14 +442,13 @@ def run_cfmm2tar(study_id):
         )
         db.session.commit()
     if current_app.config["MAIL_ENABLED"]:
-        subject = "A Cfmm2tar run for %s^%s has been submitted by %s." % (
-            study.principal,
-            study.project_name,
-            current_user.email,
+        subject = (
+            f"A Cfmm2tar run for {study.prinicipal}^{study.project_name} "
+            f"has been submitted by {current_user.email}."
         )
-        body = "A Cfmm2tar run for %s^%s has been submitted." % (
-            study.principal,
-            study.project_name,
+        body = (
+            f"A Cfmm2tar run for {study.principal}^{study.project_name} "
+            "has been submitted."
         )
         sender = current_app.config["MAIL_USERNAME"]
         recipients = current_app.config["MAIL_RECIPIENTS"]
@@ -562,14 +561,13 @@ def run_tar2bids(study_id):
         db.session.commit()
 
         if current_app.config["MAIL_ENABLED"]:
-            subject = "A Tar2bids run for %s^%s has been submitted by %s" % (
-                study.principal,
-                study.project_name,
-                current_user.email,
+            subject = (
+                f"A Tar2bids run for {study.principal}^{study.project_name} "
+                f"has been submitted by {current_user.email}"
             )
-            body = "A Tar2bids run for %s^%s has been submitted." % (
-                study.principal,
-                study.project_name,
+            body = (
+                f"A Tar2bids run for {study.principal}^{study.project_name} "
+                "has been submitted."
             )
             sender = current_app.config["MAIL_USERNAME"]
             recipients = current_app.config["MAIL_RECIPIENTS"]

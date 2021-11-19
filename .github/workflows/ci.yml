@@ -42,6 +42,13 @@ jobs:
           black_args: "-l 79"
           black_extensions: py
           auto_fix: true
+      - name: Install pylint
+        run: |
+          pip install pylint pylint-flask pylint-flask-sqlalchemy pylint-pytest
+          pip install -e .
+      - name: Run pylint
+        run: |
+          pylint autobidsportal
   test:
     name: Set up environment and run tests
     if: github.event.pull_request.draft == false
