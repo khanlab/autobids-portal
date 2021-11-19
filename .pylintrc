@@ -4,3 +4,6 @@
 load-plugins=pylint_flask,pylint_flask_sqlalchemy,pylint_pytest
 generated-members=db.session.*,self.notifications.*,err.__cause__.*
 ignored-classes=Tar2bidsRunForm,StudyConfigForm
+
+[SIMILARITIES]
+ignore-imports=yes
