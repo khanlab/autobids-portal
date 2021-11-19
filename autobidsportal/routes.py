@@ -29,7 +29,11 @@ from autobidsportal.models import (
     Cfmm2tarOutput,
     Tar2bidsOutput,
 )
-from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
+from autobidsportal.dcm4cheutils import (
+    gen_utils,
+    Dcm4cheError,
+    DicomQueryAttributes,
+)
 from autobidsportal.forms import (
     LoginForm,
     BidsForm,
@@ -705,10 +709,7 @@ def dicom_verify(study_id, method):
         abort(404)
     try:
         dicom_response = gen_utils().query_single_study(
-            study_description=description,
-            study_date=date,
-            patient_name=patient_str,
-            output_fields=[
+            [
                 "00100010",
                 "0008103E",
                 "00200011",
@@ -719,6 +720,11 @@ def dicom_verify(study_id, method):
                 "00180024",
                 "00100040",
             ],
+            DicomQueryAttributes(
+                study_description=description,
+                study_date=date,
+                patient_name=patient_str,
+            ),
             retrieve_level="SERIES",
         )
         return render_template(
