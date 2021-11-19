@@ -123,12 +123,12 @@ class Dcm4cheUtils:
         self.dcm4che_path = dcm4che_path
 
         self._findscu_str = (
-            """{} findscu""".format(self.dcm4che_path)
+            f"{self.dcm4che_path} findscu"
             + " --bind  DEFAULT"
-            + " --connect {}".format(self.connect)
+            + f" --connect {self.connect}"
             + " --accept-timeout 10000 "
-            + """ --user {} """.format(pipes.quote(self.username))
-            + """ --user-pass {} """.format(pipes.quote(self.password))
+            + f" --user {pipes.quote(self.username)} "
+            + f" --user-pass {pipes.quote(self.password)} "
         )
         if connection_details.use_tls:
             self._findscu_str += " --tls-aes "
@@ -193,20 +193,20 @@ class Dcm4cheUtils:
         cmd = self._findscu_str
 
         if attributes.study_description is not None:
-            cmd = '{} -m StudyDescription="{}"'.format(
-                cmd, attributes.study_description
+            cmd = (
+                f"{cmd} -m "
+                f'StudyDescription="{attributes.study_description}"'
             )
         if attributes.study_date is not None:
-            cmd = '{} -m StudyDate="{}"'.format(
-                cmd, attributes.study_date.strftime("%Y%m%d")
+            cmd = (
+                f"{cmd} "
+                f'-m StudyDate="{attributes.study_date.strftime("%Y%m%d")}"'
             )
         if attributes.patient_name is not None:
-            cmd = '{} -m PatientName="{}"'.format(cmd, attributes.patient_name)
+            cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
 
-        cmd = " ".join(
-            [cmd] + ["-r {}".format(field) for field in output_fields]
-        )
-        cmd = "{} -L {}".format(cmd, retrieve_level)
+        cmd = " ".join([cmd] + [f"-r {field}" for field in output_fields])
+        cmd = f"{cmd} -L {retrieve_level}"
 
         try:
             out, err, _ = _get_stdout_stderr_returncode(cmd)
@@ -217,7 +217,7 @@ class Dcm4cheUtils:
             self.logger.error(err)
 
         output_fields = [
-            "{},{}".format(field[0:4], field[4:8]).upper()
+            f"{field[0:4]},{field[4:8]}".upper()
             if re.fullmatch(r"[\dabcdefABCDEF]{8}", field)
             else field
             for field in output_fields
@@ -252,7 +252,7 @@ class Dcm4cheUtils:
                 )
             if len(out_dicts) != len(output_fields):
                 raise Dcm4cheError(
-                    "Missing output fields in dataset {}".format(out_dicts)
+                    f"Missing output fields in dataset {out_dicts}"
                 )
             grouped_dicts.append(out_dicts)
 

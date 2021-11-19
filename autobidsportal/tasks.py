@@ -65,10 +65,10 @@ def get_info_from_cfmm2tar(study_id):
     study = Study.query.get(study_id)
     study_description = f"{study.principal}^{study.project_name}"
     patient_str = study.patient_str
-    out_dir = "%s/%s/%s" % (
-        app.config["CFMM2TAR_DOWNLOAD_DIR"],
-        study.id,
-        datetime.utcnow().strftime("%Y%m%d%H%M"),
+    out_dir = str(
+        pathlib.Path(app.config["CFMM2TAR_DOWNLOAD_DIR"])
+        / str(study.id)
+        / datetime.utcnow().strftime("%Y%m%d%H%M")
     )
     try:
         for result in get_new_cfmm2tar_results(
@@ -167,12 +167,14 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
         cfmm2tar_output.tar_file for cfmm2tar_output in cfmm2tar_outputs
     ]
     prefix = app.config["TAR2BIDS_DOWNLOAD_DIR"]
-    data = "%s/%s/%s" % (
-        prefix,
-        study.id,
-        study.dataset_name
-        if study.dataset_name not in [None, ""]
-        else study.project_name,
+    data = str(
+        pathlib.Path(prefix)
+        / str(study.id)
+        / (
+            study.dataset_name
+            if study.dataset_name not in [None, ""]
+            else study.project_name
+        )
     )
     if not os.path.isdir(data):
         os.makedirs(data)
