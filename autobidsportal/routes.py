@@ -384,7 +384,7 @@ def study_config(study_id):
     if study.principal not in principal_names:
         principal_names.insert(0, study.principal)
     form.pi_name.choices = principal_names
-    form.pi_name.defaults = study.principal
+    form.pi_name.default = study.principal
     form.project_name.default = study.project_name
     if study.dataset_name is not None:
         form.dataset_name.default = study.dataset_name
