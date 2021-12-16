@@ -204,6 +204,7 @@ class Dcm4cheUtils:
             )
         if attributes.patient_name is not None:
             cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
+        cmd = f'{cmd} -m StudyInstanceUID="*"'
 
         cmd = " ".join([cmd] + [f"-r {field}" for field in output_fields])
         cmd = f"{cmd} -L {retrieve_level}"
@@ -227,8 +228,8 @@ class Dcm4cheUtils:
         # C-FIND Request done in
 
         out = str(out, encoding="utf-8")
-        out = out[out.find("C-FIND Request done in") :]
-        out = out.split("DEBUG - Dataset")[1:]
+        out = out[out.find("C-FIND-RSP") :]
+        out = out.split("C-FIND-RSP Dataset")[1:]
 
         grouped_dicts = []
         for dataset in out:

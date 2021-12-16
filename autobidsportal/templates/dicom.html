@@ -7,14 +7,10 @@
     <div class="row my-3">
         <div class="col">
             <table class="table table-light">
-                <th scope="col">Series Desciption</th>
+                <th scope="col">Series Description</th>
                 <th scope="col">Patient Name</th>
                 <th scope="col">Patient ID</th>
                 <th scope="col">Patient Sex</th>
-                <th scope="col">Sequence Name</th>
-                <th scope="col">Repetition Time</th>
-                <th scope="col">Echo Time</th>
-                <th scope="col">Protocol Name</th>
                 <th scope="col">Series Number</th>
                 
                 {% for response in dicom_response %}
@@ -24,10 +20,6 @@
                         <td>{{ response[2].get('tag_value') }}</td>
                         <td>{{ response[3].get('tag_value') }}</td>
                         <td>{{ response[4].get('tag_value') }}</td>
-                        <td>{{ response[5].get('tag_value') }}</td>
-                        <td>{{ response[6].get('tag_value') }}</td>
-                        <td>{{ response[7].get('tag_value') }}</td>
-                        <td>{{ response[8].get('tag_value') }}</td>
                     </tr>
                 {% endfor %}
             </table>
