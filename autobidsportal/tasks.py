@@ -23,6 +23,7 @@ from autobidsportal.dcm4cheutils import (
     DicomQueryAttributes,
     Tar2bidsArgs,
     Cfmm2tarError,
+    Cfmm2tarTimeoutError,
     Tar2bidsError,
 )
 
@@ -104,7 +105,7 @@ def get_info_from_cfmm2tar(study_id):
         db.session.commit()
         _set_task_progress(job.id, 100)
     except Cfmm2tarError as err:
-        _set_task_error(job.id, err.__cause__.stderr)
+        _set_task_error(job.id, err.message)
     finally:
         if not Task.query.get(job.id).complete:
             _set_task_error(job.id, "Unknown uncaught exception")
@@ -134,13 +135,24 @@ def get_new_cfmm2tar_results(
     ]
     all_results = []
     for target in studies_to_download:
-        cfmm2tar_result = gen_utils().run_cfmm2tar(
-            out_dir=out_dir, patient_name=target, project=study_description
-        )
+        attempts = 0
+        success = False
+        while not success:
+            try:
+                attempts += 1
+                cfmm2tar_result = gen_utils().run_cfmm2tar(
+                    out_dir=out_dir, patient_name=target, project=study_description
+                )
+                success = True
+            except Cfmm2tarTimeoutError as err:
+                if attempts < 5:
+                    continue
+                raise err
+
         if cfmm2tar_result == []:
             err = "Invalid Principal or Project Name"
             _set_task_error(get_current_job().id, err)
-            return []
+            raise Cfmm2tarError(err)
         all_results.extend(cfmm2tar_result)
 
     return all_results
