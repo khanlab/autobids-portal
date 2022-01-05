@@ -141,7 +141,9 @@ def get_new_cfmm2tar_results(
             try:
                 attempts += 1
                 cfmm2tar_result = gen_utils().run_cfmm2tar(
-                    out_dir=out_dir, patient_name=target, project=study_description
+                    out_dir=out_dir,
+                    patient_name=target,
+                    project=study_description,
                 )
                 success = True
             except Cfmm2tarTimeoutError as err:
