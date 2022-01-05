@@ -310,7 +310,7 @@ class Dcm4cheUtils:
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
 
-            return [
+            tar_files = [
                 [
                     line.split("created: ")[1]
                     for line in file_out.splitlines()
@@ -323,6 +323,11 @@ class Dcm4cheUtils:
                 ]
                 for file_out in split_out
             ]
+            if tar_files == []:
+                if "Timeout.java" in all_out:
+                    raise Cfmm2tarTimeoutError()
+
+            return tar_files
 
     def run_tar2bids(
         self,
@@ -389,6 +394,13 @@ class Cfmm2tarError(Exception):
 
     def __str__(self):
         return self.message
+
+
+class Cfmm2tarTimeoutError(Exception):
+    """Exception raised when cfmm2tar times out."""
+
+    def __init__(seld):
+        super().__init__()
 
 
 class Tar2bidsError(Exception):
