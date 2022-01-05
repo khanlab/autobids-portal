@@ -54,7 +54,7 @@ def _set_task_error(job_id, msg):
     task = Task.query.get(job_id)
     task.complete = True
     task.success = False
-    task.error = msg
+    task.error = msg[:128]
     task.end_time = datetime.utcnow()
     db.session.commit()
 
