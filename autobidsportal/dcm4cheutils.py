@@ -143,6 +143,9 @@ class Dcm4cheUtils:
         try:
             out, err, _ = _get_stdout_stderr_returncode(cmd)
         except subprocess.CalledProcessError as error:
+            current_app.logger.error(
+                "findscu failed while getting PI names: %s", error
+            )
             raise Dcm4cheError("Non-zero exit status from findscu.") from error
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
@@ -162,6 +165,7 @@ class Dcm4cheUtils:
         )
 
         if len(all_pis) < 1:
+            current_app.log.error("findscu completed but no PIs found.")
             raise Dcm4cheError("No PIs accessible.")
 
         return all_pis
@@ -210,8 +214,10 @@ class Dcm4cheUtils:
         cmd = f"{cmd} -L {retrieve_level}"
 
         try:
+            current_app.logger.info("Querying study with findscu.")
             out, err, _ = _get_stdout_stderr_returncode(cmd)
         except subprocess.CalledProcessError as error:
+            current_app.logger.error("Findscu failed while querying study.")
             raise Dcm4cheError("Non-zero exit status from findscu.") from error
 
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
@@ -252,6 +258,14 @@ class Dcm4cheUtils:
                     }
                 )
             if len(out_dicts) != len(output_fields):
+                current_app.logger.error(
+                    "Output fields missing in dataset %s", dataset
+                )
+                current_app.logger.error(
+                    "out_dicts: %s, output_fields: %s",
+                    out_dicts,
+                    output_fields,
+                )
                 raise Dcm4cheError(
                     f"Missing output fields in dataset {out_dicts}"
                 )
@@ -298,6 +312,9 @@ class Dcm4cheUtils:
             )
 
             try:
+                current_app.logger.info(
+                    "Running cfmm2tar: %s", " ".join(arg_list)
+                )
                 out = subprocess.run(
                     arg_list,
                     check=True,
@@ -305,10 +322,14 @@ class Dcm4cheUtils:
                     text=True,
                 )
             except subprocess.CalledProcessError as err:
+                current_app.logger.error("cfmm2tar failed: %s", err.stderr)
                 raise Cfmm2tarError(f"Cfmm2tar failed:\n{err.stderr}") from err
 
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
+
+            current_app.logger.info("cfmm2tar stdout: %s", out.stdout)
+            current_app.logger.info("cfmm2tar stderr: %s", out.stderr)
 
             tar_files = [
                 [
@@ -324,7 +345,9 @@ class Dcm4cheUtils:
                 for file_out in split_out
             ]
             if tar_files == []:
+                current_app.logger.warning("No tar files found for cfmm2tar.")
                 if "Timeout.java" in all_out:
+                    current_app.logger.error("Cfmm2tar timed out.")
                     raise Cfmm2tarTimeoutError()
 
             return tar_files
@@ -351,8 +374,10 @@ class Dcm4cheUtils:
             + args.tar_files
         )
         try:
+            current_app.logger.info("Running tar2bids.")
             subprocess.run(arg_list, check=True)
         except subprocess.CalledProcessError as err:
+            current_app.logger.warning("tar2bids failed: %s", err.stderr)
             raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
 
         return args.output_dir
@@ -399,7 +424,7 @@ class Cfmm2tarError(Exception):
 class Cfmm2tarTimeoutError(Exception):
     """Exception raised when cfmm2tar times out."""
 
-    def __init__(seld):
+    def __init__(self):
         super().__init__()
 
 

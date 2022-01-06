@@ -130,6 +130,8 @@ def index():
         db.session.add(answer)
         db.session.commit()
 
+        current_app.logger.info("Study %i successfully submitted.", answer.id)
+
         flash("Thanks, the survey has been submitted!")
 
         if current_app.config["MAIL_ENABLED"]:
@@ -186,6 +188,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
+        current_app.logger.info("New user %i registered.", user.id)
         flash("Congratulations, you are now a registered user!")
         return redirect(url_for("portal_blueprint.login"))
     return render_template("register.html", title="Register", form=form)
@@ -211,6 +214,7 @@ def update_heuristics():
     current_user.launch_task(
         "update_heuristics", "Manually triggered heuristic update"
     )
+    current_app.logger.info("Update heuristic task launched.")
     flash("Currently updating heuristics... Give it a minute or two.")
     return user_list()
 
@@ -248,11 +252,16 @@ def admin(user_id):
             else:
                 user.admin = False
             db.session.commit()
+            current_app.logger.info(
+                "Changed user %i's admin status to %s", user.id, user.admin
+            )
         if form.validate_on_submit():
             for study_id in form.choices.data:
                 print(study_id)
                 study = Study.query.get(study_id)
-                print(study.users_authorized)
+                current_app.logger.info(
+                    "Added user %i to study %i.", user.id, study.id
+                )
                 if user not in study.users_authorized:
                     study.users_authorized.append(user)
             db.session.commit()
@@ -261,6 +270,9 @@ def admin(user_id):
                 study = Study.query.get(study_id)
                 if user in study.users_authorized:
                     study.users_authorized.remove(user)
+                    current_app.logger.info(
+                        "Removed user %i from study %i", user.id, study.id
+                    )
             db.session.commit()
 
     return render_template(
@@ -364,6 +376,7 @@ def study_config(study_id):
         study.users_authorized = [
             User.query.get(id) for id in form.users_authorized.data
         ]
+        current_app.logger.info("Updated study %i config", study.id)
         db.session.commit()
 
     available_heuristics = sorted(
@@ -440,6 +453,7 @@ def run_cfmm2tar(study_id):
             f"cfmm2tar for study {study_id}",
             study_id,
         )
+        current_app.logger.info("Launched cfmm2tar for study %i", study_id)
         db.session.commit()
     if current_app.config["MAIL_ENABLED"]:
         subject = (
@@ -492,6 +506,9 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
         if len(list(cfmm2tar_dir.iterdir())) == 0:
             cfmm2tar_dir.rmdir()
         db.session.delete(cfmm2tar_output)
+        current_app.logger.info(
+            "Deleted tar file %s for study %i", cfmm2tar_file, study_id
+        )
         db.session.commit()
 
     return answer_info(study_id)
@@ -517,6 +534,9 @@ def delete_tar2bids(study_id):
             if tar2bids_path.exists():
                 shutil.rmtree(str(tar2bids_path))
             db.session.delete(tar2bids_output)
+            current_app.logger.info(
+                "Deleted BIDS dir %s for study %i", tar2bids_path, study_id
+            )
             db.session.commit()
 
     return answer_info(study_id)
@@ -557,6 +577,11 @@ def run_tar2bids(study_id):
             f"tar2bids for study {study_id}",
             study_id,
             [tar_file.id for tar_file in tar_files],
+        )
+        current_app.logger.info(
+            "Launched tar2bids for study %i with files %s",
+            study_id,
+            [tar_file.tar_file for tar_file in tar_files],
         )
         db.session.commit()
 
@@ -729,6 +754,9 @@ def dicom_verify(study_id, method):
         )
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
+        current_app.logger.warning(
+            "Failed to get DICOM info for study %i: %s", study_id, err
+        )
         return render_template(
             "dicom_error.html",
             err=err,
