@@ -32,6 +32,7 @@ def create_app(config_object=None, override_dict=None):
         app.config.from_object(config_object)
     if override_dict is not None:
         app.config.update(override_dict)
+    app.logger.setLevel(app.config["LOG_LEVEL"])
     app.register_blueprint(portal_blueprint, url_prefix="/")
     app.register_error_handler(400, bad_request)
     app.register_error_handler(404, not_found_error)

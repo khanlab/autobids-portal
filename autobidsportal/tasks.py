@@ -133,6 +133,11 @@ def get_new_cfmm2tar_results(
             for output in existing_outputs
         )
     ]
+    app.logger.info(
+        "Running cfmm2tar for studies %s in study %i",
+        studies_to_download,
+        study_id,
+    )
     all_results = []
     for target in studies_to_download:
         attempts = 0
@@ -148,10 +153,19 @@ def get_new_cfmm2tar_results(
                 success = True
             except Cfmm2tarTimeoutError as err:
                 if attempts < 5:
+                    app.logger.warning(
+                        "cfmm2tar timeout after %i attempt(s) (target %s).",
+                        attempts,
+                        target,
+                    )
                     continue
                 raise err
+        app.logger.info("Successfully ran cfmm2tar for target %s.", target)
 
         if cfmm2tar_result == []:
+            app.logger.error(
+                "No cfmm2tar results parsed for target %s", target
+            )
             err = "Invalid Principal or Project Name"
             _set_task_error(get_current_job().id, err)
             raise Cfmm2tarError(err)
@@ -196,6 +210,7 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
         with tempfile.TemporaryDirectory(
             dir=app.config["TAR2BIDS_TEMP_DIR"]
         ) as temp_dir:
+            app.logger.info("Running tar2bids for study %i", study.id)
             tar2bids_results = gen_utils().run_tar2bids(
                 Tar2bidsArgs(
                     output_dir=data,
@@ -215,9 +230,14 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
         db.session.commit()
         _set_task_progress(job.id, 100)
     except Tar2bidsError as err:
+        app.logger.error("tar2bids failed: %s", err)
         _set_task_error(job.id, err.__cause__.stderr)
     finally:
         if not Task.query.get(job.id).complete:
+            app.logger.error(
+                "tar2bids for study %i failed with an uncaught exception.",
+                study.id,
+            )
             _set_task_error(job.id, "Unknown uncaught exception.")
 
 
@@ -233,6 +253,7 @@ def update_heuristics():
         ).returncode
         != 0
     ):
+        app.logger.info("No heuristic repo present. Cloning it...")
         subprocess.run(
             [
                 "git",
@@ -244,6 +265,7 @@ def update_heuristics():
         )
 
     try:
+        app.logger.info("Pulling heuristic repo.")
         subprocess.run(
             ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "pull"],
             check=True,
@@ -252,4 +274,5 @@ def update_heuristics():
             _set_task_progress(job.id, 100)
     finally:
         if (job is not None) and not Task.query.get(job.id).complete:
+            app.logger.error("Pull from heuristic repo unsuccessful.")
             _set_task_error(job.id, "Unknown uncaught exception.")

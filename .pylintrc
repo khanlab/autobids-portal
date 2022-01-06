@@ -2,7 +2,7 @@
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
 load-plugins=pylint_flask,pylint_flask_sqlalchemy,pylint_pytest
-generated-members=db.session.*,self.notifications.*,err.__cause__.*
+generated-members=db.session.*,self.notifications.*,err.__cause__.*,app.logger
 ignored-classes=Tar2bidsRunForm,StudyConfigForm
 
 [SIMILARITIES]

@@ -10,6 +10,8 @@ class Config(object):
     ) or "sqlite:///" + os.path.join(basedir, "app.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    LOG_LEVEL = "WARNING"
+
     DICOM_SERVER_URL = "0.0.0.0:11112"
     DICOM_SERVER_USERNAME = "username"
     DICOM_SERVER_PASSWORD = "password"

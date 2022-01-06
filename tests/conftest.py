@@ -26,6 +26,8 @@ class TestConfig:
 
     REDIS_URL = "redis://localhost:6379"
 
+    LOG_LEVEL = "DEBUG"
+
     DICOM_SERVER_URL = "PYNETDICOM@127.0.0.1:11112"
     DICOM_SERVER_USERNAME = "username"
     DICOM_SERVER_PASSWORD = "password"
