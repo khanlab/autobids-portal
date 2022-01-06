@@ -424,9 +424,6 @@ class Cfmm2tarError(Exception):
 class Cfmm2tarTimeoutError(Exception):
     """Exception raised when cfmm2tar times out."""
 
-    def __init__(self):
-        super().__init__()
-
 
 class Tar2bidsError(Exception):
     """Exception raised when tar2bids fails."""
