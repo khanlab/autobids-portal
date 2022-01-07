@@ -322,6 +322,9 @@ class Dcm4cheUtils:
                     text=True,
                 )
             except subprocess.CalledProcessError as err:
+                if "Timeout.java" in err.stderr:
+                    current_app.logger.warning("cfmm2tar timed out.")
+                    raise Cfmm2tarTimeoutError() from err
                 current_app.logger.error("cfmm2tar failed: %s", err.stderr)
                 raise Cfmm2tarError(f"Cfmm2tar failed:\n{err.stderr}") from err
 
@@ -347,7 +350,7 @@ class Dcm4cheUtils:
             if tar_files == []:
                 current_app.logger.warning("No tar files found for cfmm2tar.")
                 if "Timeout.java" in all_out:
-                    current_app.logger.error("Cfmm2tar timed out.")
+                    current_app.logger.warning("cfmm2tar timed out.")
                     raise Cfmm2tarTimeoutError()
 
             return tar_files
