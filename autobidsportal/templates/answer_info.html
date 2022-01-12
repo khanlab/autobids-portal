@@ -58,215 +58,47 @@
     <div class="row">
         <div class="col-12">
             <h2 class="sub-header">{{submitter_answer.principal}}^{{submitter_answer.project_name}} - {{submitter_answer.patient_str}}</h2>
-            <table class="table table-light"></p>
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Current Status</th>
-                    <th scope="col">Which Scanner</th>
-                    <th scope="col">Number of Expected Scans</th>
-                    <th scope="col">Is this Study Longitudinal or Multi-Session</th>
-                    <th scope="col">Familiarity</th>
-                    <th scope="col">Principal or "PI" Identifier</th>
-                    <th scope="col">Project Name Identifier</th>
-                    <th scope="col">Overridden Dataset Name</th>
-                    <th scope="col">Sample Date</th>
-                    {% if submitter_answer.retrospective_data == True %}
-                        <th scope="col">Retrospective Data</th>
-                        <th scope="col">Retrospective Data Start Date</th>
-                        <th scope="col">Retrospective Data End Date</th>
-                    {% endif %}
-                    <th scope="col">Comment</th>
-                </tr>
-
-                <tr>
-                    <td>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
-                        <br>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
-                        <br>
-                        <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
-                    </td>
-                    <td>{{ submitter_answer.submitter_name }}</td>
-                    <td>{{ submitter_answer.submitter_email }}</td>
-                    <td>{{ submitter_answer.status.capitalize() }}</td>
-                    <td>
-                        {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                    </td>
-                    <td>{{ submitter_answer.scan_number }}</td>
-                    <td>
-                        {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
-                    </td>
-                    <td>
-                        <table class="familiarity-results">
-                            <tr>
-                                <td class="familiarity-result-opt">Bids:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_bids == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_bids == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_bids == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_bids == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_bids == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">Bids App:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_bidsapp == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_bidsapp == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_bidsapp == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_bidsapp == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_bidsapp == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">Python:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_python == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_python == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_python == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_python == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_python == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">Linux:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_linux == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_linux == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_linux == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_linux == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_linux == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">Bash:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_bash == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_bash == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_bash == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_bash == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_bash == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">HPC:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_hpc == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_hpc == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_hpc == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_hpc == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_hpc == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">Open Neuro:</td>
-                                <td class="familiarity-result-opt">
-                                    {% if submitter_answer.familiarity_openneuro == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_openneuro == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_openneuro == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_openneuro == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_openneuro == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="familiarity-result-opt">CBRAIN:</td>
-                                <td class="familiarity-result-opt">{% if submitter_answer.familiarity_cbrain == '1' %}
-                                        <p class="opt">Not familiar at all</p>
-                                    {% elif submitter_answer.familiarity_cbrain == '2' %}
-                                        <p class="opt">Have heard of it</p>
-                                    {% elif submitter_answer.familiarity_cbrain == '3' %}
-                                        <p class="opt">Have used of it</p>
-                                    {% elif submitter_answer.familiarity_cbrain == '4' %}
-                                        <p class="opt">Used it regularly</p>
-                                    {% elif submitter_answer.familiarity_cbrain == '5' %}
-                                        <p class="opt">I consider myself an expert</p>
-                                    {% endif %} 
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                    <td>{% if submitter_answer.principal == 'Other' %} {{ submitter_answer.principal_other }} {% else %} {{ submitter_answer.principal }} {% endif %} </td>
-                    <td>{{ submitter_answer.project_name }}</td>
-                    <td>{{ submitter_answer.dataset_name }}</td>
-                    <td>
-                        {% if submitter_answer.sample != None %}
-                            {{ submitter_answer.sample.date() }}
-                        {% else %}
-                            {{ submitter_answer.sample }}
-                        {% endif %} 
-                    </td>
-                    {% if submitter_answer.retrospective_data == True %}
+            <div class="table-responsive">
+                <table class="table table-light"></p>
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">Which Scanner</th>
+                        <th scope="col">Number of Expected Scans</th>
+                        <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+                        <th scope="col">Principal or "PI" Identifier</th>
+                        <th scope="col">Project Name Identifier</th>
+                        <th scope="col">Overridden Dataset Name</th>
+                        <th scope="col">Comment</th>
+                    </tr>
+                    <tr>
                         <td>
-                            {% if submitter_answer.retrospective_data == True %} Yes {% else %} None {% endif %} 
+                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
+                            <br>
+                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
+                            <br>
+                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
                         </td>
                         <td>
-                            {% if submitter_answer.retrospective_start != None %}
-                                {{ submitter_answer.retrospective_start.date() }}
-                            {% else %}
-                                {{ submitter_answer.retrospective_start }}
-                            {% endif %} 
+                            {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
                         </td>
+                        <td>{{ submitter_answer.scan_number }}</td>
                         <td>
-                            {% if submitter_answer.retrospective_end != None %}
-                                {{ submitter_answer.retrospective_end.date() }}
-                            {% else %}
-                                {{ submitter_answer.retrospective_end }}
-                            {% endif %} 
+                            {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
                         </td>
-                    {% endif %} 
-                    <td>{{ submitter_answer.comment.capitalize() }}</td>
-                </tr>
-            </table>
+                        <td>{{ submitter_answer.principal }}</td>
+                        <td>{{ submitter_answer.project_name }}</td>
+                        <td>{{ submitter_answer.dataset_name }}</td>
+                        <td>{{ submitter_answer.comment.capitalize() }}</td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
 
     <div class="row mb-2">
         <div class="col text-center">
             <a href="{{url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}" class="btn btn-link" role="button">Study Config</a>
+            <a href="{{ url_for('portal_blueprint.study_demographics', study_id=submitter_answer.id) }}" class="btn btn-link" role="button">Submitter Demographics</a>
         </div>
     </div>
 
@@ -280,21 +112,19 @@
 
     <div class="row">
         <div class="col-6">
-             <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
+            <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
             <table class="table table-light">
                 <tr>
-                    <th class="col-md-1">Task ID</th>
-                    <th class="col-md-2">Start Date and Time</th>
-                    <th class="col-md-3">End Date and Time</th>
-                    <th class="col-md-4">Completion Status</th>
+                    <th scope="col">Start Date and Time</th>
+                    <th scope="col">End Date and Time</th>
+                    <th scope="col">Completion Status</th>
                 </tr>
 
                 {% for t in cfmm2tar_tasks %}
                 <tr>
-                    <td class="col-md-1">{{ t.id }}</td>
-                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
-                    <td class="col-md-4">
+                    <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td>
                         {% if t.complete == True %} 
                             {% if t.success == True %} 
                                 Completed Successfully
@@ -313,53 +143,52 @@
             <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
 
             <form method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                <table class="table table-light">
-                    <tr>
-                        <th class="col-md-1">Include in tar2bids</th>
-                        <th class="col-md-2">Tar File</th>
-                        <th class="col-md-3">UID</th>
-                        <th class="col-md-4">Date</th>
-                        <th class="col-md-5">Delete</th>
-                    </tr>
+                <div class="table-responsive">
+                    <table class="table table-light">
+                        <tr>
+                            <th scope="col">Include in tar2bids</th>
+                            <th scope="col">Tar File</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Delete</th>
+                        </tr>
 
-                    {% for choice, name, out in form_data %}
-                    <tr>
-                        <td class="col-md-1">
-                            <div class="form-check">
-                                {{ choice(class="form-check-input") }}
-                                {{ choice.label(class="form-check-label") }}
-                            </div>
-                        </td>
-                        <td class="col-md-2">{{ name }}</td>
-                        <td class="col-md-3">{{ out.uid }}</td>
-                        <td class="col-md-4">{% if out.date != None %} {{ out.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ out.date }} {% endif %}</td>
-                        <td class="col-md-4">
-                            <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}" role="button">Delete</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
-                <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
+                        {% for choice, name, out in form_data %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                            </td>
+                            <td>{{ name }}</td>
+                            <td>{% if out.date != None %} {{ out.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ out.date }} {% endif %}</td>
+                            <td class="col-md-4">
+                                <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}" role="button">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
+                </div>
             </form>
         </div>
+    </div>
 
     <div class="row">
         <div class="col-6">
             <h2 class="sub-header">Previous Tar2bids Runs</h2>
             <table class="table table-light">
                 <tr>
-                    <th class="col-md-1">Task ID</th>
-                    <th class="col-md-2">Start Date and Time</th>
-                    <th class="col-md-3">End Date and Time</th>
-                    <th class="col-md-4">Completion Status</th>
+                    <th scope="col">Start Date and Time</th>
+                    <th scope="col">End Date and Time</th>
+                    <th scope="col">Completion Status</th>
                 </tr>
 
                 {% for t in tar2bids_tasks %}
                 <tr>
-                    <td class="col-md-1">{{ t.id }}</td>
-                    <td class="col-md-2">{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                    <td class="col-md-3">{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
-                    <td class="col-md-4">
+                    <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                    <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                    <td>
                         {% if t.complete == True %} 
                             {% if t.success == True %} 
                                 Completed Successfully
@@ -376,26 +205,28 @@
         </div>
         <div class="col-6">
             <h2 class="sub-header">Most Recent Tar2bids Results</h2>
-            <table class="table table-light">
-                <tr>
-                    <th class="col-md-1">Tar File</th>
-                    <th class="col-md-2">Heuristic</th>
-                    <th class="col-md-3">Bids Directory</th>
-                </tr>
+            <div class="table-responsive">
+                <table class="table table-light">
+                    <tr>
+                        <th scope="col">Tar File</th>
+                        <th scope="col">Heuristic</th>
+                        <th scope="col">Bids Directory</th>
+                    </tr>
 
-                {% for f in tar2bids_files %}
-                <tr>
-                    <td class="col-md-1">
-                    {% for out in f.cfmm2tar_outputs %}
-                        {{ out.tar_file  }}
-                        <br>
+                    {% for f in tar2bids_files %}
+                    <tr>
+                        <td class="col-md-1">
+                        {% for out in f.cfmm2tar_outputs %}
+                            {{ out.tar_file  }}
+                            <br>
+                        {% endfor %}
+                        </td>
+                        <td class="col-md-2">{{ f.heuristic }}</td>
+                        <td class="col-md-3">{{ f.bids_dir }}</td>
+                    </tr>
                     {% endfor %}
-                    </td>
-                    <td class="col-md-2">{{ f.heuristic }}</td>
-                    <td class="col-md-3">{{ f.bids_dir }}</td>
-                </tr>
-                {% endfor %}
-            </table>
+                </table>
+            </div>
             <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}", role="button">Delete BIDS dataset</a>
         </div>
     </div>

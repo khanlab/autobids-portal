@@ -346,6 +346,19 @@ def answer_info(study_id):
 
 
 @portal_blueprint.route(
+    "/results/<int:study_id>/demographics", methods=["GET"]
+)
+def study_demographics(study_id):
+    """Render page with information about a study's submitter."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+    return render_template("study_demographics.html", study=study)
+
+
+@portal_blueprint.route(
     "/results/<int:study_id>/config", methods=["GET", "POST"]
 )
 @login_required

@@ -360,8 +360,12 @@ def test_complete_survey_access_study_info(test_client, login_admin):
     assert b"Logout" in response.data
     assert b"Login" not in response.data
     assert b"Name" in response.data
-    assert b"Familiarity" in response.data
     assert b"Results" in response.data
+
+    response = test_client.get(
+        "/results/1/demographics", follow_redirects=True
+    )
+    assert b"Familiarity" in response.data
     assert b"John" in response.data
     assert b"johnsmith@gmail.com" in response.data
 
