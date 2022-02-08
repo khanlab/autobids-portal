@@ -11,12 +11,15 @@ import subprocess
 import logging
 import re
 import tempfile
+import pathlib
 from dataclasses import dataclass
 from datetime import date
 from typing import Sequence
 
 # for quote python strings for safe use in posix shells
 import pipes
+from defusedxml.ElementTree import parse
+
 from flask import current_app
 
 
@@ -102,6 +105,62 @@ class Tar2bidsArgs:
     patient_str: str = None
     heuristic: str = None
     temp_dir: str = None
+
+
+def parse_findscu_xml(element_tree, output_fields):
+    """Find the relevant output from findscu output XML.
+
+    Parameters
+    ----------
+    element_tree : ElementTree
+        One XML document produced by findscu.
+    output_fields : list of str
+        List of output fields we're interested in (passed to findscu)
+    """
+    output_fields = [
+        f"{field[:8]}".upper()
+        if re.fullmatch(r"[\dabcdefABCDEF]{8}", field)
+        else field
+        for field in output_fields
+    ]
+    out_list = []
+    for field in output_fields:
+        attribute_by_tag = element_tree.getroot().find(
+            f"./DicomAttribute[@tag='{field}']"
+        )
+        attribute_by_keyword = element_tree.getroot().find(
+            f"./DicomAttribute[@keyword='{field}']"
+        )
+        attribute = (
+            attribute_by_tag
+            if attribute_by_tag is not None
+            else attribute_by_keyword
+        )
+        if attribute is None:
+            raise Dcm4cheError(
+                f"Missing expected output field {field} in findscu output"
+            )
+        tag_code = attribute.attrib["tag"]
+        out_dict = {
+            "tag_code": f"{tag_code[0:4]},{tag_code[4:8]}",
+            "tag_name": attribute.attrib["keyword"],
+        }
+        if attribute.attrib["vr"] == "PN":
+            value_elements = [
+                element
+                for element in attribute.findall(".//*")
+                if element.text is not None
+            ]
+            if len(value_elements) == 0:
+                raise Dcm4cheError(
+                    f"Found PN attribute with no text: {attribute}"
+                )
+            value = value_elements[0].text
+        else:
+            value = attribute.find("./Value").text
+        out_dict["tag_value"] = value
+        out_list.append(out_dict)
+    return out_list
 
 
 class Dcm4cheUtils:
@@ -214,8 +273,14 @@ class Dcm4cheUtils:
         cmd = f"{cmd} -L {retrieve_level}"
 
         try:
-            current_app.logger.info("Querying study with findscu.")
-            out, err, _ = _get_stdout_stderr_returncode(cmd)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                cmd = f"{cmd} --out-dir {tmpdir} --out-file 000.xml -X"
+                current_app.logger.info("Querying study with findscu.")
+                _, err, _ = _get_stdout_stderr_returncode(cmd)
+
+                trees_xml = [
+                    parse(child) for child in pathlib.Path(tmpdir).iterdir()
+                ]
         except subprocess.CalledProcessError as error:
             current_app.logger.error("Findscu failed while querying study.")
             raise Dcm4cheError("Non-zero exit status from findscu.") from error
@@ -223,55 +288,7 @@ class Dcm4cheUtils:
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
 
-        output_fields = [
-            f"{field[0:4]},{field[4:8]}".upper()
-            if re.fullmatch(r"[\dabcdefABCDEF]{8}", field)
-            else field
-            for field in output_fields
-        ]
-
-        # Idea: Discard everything before:
-        # C-FIND Request done in
-
-        out = str(out, encoding="utf-8")
-        out = out[out.find("C-FIND-RSP") :]
-        out = out.split("C-FIND-RSP Dataset")[1:]
-
-        grouped_dicts = []
-        for dataset in out:
-            out_dicts = []
-            for line in dataset.splitlines():
-                if not any(field in line for field in output_fields):
-                    continue
-                match = re.match(
-                    r"(\([\dABCDEF]{4},[\dABCDEF]{4}\)) "
-                    + r"[A-Z]{2} \[(.*)\] (\w+)",
-                    line,
-                )
-                if match is None:
-                    continue
-                out_dicts.append(
-                    {
-                        "tag_code": match.group(1),
-                        "tag_name": match.group(3),
-                        "tag_value": match.group(2),
-                    }
-                )
-            if len(out_dicts) != len(output_fields):
-                current_app.logger.error(
-                    "Output fields missing in dataset %s", dataset
-                )
-                current_app.logger.error(
-                    "out_dicts: %s, output_fields: %s",
-                    out_dicts,
-                    output_fields,
-                )
-                raise Dcm4cheError(
-                    f"Missing output fields in dataset {out_dicts}"
-                )
-            grouped_dicts.append(out_dicts)
-
-        return grouped_dicts
+        return [parse_findscu_xml(tree, output_fields) for tree in trees_xml]
 
     def run_cfmm2tar(
         self, out_dir, date_str=None, patient_name=None, project=None
