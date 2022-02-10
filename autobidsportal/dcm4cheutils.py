@@ -306,6 +306,12 @@ class Dcm4cheUtils:
             PatientName string.
         project : str, optional
             "Principal^Project" to search for.
+
+        Returns
+        -------
+        list of list of str
+            A list containing the tar file name and uid file name (in that
+            order) for each result.
         """
         if all(arg is None for arg in [date_str, patient_name, project]):
             raise Cfmm2tarError(

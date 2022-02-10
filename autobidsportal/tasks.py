@@ -59,8 +59,89 @@ def _set_task_error(job_id, msg):
     db.session.commit()
 
 
+def run_cfmm2tar_with_retries(out_dir, target, study_description):
+    """Run cfmm2tar, retrying multiple times if it times out.
+
+    Parameters
+    ----------
+    out_dir : str
+        Directory to which to download tar files.
+    target : str
+        PatientName string.
+    study_description : str
+        "Principal^Project" to search for.
+    """
+    attempts = 0
+    success = False
+    while not success:
+        try:
+            attempts += 1
+            cfmm2tar_result = gen_utils().run_cfmm2tar(
+                out_dir=out_dir,
+                patient_name=target,
+                project=study_description,
+            )
+            success = True
+        except Cfmm2tarTimeoutError as err:
+            if attempts < 5:
+                app.logger.warning(
+                    "cfmm2tar timeout after %i attempt(s) (target %s).",
+                    attempts,
+                    target,
+                )
+                continue
+            raise err
+    return cfmm2tar_result
+
+
+def record_cfmm2tar(tar_path, uid_path, study_id):
+    """Parse cfmm2tar output files and record them in the db.
+
+    Parameters
+    ----------
+    tar_path : str
+        Path to the downloaded tar file.
+    uid_path : str
+        Path to the downloaded uid file.
+    study_id : int
+        ID of the study associated with this cfmm2tar output.
+    """
+    tar_file = pathlib.PurePath(tar_path).name
+    try:
+        date_match = re.fullmatch(
+            r"[a-zA-Z]+_\w+_(\d{8})_\w+_[\.a-zA-Z\d]+\.tar", tar_file
+        ).group(1)
+    except AttributeError as err:
+        raise Cfmm2tarError(f"Output {tar_file} could not be parsed.") from err
+
+    with open(uid_path, "r", encoding="utf-8") as uid_file:
+        uid = uid_file.read()
+    cfmm2tar = Cfmm2tarOutput(
+        study_id=study_id,
+        tar_file=tar_path,
+        uid=uid,
+        date=datetime(
+            int(date_match[0:4]),
+            int(date_match[4:6]),
+            int(date_match[6:8]),
+        ),
+    )
+    db.session.add(cfmm2tar)
+    db.session.commit()
+    pathlib.Path(uid_path).unlink()
+
+
 def get_info_from_cfmm2tar(study_id):
-    """Get all info related to a specific cfmm2tar run."""
+    """Run cfmm2tar for a given study
+
+    This will check which patients have already been downloaded, download any
+    new ones, and record them in the database.
+
+    Parameters
+    ----------
+    study_id : int
+        ID of the study for which to run cfmm2tar.
+    """
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
@@ -71,107 +152,55 @@ def get_info_from_cfmm2tar(study_id):
         / str(study.id)
         / datetime.utcnow().strftime("%Y%m%d%H%M")
     )
-    try:
-        for result in get_new_cfmm2tar_results(
-            study_description=study_description,
-            patient_str=patient_str,
-            out_dir=out_dir,
-            study_id=study_id,
-        ):
-            tar_file = pathlib.PurePath(result[0]).name
-            try:
-                date_match = re.fullmatch(
-                    r"[a-zA-Z]+_\w+_(\d{8})_\w+_[\.a-zA-Z\d]+\.tar", tar_file
-                ).group(1)
-            except AttributeError as err:
-                raise Cfmm2tarError(
-                    f"Output {tar_file} could not be parsed."
-                ) from err
 
-            with open(result[1], "r", encoding="utf-8") as uid_file:
-                uid = uid_file.read()
-            cfmm2tar = Cfmm2tarOutput(
-                study_id=study_id,
-                tar_file=result[0],
-                uid=uid,
-                date=datetime(
-                    int(date_match[0:4]),
-                    int(date_match[4:6]),
-                    int(date_match[6:8]),
-                ),
+    existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
+
+    utils = gen_utils()
+    try:
+        dicom_studies = utils.query_single_study(
+            ["PatientName"],
+            DicomQueryAttributes(
+                study_description=study_description,
+                patient_name=patient_str,
+            ),
+        )
+        studies_to_download = [
+            study[0]["tag_value"]
+            for study in dicom_studies
+            if not any(
+                study[0]["tag_value"] in pathlib.Path(output.tar_file).name
+                for output in existing_outputs
             )
-            db.session.add(cfmm2tar)
-            pathlib.Path(result[1]).unlink()
-        db.session.commit()
+        ]
+        app.logger.info(
+            "Running cfmm2tar for studies %s in study %i",
+            studies_to_download,
+            study_id,
+        )
+        for target in studies_to_download:
+            result = run_cfmm2tar_with_retries(
+                out_dir, target, study_description
+            )
+            app.logger.info("Successfully ran cfmm2tar for target %s.", target)
+            app.logger.info("Result: %s", result)
+
+            if result == []:
+                app.logger.error(
+                    "No cfmm2tar results parsed for target %s", target
+                )
+                err = "Invalid Principal or Project Name"
+                _set_task_error(get_current_job().id, err)
+                raise Cfmm2tarError(err)
+            for individual_result in result:
+                record_cfmm2tar(
+                    individual_result[0], individual_result[1], study_id
+                )
         _set_task_progress(job.id, 100)
     except Cfmm2tarError as err:
         _set_task_error(job.id, err.message)
     finally:
         if not Task.query.get(job.id).complete:
             _set_task_error(job.id, "Unknown uncaught exception")
-
-
-def get_new_cfmm2tar_results(
-    study_description, patient_str, out_dir, study_id
-):
-    """Run cfmm2tar and parse new results."""
-    existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
-
-    utils = gen_utils()
-    dicom_studies = utils.query_single_study(
-        ["PatientName"],
-        DicomQueryAttributes(
-            study_description=study_description,
-            patient_name=patient_str,
-        ),
-    )
-    studies_to_download = [
-        study[0]["tag_value"]
-        for study in dicom_studies
-        if not any(
-            study[0]["tag_value"] in pathlib.Path(output.tar_file).name
-            for output in existing_outputs
-        )
-    ]
-    app.logger.info(
-        "Running cfmm2tar for studies %s in study %i",
-        studies_to_download,
-        study_id,
-    )
-    all_results = []
-    for target in studies_to_download:
-        attempts = 0
-        success = False
-        while not success:
-            try:
-                attempts += 1
-                cfmm2tar_result = gen_utils().run_cfmm2tar(
-                    out_dir=out_dir,
-                    patient_name=target,
-                    project=study_description,
-                )
-                success = True
-            except Cfmm2tarTimeoutError as err:
-                if attempts < 5:
-                    app.logger.warning(
-                        "cfmm2tar timeout after %i attempt(s) (target %s).",
-                        attempts,
-                        target,
-                    )
-                    continue
-                raise err
-        app.logger.info("Successfully ran cfmm2tar for target %s.", target)
-
-        if cfmm2tar_result == []:
-            app.logger.error(
-                "No cfmm2tar results parsed for target %s", target
-            )
-            err = "Invalid Principal or Project Name"
-            _set_task_error(get_current_job().id, err)
-            raise Cfmm2tarError(err)
-        all_results.extend(cfmm2tar_result)
-
-    return all_results
 
 
 def get_info_from_tar2bids(study_id, tar_file_ids):
