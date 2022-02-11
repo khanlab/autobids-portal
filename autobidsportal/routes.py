@@ -759,10 +759,17 @@ def dicom_verify(study_id, method):
             ),
             retrieve_level="SERIES",
         )
+        sorted_responses = [
+            {
+                attribute["tag_name"]: attribute["tag_value"]
+                for attribute in response
+            }
+            for response in dicom_response
+        ]
         return render_template(
             "dicom.html",
             title="Dicom Result",
-            dicom_response=dicom_response,
+            dicom_response=sorted_responses,
             submitter_answer=study,
         )
     except Dcm4cheError as err:

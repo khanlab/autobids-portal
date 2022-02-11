@@ -15,11 +15,11 @@
                 
                 {% for response in dicom_response %}
                     <tr>
-                        <td>{{ response[0].get('tag_value') }}</td>
-                        <td>{{ response[1].get('tag_value') }}</td>
-                        <td>{{ response[2].get('tag_value') }}</td>
-                        <td>{{ response[3].get('tag_value') }}</td>
-                        <td>{{ response[4].get('tag_value') }}</td>
+                        <td>{{ response["SeriesDescription"] }}</td>
+                        <td>{{ response["PatientName"] }}</td>
+                        <td>{{ response["PatientID"] }}</td>
+                        <td>{{ response["PatientSex"] }}</td>
+                        <td>{{ response["SeriesNumber"] }}</td>
                     </tr>
                 {% endfor %}
             </table>
