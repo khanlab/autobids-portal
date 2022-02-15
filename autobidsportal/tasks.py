@@ -109,7 +109,7 @@ def record_cfmm2tar(tar_path, uid_path, study_id):
     tar_file = pathlib.PurePath(tar_path).name
     try:
         date_match = re.fullmatch(
-            r"[a-zA-Z]+_\w+_(\d{8})_\w+_[\.a-zA-Z\d]+\.tar", tar_file
+            r"[a-zA-Z]+_\w+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
         ).group(1)
     except AttributeError as err:
         raise Cfmm2tarError(f"Output {tar_file} could not be parsed.") from err
@@ -164,6 +164,22 @@ def get_info_from_cfmm2tar(study_id):
                 patient_name=patient_str,
             ),
         )
+        patient_names = [
+            [
+                attribute
+                for attribute in study
+                if attribute["tag_name"] == "PatientName"
+            ][0]["tag_value"]
+            for study in dicom_studies
+        ]
+        studies_to_download = [
+            patient_name
+            for patient_name in patient_names
+            if not any(
+                patient_name in pathlib.Path(output.tar_file).name
+                for output in existing_outputs
+            )
+        ]
         studies_to_download = [
             study[0]["tag_value"]
             for study in dicom_studies
@@ -197,9 +213,11 @@ def get_info_from_cfmm2tar(study_id):
                 )
         _set_task_progress(job.id, 100)
     except Cfmm2tarError as err:
+        app.logger.error(f"Cfmm2tar error: {err.message}")
         _set_task_error(job.id, err.message)
     finally:
         if not Task.query.get(job.id).complete:
+            app.logger.error("Cfmm2tar failed for an unknown reason.")
             _set_task_error(job.id, "Unknown uncaught exception")
 
 
