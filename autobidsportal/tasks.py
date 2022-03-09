@@ -155,9 +155,8 @@ def get_info_from_cfmm2tar(study_id):
 
     existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
 
-    utils = gen_utils()
     try:
-        dicom_studies = utils.query_single_study(
+        dicom_studies = gen_utils().query_single_study(
             ["PatientName"],
             DicomQueryAttributes(
                 study_description=study_description,
@@ -193,6 +192,7 @@ def get_info_from_cfmm2tar(study_id):
             studies_to_download,
             study_id,
         )
+        error_msgs = []
         for target in studies_to_download:
             result = run_cfmm2tar_with_retries(
                 out_dir, target, study_description
@@ -204,14 +204,18 @@ def get_info_from_cfmm2tar(study_id):
                 app.logger.error(
                     "No cfmm2tar results parsed for target %s", target
                 )
-                err = "Invalid Principal or Project Name"
-                _set_task_error(get_current_job().id, err)
-                raise Cfmm2tarError(err)
+                error_msgs.append(
+                    f"No cfmm2tar results parsed for target f{target}. Check "
+                    "the stderr for more information."
+                )
             for individual_result in result:
                 record_cfmm2tar(
                     individual_result[0], individual_result[1], study_id
                 )
-        _set_task_progress(job.id, 100)
+        if len(error_msgs) > 0:
+            _set_task_error(job.id, "\n".join(error_msgs))
+        else:
+            _set_task_progress(job.id, 100)
     except Cfmm2tarError as err:
         app.logger.error(f"Cfmm2tar error: {err.message}")
         _set_task_error(job.id, err.message)
