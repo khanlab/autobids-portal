@@ -1,4 +1,4 @@
-import { Accordion, TextItem, DirItem } from "./Accordion";
+import { Accordion, TextItem, DirItem, genAccordion } from "./Accordion";
 
-export { Accordion, TextItem, DirItem };
-export default { Accordion, TextItem, DirItem };
+export { Accordion, TextItem, DirItem, genAccordion };
+export default { Accordion, TextItem, DirItem, genAccordion };

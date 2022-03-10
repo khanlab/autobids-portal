@@ -1,24 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
+import Button from "react-bootstrap/Button";
+import Collapse from "react-bootstrap/Collapse";
 
 import TextItem from "./TextItem"
 
 function DirItem(props) {
   const { text, children, dirId } = props;
+  const [open, setOpen] = useState(false);
   return (
     <li className="list-group-item">
-      <button
-        className="btn btn-link"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target={`#${dirId}`}
-        aria-expanded="false"
+      <Button
+        onClick={() => setOpen(!open)}
+        aria-controls={dirId}
+        aria-expanded={open}
+        variant="link"
       >
         {text}
-      </button>
-      <ul className="list-group collapse" id={dirId}>
-        {children}
-      </ul>
+      </Button>
+      <Collapse in={open}>
+          <ul className="list-group collapse" id={dirId}>
+            {children}
+          </ul>
+      </Collapse>
     </li>
   );
 }
