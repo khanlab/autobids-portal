@@ -45,7 +45,7 @@ from autobidsportal.forms import (
     Tar2bidsRunForm,
     DEFAULT_HEURISTICS,
 )
-from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.filesystem import gen_dir_dict, isolate_names
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -339,17 +339,19 @@ def answer_info(study_id):
     )
     current_app.logger.info(bids_dict)
     json_filetree = JSONEncoder().encode(
-        bids_dict.get(
-            str(
-                Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
-                / str(study.id)
-                / (
-                    study.dataset_name
-                    if study.dataset_name not in [None, ""]
-                    else study.project_name
-                )
-            ),
-            {},
+        isolate_names(
+            bids_dict.get(
+                str(
+                    Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
+                    / str(study.id)
+                    / (
+                        study.dataset_name
+                        if study.dataset_name not in [None, ""]
+                        else study.project_name
+                    )
+                ),
+                {},
+            )
         )
     )
     current_app.logger.info(json_filetree)

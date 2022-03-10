@@ -45,3 +45,29 @@ def gen_dir_dict(path):
                 del child_dirs[dir_path]
         child_dirs[str(path_root)] = dir_dict
     return child_dirs
+
+
+def isolate_names(dict_file_tree):
+    """Isolate the name from every dir in a file tree dict.
+
+    Parameters
+    ----------
+    dict_file_tree : dict
+        Dictionary representation of a file tree from gen_dir_dict.
+
+    Returns
+    -------
+    dict
+        The same dictionary but with just the directory names instead of
+        absolute or relative paths.
+    """
+    if len(dict_file_tree) == 0:
+        return {}
+    new_tree = dict_file_tree.copy()
+    for dir_child in list(dict_file_tree["dirs"]):
+        dict_child = new_tree["dirs"][dir_child]
+        new_tree["dirs"][pathlib.Path(dir_child).name] = isolate_names(
+            dict_child
+        )
+        del new_tree["dirs"][dir_child]
+    return new_tree
