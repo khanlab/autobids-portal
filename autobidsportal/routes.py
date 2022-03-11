@@ -337,7 +337,6 @@ def answer_info(study_id):
             else study.project_name
         )
     )
-    current_app.logger.info(bids_dict)
     json_filetree = JSONEncoder().encode(
         isolate_names(
             bids_dict.get(
@@ -354,7 +353,6 @@ def answer_info(study_id):
             )
         )
     )
-    current_app.logger.info(json_filetree)
 
     form = Tar2bidsRunForm()
     form.tar_files.choices = [
