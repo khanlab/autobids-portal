@@ -204,31 +204,20 @@
             </table>
         </div>
         <div class="col-6">
-            <h2 class="sub-header">Most Recent Tar2bids Results</h2>
-            <div class="table-responsive">
-                <table class="table table-light">
-                    <tr>
-                        <th scope="col">Tar File</th>
-                        <th scope="col">Heuristic</th>
-                        <th scope="col">Bids Directory</th>
-                    </tr>
-
-                    {% for f in tar2bids_files %}
-                    <tr>
-                        <td class="col-md-1">
-                        {% for out in f.cfmm2tar_outputs %}
-                            {{ out.tar_file  }}
-                            <br>
-                        {% endfor %}
-                        </td>
-                        <td class="col-md-2">{{ f.heuristic }}</td>
-                        <td class="col-md-3">{{ f.bids_dir }}</td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-            <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}", role="button">Delete BIDS dataset</a>
+            <h2 class="sub-header">Bids Dataset</h2>
+            <div id="filetree-mount"></div>
+            <a class="btn btn-danger my-2" href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}", role="button">Delete BIDS dataset</a>
         </div>
     </div>
 </div>
+
 {% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript">
+    const reactElement = AutobidsPortal.genAccordion({{ json_filetree|safe }});
+    ReactDOM.render(reactElement, document.querySelector("#filetree-mount"));
+</script>
+{% endblock %}
+

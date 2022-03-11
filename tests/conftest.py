@@ -57,6 +57,7 @@ def test_client():
                     "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_file.name}",
                     "HEURISTIC_REPO_PATH": str(heuristic_dir_base),
                     "HEURISTIC_DIR_PATH": "heuristics",
+                    "TAR2BIDS_DOWNLOAD_DIR": str(heuristic_dir_base),
                 },
             )
             with app.test_client() as testing_client:

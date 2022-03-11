@@ -1,6 +1,7 @@
 """All routes in the portal are defined here."""
 
 from datetime import datetime
+from json import JSONEncoder
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
 import shutil
@@ -44,6 +45,7 @@ from autobidsportal.forms import (
     Tar2bidsRunForm,
     DEFAULT_HEURISTICS,
 )
+from autobidsportal.filesystem import gen_dir_dict, isolate_names
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -326,6 +328,33 @@ def answer_info(study_id):
         study_id=study_id, name="get_info_from_tar2bids"
     ).all()
     tar2bids_files = study.tar2bids_outputs
+    bids_dict = gen_dir_dict(
+        Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
+        / str(study.id)
+        / (
+            study.dataset_name
+            if study.dataset_name not in [None, ""]
+            else study.project_name
+        )
+    )
+    current_app.logger.info(bids_dict)
+    json_filetree = JSONEncoder().encode(
+        isolate_names(
+            bids_dict.get(
+                str(
+                    Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
+                    / str(study.id)
+                    / (
+                        study.dataset_name
+                        if study.dataset_name not in [None, ""]
+                        else study.project_name
+                    )
+                ),
+                {},
+            )
+        )
+    )
+    current_app.logger.info(json_filetree)
 
     form = Tar2bidsRunForm()
     form.tar_files.choices = [
@@ -342,6 +371,7 @@ def answer_info(study_id):
         form_data=zip(form.tar_files, cfmm2tar_file_names, cfmm2tar_files),
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
+        json_filetree=json_filetree,
     )
 
 
