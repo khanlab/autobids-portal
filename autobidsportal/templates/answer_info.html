@@ -216,7 +216,7 @@
 {% block scripts %}
 {{ super() }}
 <script type="text/javascript">
-    const reactElement = AutobidsPortal.genAccordion({{ json_filetree|safe }});
+    const reactElement = genAccordion({{ json_filetree|safe }});
     ReactDOM.render(reactElement, document.querySelector("#filetree-mount"));
 </script>
 {% endblock %}
