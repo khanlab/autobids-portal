@@ -27,6 +27,7 @@
   },
   "browserslist": "defaults",
   "devDependencies": {
+    "@swc/helpers": "latest",
     "eslint": "^8.10.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^17.0.0-1",
@@ -35,7 +36,6 @@
     "eslint-plugin-react": "^7.29.2",
     "eslint-plugin-react-hooks": "^4.3.0",
     "parcel": "latest",
-    "@swc/helpers": "latest",
     "prettier": "^2.5.1"
   }
 }
