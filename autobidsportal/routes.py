@@ -787,13 +787,19 @@ def dicom_verify(study_id, method):
             ),
             retrieve_level="SERIES",
         )
-        sorted_responses = [
-            {
-                attribute["tag_name"]: attribute["tag_value"]
-                for attribute in response
-            }
-            for response in dicom_response
-        ]
+        sorted_responses = sorted(
+            [
+                {
+                    attribute["tag_name"]: attribute["tag_value"]
+                    for attribute in response
+                }
+                for response in dicom_response
+            ],
+            key=lambda attr_dict: (
+                f'{attr_dict["PatientName"]}'
+                f'{attr_dict["SeriesDescription"]}'
+            ),
+        )
         return render_template(
             "dicom.html",
             title="Dicom Result",
