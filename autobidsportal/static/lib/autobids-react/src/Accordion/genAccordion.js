@@ -4,15 +4,19 @@ import Accordion from "./Accordion";
 import DirItem from "./DirItem";
 import TextItem from "./TextItem";
 
+function sortItems(a, b) {
+  return (a.text < b.text ? -1 : 1);
+}
+
 function genAccordion(fileTree) {
   const textItems = fileTree.files.map((fileName) => (
     <TextItem key={fileName} text={fileName}></TextItem>
   ));
-  textItems.sort((a, b) => a.text < b.text ? -1 : 1);
+  textItems.sort(sortItems);
   const dirItems = Object.entries(fileTree.dirs).map(([key, value]) =>
     genDirItem(key, value)
   );
-  dirItems.sort((a, b) => a.text < b.text ? -1 : 1);
+  dirItems.sort(sortItems);
   return (
     <Accordion>
       {textItems}
@@ -25,11 +29,11 @@ function genDirItem(dirName, dirContents) {
   const textItems = dirContents.files.map((fileName) => (
     <TextItem key={fileName} text={fileName}></TextItem>
   ));
-  textItems.sort((a, b) => a.text < b.text ? -1 : 1);
+  textItems.sort(sortItems);
   const dirItems = Object.entries(dirContents.dirs).map(([key, value]) =>
     genDirItem(key, value)
   );
-  dirItems.sort((a, b) => a.text < b.text ? -1 : 1);
+  dirItems.sort(sortItems);
   return (
     <DirItem text={dirName} key={dirName} dirId={"dir" + dirName.replaceAll("/", "")}>
       {textItems}
