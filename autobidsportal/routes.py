@@ -797,7 +797,7 @@ def dicom_verify(study_id, method):
             ],
             key=lambda attr_dict: (
                 f'{attr_dict["PatientName"]}'
-                f'{attr_dict["SeriesDescription"]}'
+                f'{int(attr_dict["SeriesNumber"]):03d}'
             ),
         )
         return render_template(
