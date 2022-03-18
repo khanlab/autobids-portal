@@ -40,7 +40,10 @@ class Config(object):
 
     REDIS_URL = os.environ.get("REDIS_URL") or "redis://"
 
+    # Directory, preferably local, into which to temporarily download tar files
     CFMM2TAR_DOWNLOAD_DIR = "/home/debian/cfmm2tar-download"
+    # Directory, possibly remote, into which to move downloaded tar files
+    CFMM2TAR_STORAGE_DIR = "/home/debian/cfmm2tar-storage"
     TAR2BIDS_DOWNLOAD_DIR = "/home/debian/tar2bids-download"
 
     # Git repo containing custom heuristic files

@@ -94,6 +94,12 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
     return cfmm2tar_result
 
 
+def move_downloaded_tar(tar_file_tmp, out_dir):
+    """Move a downloaded tar file to its permanent home."""
+    tar_orig = pathlib.Path(tar_file_tmp)
+    return tar_orig.replace(pathlib.Path(out_dir) / tar_orig.name)
+
+
 def record_cfmm2tar(tar_path, uid_path, study_id):
     """Parse cfmm2tar output files and record them in the db.
 
@@ -146,12 +152,10 @@ def get_info_from_cfmm2tar(study_id):
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
     study_description = f"{study.principal}^{study.project_name}"
-    patient_str = study.patient_str
     out_dir = str(
-        pathlib.Path(app.config["CFMM2TAR_DOWNLOAD_DIR"])
-        / str(study.id)
-        / datetime.utcnow().strftime("%Y%m%d%H%M")
+        pathlib.Path(app.config["CFMM2TAR_STORAGE_DIR"]) / str(study.id)
     )
+    pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
 
@@ -160,7 +164,7 @@ def get_info_from_cfmm2tar(study_id):
             ["PatientName"],
             DicomQueryAttributes(
                 study_description=study_description,
-                patient_name=patient_str,
+                patient_name=study.patient_str,
             ),
         )
         patient_names = [
@@ -194,24 +198,38 @@ def get_info_from_cfmm2tar(study_id):
         )
         error_msgs = []
         for target in studies_to_download:
-            result = run_cfmm2tar_with_retries(
-                out_dir, target, study_description
-            )
-            app.logger.info("Successfully ran cfmm2tar for target %s.", target)
-            app.logger.info("Result: %s", result)
+            with tempfile.TemporaryDirectory(
+                dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
+            ) as download_dir:
+                result = run_cfmm2tar_with_retries(
+                    download_dir, target, study_description
+                )
+                app.logger.info(
+                    "Successfully ran cfmm2tar for target %s.", target
+                )
+                app.logger.info("Result: %s", result)
 
-            if result == []:
-                app.logger.error(
-                    "No cfmm2tar results parsed for target %s", target
-                )
-                error_msgs.append(
-                    f"No cfmm2tar results parsed for target f{target}. Check "
-                    "the stderr for more information."
-                )
-            for individual_result in result:
-                record_cfmm2tar(
-                    individual_result[0], individual_result[1], study_id
-                )
+                if result == []:
+                    app.logger.error(
+                        "No cfmm2tar results parsed for target %s", target
+                    )
+                    error_msgs.append(
+                        f"No cfmm2tar results parsed for target f{target}. "
+                        "Check the stderr for more information."
+                    )
+                for individual_result in result:
+                    record_cfmm2tar(
+                        str(
+                            move_downloaded_tar(individual_result[0], out_dir)
+                        ),
+                        individual_result[1],
+                        study_id,
+                    )
+                    app.logger.info(
+                        "Moved downloaded tar file from %s to %s",
+                        individual_result[0],
+                        out_dir,
+                    )
         if len(error_msgs) > 0:
             _set_task_error(job.id, "\n".join(error_msgs))
         else:
