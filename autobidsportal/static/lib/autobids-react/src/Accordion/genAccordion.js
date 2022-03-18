@@ -5,7 +5,7 @@ import DirItem from "./DirItem";
 import TextItem from "./TextItem";
 
 function sortItems(a, b) {
-  return (a.text < b.text ? -1 : 1);
+  return (a.props.text < b.props.text ? -1 : 1);
 }
 
 function genAccordion(fileTree) {
