@@ -6,6 +6,7 @@ import pathlib
 import re
 import os
 import subprocess
+import shutil
 
 from rq import get_current_job
 from rq.job import Job
@@ -97,7 +98,9 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
 def move_downloaded_tar(tar_file_tmp, out_dir):
     """Move a downloaded tar file to its permanent home."""
     tar_orig = pathlib.Path(tar_file_tmp)
-    return tar_orig.replace(pathlib.Path(out_dir) / tar_orig.name)
+    return pathlib.Path(
+        shutil.move(str(tar_orig), str(pathlib.Path(out_dir) / tar_orig.name))
+    )
 
 
 def record_cfmm2tar(tar_path, uid_path, study_id):
