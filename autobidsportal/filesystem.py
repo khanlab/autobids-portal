@@ -14,20 +14,19 @@ def gen_dir_dict(path):
     Returns
     -------
     dict
-        A dict with one key (the root directory name), where the value is a
-        recursive series of dicts with keys "files" and "dirs", where "files"
-        has a list of file names in the dict, and "dirs" has the directory
-        names as keys and contents the same as the root dict.
+        A dict with two keys: "files" and "dirs". The value of "files" is a
+        list of file names in "path", and the value of "dirs" is a directory
+        where every key is the name of a directory in "path", and the
+        corresponding value has the same structure as the overall returned
+        dict.
 
         Example:
         {
-            "root_dir": {
-                "files": ["file1.txt", "file2.txt"],
-                "dirs": {
-                    "child_dir": {
-                        "files": ["file3.txt"],
-                        "dirs": {},
-                    },
+            "files": ["file1.txt", "file2.txt"],
+            "dirs": {
+                "child_dir": {
+                    "files": ["file3.txt"],
+                    "dirs": {},
                 },
             },
         }
