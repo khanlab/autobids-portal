@@ -328,7 +328,7 @@ def answer_info(study_id):
         study_id=study_id, name="get_info_from_tar2bids"
     ).all()
     tar2bids_files = study.tar2bids_outputs
-    bids_dict = gen_dir_dict(
+    tar2bids_path = (
         Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
         / str(study.id)
         / (
@@ -337,6 +337,8 @@ def answer_info(study_id):
             else study.project_name
         )
     )
+
+    bids_dict = gen_dir_dict(tar2bids_path) if tar2bids_path.exists() else {}
     json_filetree = JSONEncoder().encode(bids_dict)
 
     form = Tar2bidsRunForm()
