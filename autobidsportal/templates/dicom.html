@@ -6,20 +6,52 @@
 <div class="container">
     <div class="row my-3">
         <div class="col">
-            <table class="table table-light">
-                <th scope="col">Patient ID</th>
-                <th scope="col">Patient Name</th>
-                <th scope="col">Patient Sex</th>
-                <th scope="col">Series Number</th>
-                <th scope="col">Series Description</th>
+            <table class="table table-light table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th scope="col">Patient ID</th>
+                        <th scope="col">Patient Name</th>
+                        <th scope="col">Patient Sex</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {% for response in dicom_response %}
                     <tr>
-                        <td>{{ response["PatientID"] }}</td>
+                        <td>
+                            <button
+                                    class="btn btn-outline-dark"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#collapse{{ response["PatientID"] }}"
+                                    type="button"
+                                    aria-expanded="false"
+                                    aria-controls="collapse{{ response["PatientID"] }}">
+                                {{ response["PatientID"] }}
+                            </a>
+                        </td>
                         <td>{{ response["PatientName"] }}</td>
                         <td>{{ response["PatientSex"] }}</td>
-                        <td>{{ response["SeriesNumber"] }}</td>
-                        <td>{{ response["SeriesDescription"] }}</td>
                     </tr>
+                    <tr class="collapse" id="collapse{{ response["PatientID"] }}">
+                        <td colspan="3">
+                            <table class="table table-light">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Series Number</th>
+                                        <th scope="col">Series Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for series in response["series"] %}
+                                        <tr>
+                                            <td>{{ series["SeriesNumber"] }}</td>
+                                            <td>{{ series["SeriesDescription"] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </tbody>
                 {% endfor %}
             </table>
         </div>

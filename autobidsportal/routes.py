@@ -774,19 +774,45 @@ def dicom_verify(study_id, method):
             ),
             retrieve_level="SERIES",
         )
+        responses = [
+            {
+                attribute["tag_name"]: attribute["tag_value"]
+                for attribute in response
+            }
+            for response in dicom_response
+        ]
+        patient_info = {
+            (
+                response["PatientID"],
+                response["PatientName"],
+                response["PatientSex"],
+            )
+            for response in responses
+        }
+        responses = [
+            {
+                "PatientName": patient_name,
+                "PatientID": patient_id,
+                "PatientSex": patient_sex,
+                "series": sorted(
+                    [
+                        {
+                            "SeriesNumber": response["SeriesNumber"],
+                            "SeriesDescription": response["SeriesDescription"],
+                        }
+                        for response in responses
+                        if response["PatientName"] == patient_name
+                    ],
+                    key=lambda series_dict: f'{int(series_dict["SeriesNumber"]):03d}',
+                ),
+            }
+            for (patient_id, patient_name, patient_sex) in patient_info
+        ]
         sorted_responses = sorted(
-            [
-                {
-                    attribute["tag_name"]: attribute["tag_value"]
-                    for attribute in response
-                }
-                for response in dicom_response
-            ],
-            key=lambda attr_dict: (
-                f'{attr_dict["PatientName"]}'
-                f'{int(attr_dict["SeriesNumber"]):03d}'
-            ),
+            responses,
+            key=lambda attr_dict: f'{attr_dict["PatientName"]}',
         )
+
         return render_template(
             "dicom.html",
             title="Dicom Result",
