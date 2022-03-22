@@ -113,38 +113,40 @@
     <div class="row">
         <div class="col-6">
             <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
-            <table class="table table-light">
-                <tr>
-                    <th scope="col">Start Date and Time</th>
-                    <th scope="col">End Date and Time</th>
-                    <th scope="col">Completion Status</th>
-                </tr>
+            <div class="table-responsive" style="max-height: 400px;">
+                <table class="table table-light overflow-auto">
+                    <tr>
+                        <th scope="col">Start Date and Time</th>
+                        <th scope="col">End Date and Time</th>
+                        <th scope="col">Completion Status</th>
+                    </tr>
 
-                {% for t in cfmm2tar_tasks %}
-                <tr>
-                    <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                    <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
-                    <td>
-                        {% if t.complete == True %} 
-                            {% if t.success == True %} 
-                                Completed Successfully
+                    {% for t in cfmm2tar_tasks %}
+                    <tr>
+                        <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
+                        <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
+                        <td>
+                            {% if t.complete == True %}
+                                {% if t.success == True %}
+                                    Completed Successfully
+                                {% else %}
+                                    Failed
+                                {% endif %}
                             {% else %} 
-                                Failed
+                                In Progress
                             {% endif %}
-                        {% else %} 
-                            In Progress
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
         <div class="col-6">
             <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
 
             <form method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                <div class="table-responsive">
-                    <table class="table table-light">
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-light overflow-auto">
                         <tr>
                             <th scope="col">Include in tar2bids</th>
                             <th scope="col">Tar File</th>
@@ -168,8 +170,8 @@
                         </tr>
                         {% endfor %}
                     </table>
-                    <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
                 </div>
+                <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
             </form>
         </div>
     </div>
