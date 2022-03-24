@@ -745,8 +745,6 @@ def dicom_verify(study_id, method):
         abort(404)
     study_info = f"{study.principal}^{study.project_name}"
     patient_str = study.patient_str
-    # 'PatientName', 'SeriesDescription', 'SeriesNumber','RepetitionTime',
-    # 'EchoTime','ProtocolName','PatientID','SequenceName','PatientSex'
     if method.lower() == "both":
         description = study_info
         date = study.sample.date()
@@ -761,11 +759,13 @@ def dicom_verify(study_id, method):
     try:
         dicom_response = gen_utils().query_single_study(
             [
-                "00100010",
-                "0008103E",
-                "00200011",
-                "00100020",
-                "00100040",
+                "0020000D",  # StudyInstanceUID
+                "00100010",  # PatientName
+                "0008103E",  # SeriesDescription
+                "00200011",  # SeriesNumber
+                "00200010",  # StudyID
+                "00100020",  # PatientID
+                "00100040",  # PatientSex
             ],
             DicomQueryAttributes(
                 study_description=description,
@@ -786,6 +786,8 @@ def dicom_verify(study_id, method):
                 response["PatientID"],
                 response["PatientName"],
                 response["PatientSex"],
+                response["StudyID"],
+                response["StudyInstanceUID"],
             )
             for response in responses
         }
@@ -794,6 +796,8 @@ def dicom_verify(study_id, method):
                 "PatientName": patient_name,
                 "PatientID": patient_id,
                 "PatientSex": patient_sex,
+                "StudyID": study_id,
+                "StudyInstanceUID": study_uid,
                 "series": sorted(
                     [
                         {
@@ -801,12 +805,18 @@ def dicom_verify(study_id, method):
                             "SeriesDescription": response["SeriesDescription"],
                         }
                         for response in responses
-                        if response["PatientName"] == patient_name
+                        if response["StudyInstanceUID"] == study_uid
                     ],
                     key=lambda series_dict: f'{int(series_dict["SeriesNumber"]):03d}',
                 ),
             }
-            for (patient_id, patient_name, patient_sex) in patient_info
+            for (
+                patient_id,
+                patient_name,
+                patient_sex,
+                study_id,
+                study_uid,
+            ) in patient_info
         ]
         sorted_responses = sorted(
             responses,

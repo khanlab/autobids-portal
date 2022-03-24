@@ -12,6 +12,7 @@
                         <th scope="col">Patient Name</th>
                         <th scope="col">Patient ID</th>
                         <th scope="col">Patient Sex</th>
+                        <th scope="col">Study ID</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -21,18 +22,19 @@
                             <button
                                     class="btn btn-outline-dark"
                                     data-bs-toggle="collapse"
-                                    data-bs-target="#collapse{{ response["PatientName"]|replace("+", "plus")|replace(".", "dot")|replace("#", "pound")|replace(" ", "space") }}"
+                                    data-bs-target="#collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}"
                                     type="button"
                                     aria-expanded="false"
-                                    aria-controls="collapse{{ response["PatientName"]|replace("+", "plus")|replace(".", "dot")|replace("#", "pound")|replace(" ", "space") }}">
+                                    aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
                                 {{ response["PatientName"] }}
                             </a>
                         </td>
                         <td>{{ response["PatientID"] }}</td>
                         <td>{{ response["PatientSex"] }}</td>
+                        <td>{{ response["StudyID"] }}</td>
                     </tr>
-                    <tr class="collapse" id="collapse{{ response["PatientName"]|replace("+", "plus")|replace(".", "dot")|replace("#", "pound")|replace(" ", "space") }}">
-                        <td colspan="3">
+                    <tr class="collapse" id="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
+                        <td colspan="4">
                             <table class="table table-light">
                                 <thead>
                                     <tr>
