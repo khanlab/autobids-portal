@@ -55,7 +55,7 @@ def _set_task_error(job_id, msg):
     task = Task.query.get(job_id)
     task.complete = True
     task.success = False
-    task.error = msg[:128]
+    task.error = msg[:128] if msg else ""
     task.end_time = datetime.utcnow()
     db.session.commit()
 
@@ -303,7 +303,10 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
         _set_task_progress(job.id, 100)
     except Tar2bidsError as err:
         app.logger.error("tar2bids failed: %s", err)
-        _set_task_error(job.id, err.__cause__.stderr)
+        _set_task_error(
+            job.id,
+            err.__cause__.stderr if err.__cause__ is not None else str(err),
+        )
     finally:
         if not Task.query.get(job.id).complete:
             app.logger.error(
