@@ -181,9 +181,19 @@ def get_info_from_cfmm2tar(study_id):
         studies_to_download = [
             patient_name
             for patient_name in patient_names
-            if not any(
-                patient_name in pathlib.Path(output.tar_file).name
-                for output in existing_outputs
+            if re.fullmatch(
+                (
+                    study.patient_name_re
+                    if study.patient_name_re is not None
+                    else ".*"
+                ),
+                patient_name,
+            )
+            and (
+                not any(
+                    patient_name in pathlib.Path(output.tar_file).name
+                    for output in existing_outputs
+                )
             )
         ]
         studies_to_download = [

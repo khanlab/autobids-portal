@@ -5,6 +5,7 @@ from json import JSONEncoder
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
 import shutil
+import re
 
 from flask import (
     current_app,
@@ -376,7 +377,7 @@ def study_demographics(study_id):
 @portal_blueprint.route(
     "/results/<int:study_id>/config", methods=["GET", "POST"]
 )
-@login_required
+@login_required  # pylint: disable=too-many-statements,too-many-branches
 def study_config(study_id):
     """Page to display and edit study config."""
     study = Study.query.get_or_404(study_id)
@@ -401,6 +402,7 @@ def study_config(study_id):
         study.heuristic = form.heuristic.data
         study.subj_expr = form.subj_expr.data
         study.patient_str = form.patient_str.data
+        study.patient_name_re = form.patient_re.data
         study.users_authorized = [
             User.query.get(id) for id in form.users_authorized.data
         ]
@@ -443,6 +445,10 @@ def study_config(study_id):
     else:
         form.subj_expr.default = study.subj_expr
     form.patient_str.default = study.patient_str
+    if study.patient_name_re is None:
+        form.patient_re.default = ".*"
+    else:
+        form.patient_re.default = study.patient_name_re
     form.users_authorized.choices = [
         (user.id, user.email) for user in User.query.all()
     ]
@@ -790,6 +796,14 @@ def dicom_verify(study_id, method):
                 response["StudyInstanceUID"],
             )
             for response in responses
+            if re.fullmatch(
+                (
+                    study.patient_name_re
+                    if study.patient_name_re is not None
+                    else ".*"
+                ),
+                response["PatientName"],
+            )
         }
         responses = [
             {

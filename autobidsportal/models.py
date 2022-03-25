@@ -202,6 +202,7 @@ class Study(db.Model):
         lazy="subquery",
         backref=db.backref("studies", lazy=True),
     )
+    patient_name_re = db.Column(db.Text())
 
     # Study outputs
     tasks = db.relationship("Task", backref="study", lazy=True)

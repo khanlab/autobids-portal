@@ -290,6 +290,9 @@ class StudyConfigForm(FlaskForm):
     heuristic = SelectField("Heuristic", choices=[])
     subj_expr = StringField("Tar2bids Patient Name Search String")
     patient_str = StringField("DICOM PatientName Identifier")
+    patient_re = StringField(
+        "Regular expression to match with returned PatientNames"
+    )
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
 
 
