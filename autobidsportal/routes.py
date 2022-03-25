@@ -5,7 +5,6 @@ from json import JSONEncoder
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
 import shutil
-import re
 
 from flask import (
     current_app,
@@ -30,11 +29,10 @@ from autobidsportal.models import (
     Task,
     Cfmm2tarOutput,
     Tar2bidsOutput,
+    ExplicitPatient,
 )
 from autobidsportal.dcm4cheutils import (
-    gen_utils,
     Dcm4cheError,
-    DicomQueryAttributes,
 )
 from autobidsportal.forms import (
     LoginForm,
@@ -44,9 +42,11 @@ from autobidsportal.forms import (
     RemoveAccessForm,
     StudyConfigForm,
     Tar2bidsRunForm,
+    ExcludeScansForm,
     DEFAULT_HEURISTICS,
 )
 from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.dicom import get_study_records
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -403,6 +403,33 @@ def study_config(study_id):
         study.subj_expr = form.subj_expr.data
         study.patient_str = form.patient_str.data
         study.patient_name_re = form.patient_re.data
+        for explicit_patient in study.explicit_patients:
+            if explicit_patient.included and (
+                explicit_patient.study_instance_uid
+                not in form.included_patients.data
+            ):
+                db.session.delete(explicit_patient)
+            elif (not explicit_patient.included) and (
+                explicit_patient.study_instance_uid
+                not in form.excluded_patients.data
+            ):
+                db.session.delete(explicit_patient)
+        if form.newly_excluded.data != "":
+            db.session.add(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=form.newly_excluded.data,
+                    included=False,
+                )
+            )
+        if form.newly_included.data != "":
+            db.session.add(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=form.newly_included.data,
+                    included=True,
+                )
+            )
         study.users_authorized = [
             User.query.get(id) for id in form.users_authorized.data
         ]
@@ -449,6 +476,28 @@ def study_config(study_id):
         form.patient_re.default = ".*"
     else:
         form.patient_re.default = study.patient_name_re
+    form.excluded_patients.choices = [
+        (patient.study_instance_uid, patient.study_instance_uid)
+        for patient in study.explicit_patients
+        if not patient.included
+    ]
+    form.excluded_patients.default = [
+        patient.study_instance_uid
+        for patient in study.explicit_patients
+        if not patient.included
+    ]
+    form.newly_excluded.default = ""
+    form.included_patients.choices = [
+        (patient.study_instance_uid, patient.study_instance_uid)
+        for patient in study.explicit_patients
+        if patient.included
+    ]
+    form.included_patients.default = [
+        patient.study_instance_uid
+        for patient in study.explicit_patients
+        if patient.included
+    ]
+    form.newly_included.default = ""
     form.users_authorized.choices = [
         (user.id, user.email) for user in User.query.all()
     ]
@@ -738,6 +787,27 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
+@portal_blueprint.route("results/<int:study_id>/exclusions", methods=["POST"])
+@login_required
+def update_exclusions(study_id):
+    """Updates the excluded UIDs for a study."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+
+    form = ExcludeScansForm()
+    for uid in form.choices_to_exclude.data:
+        excluded_uid = ExplicitPatient(
+            study_id=study.id, study_instance_uid=uid, included=False
+        )
+        db.session.add(excluded_uid)
+        db.session.commit()
+
+    return dicom_verify(study_id, "description")
+
+
 @portal_blueprint.route(
     "/results/<int:study_id>/dicom/<string:method>", methods=["GET"]
 )
@@ -750,7 +820,6 @@ def dicom_verify(study_id, method):
     ):
         abort(404)
     study_info = f"{study.principal}^{study.project_name}"
-    patient_str = study.patient_str
     if method.lower() == "both":
         description = study_info
         date = study.sample.date()
@@ -762,86 +831,10 @@ def dicom_verify(study_id, method):
         date = None
     else:
         abort(404)
-    try:
-        dicom_response = gen_utils().query_single_study(
-            [
-                "0020000D",  # StudyInstanceUID
-                "00100010",  # PatientName
-                "0008103E",  # SeriesDescription
-                "00200011",  # SeriesNumber
-                "00200010",  # StudyID
-                "00100020",  # PatientID
-                "00100040",  # PatientSex
-            ],
-            DicomQueryAttributes(
-                study_description=description,
-                study_date=date,
-                patient_name=patient_str,
-            ),
-            retrieve_level="SERIES",
-        )
-        responses = [
-            {
-                attribute["tag_name"]: attribute["tag_value"]
-                for attribute in response
-            }
-            for response in dicom_response
-        ]
-        patient_info = {
-            (
-                response["PatientID"],
-                response["PatientName"],
-                response["PatientSex"],
-                response["StudyID"],
-                response["StudyInstanceUID"],
-            )
-            for response in responses
-            if re.fullmatch(
-                (
-                    study.patient_name_re
-                    if study.patient_name_re is not None
-                    else ".*"
-                ),
-                response["PatientName"],
-            )
-        }
-        responses = [
-            {
-                "PatientName": patient_name,
-                "PatientID": patient_id,
-                "PatientSex": patient_sex,
-                "StudyID": study_id,
-                "StudyInstanceUID": study_uid,
-                "series": sorted(
-                    [
-                        {
-                            "SeriesNumber": response["SeriesNumber"],
-                            "SeriesDescription": response["SeriesDescription"],
-                        }
-                        for response in responses
-                        if response["StudyInstanceUID"] == study_uid
-                    ],
-                    key=lambda series_dict: f'{int(series_dict["SeriesNumber"]):03d}',
-                ),
-            }
-            for (
-                patient_id,
-                patient_name,
-                patient_sex,
-                study_id,
-                study_uid,
-            ) in patient_info
-        ]
-        sorted_responses = sorted(
-            responses,
-            key=lambda attr_dict: f'{attr_dict["PatientName"]}',
-        )
 
-        return render_template(
-            "dicom.html",
-            title="Dicom Result",
-            dicom_response=sorted_responses,
-            submitter_answer=study,
+    try:
+        responses = get_study_records(
+            study, date=date, description=description
         )
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
@@ -854,6 +847,24 @@ def dicom_verify(study_id, method):
             err_cause=err_cause,
             title="DICOM Result Not Found",
         )
+
+    sorted_responses = sorted(
+        responses,
+        key=lambda attr_dict: f'{attr_dict["PatientName"]}',
+    )
+    form = ExcludeScansForm()
+    form.choices_to_exclude.choices = [
+        (response["StudyInstanceUID"], "Exclude")
+        for response in sorted_responses
+    ]
+
+    return render_template(
+        "dicom.html",
+        title="Dicom Result",
+        dicom_response=sorted_responses,
+        submitter_answer=study,
+        form=form,
+    )
 
 
 @portal_blueprint.route("/logout", methods=["GET", "POST"])

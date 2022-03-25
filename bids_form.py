@@ -13,6 +13,7 @@ from autobidsportal.models import (
     Task,
     Cfmm2tarOutput,
     Tar2bidsOutput,
+    ExplicitPatient,
 )
 from autobidsportal.tasks import update_heuristics
 
@@ -32,6 +33,7 @@ def make_shell_context():
         "Task": Task,
         "Cfmm2tarOutput": Cfmm2tarOutput,
         "Tar2bidsOutput": Tar2bidsOutput,
+        "ExplicitPatient": ExplicitPatient,
     }
 
 

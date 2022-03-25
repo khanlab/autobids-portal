@@ -203,6 +203,7 @@ class Study(db.Model):
         backref=db.backref("studies", lazy=True),
     )
     patient_name_re = db.Column(db.Text())
+    explicit_patients = db.relationship("ExplicitPatient", backref="study")
 
     # Study outputs
     tasks = db.relationship("Task", backref="study", lazy=True)
@@ -340,3 +341,12 @@ class Principal(db.Model):
 
     def __repr__(self):
         return f"<Principal {self.principal_name}>"
+
+
+class ExplicitPatient(db.Model):
+    """A tar file to be explicitly included in or excluded from a study."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    study_instance_uid = db.Column(db.String(64))
+    included = db.Column(db.Boolean())
