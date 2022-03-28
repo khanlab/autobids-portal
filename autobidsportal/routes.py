@@ -376,7 +376,7 @@ def study_demographics(study_id):
 @portal_blueprint.route(
     "/results/<int:study_id>/config", methods=["GET", "POST"]
 )
-@login_required
+@login_required  # pylint: disable=too-many-statements,too-many-branches
 def study_config(study_id):
     """Page to display and edit study config."""
     study = Study.query.get_or_404(study_id)
@@ -390,6 +390,10 @@ def study_config(study_id):
         study.principal = form.pi_name.data
         study.project_name = form.project_name.data
         study.dataset_name = form.dataset_name.data
+        if form.example_date.data:
+            study.sample = form.example_date.data
+        else:
+            study.sample = None
         if form.retrospective_data.data:
             study.retrospective_data = True
             study.retrospective_start = form.retrospective_start.data
@@ -429,6 +433,8 @@ def study_config(study_id):
     form.project_name.default = study.project_name
     if study.dataset_name is not None:
         form.dataset_name.default = study.dataset_name
+    if study.sample is not None:
+        form.example_date.default = study.sample
     form.retrospective_data.default = study.retrospective_data
     if study.retrospective_data:
         form.retrospective_start.default = study.retrospective_start
@@ -746,9 +752,13 @@ def dicom_verify(study_id, method):
     study_info = f"{study.principal}^{study.project_name}"
     patient_str = study.patient_str
     if method.lower() == "both":
+        if study.sample is None:
+            abort(404)
         description = study_info
         date = study.sample.date()
     elif method.lower() == "date":
+        if study.sample is None:
+            abort(404)
         description = None
         date = study.sample.date()
     elif method.lower() == "description":
