@@ -376,9 +376,10 @@ def study_demographics(study_id):
 @portal_blueprint.route(
     "/results/<int:study_id>/config", methods=["GET", "POST"]
 )
-@login_required  # pylint: disable=too-many-statements,too-many-branches
+@login_required
 def study_config(study_id):
     """Page to display and edit study config."""
+    # pylint: disable=too-many-statements,too-many-branches
     study = Study.query.get_or_404(study_id)
     if (not current_user.admin) and (
         current_user not in study.users_authorized
