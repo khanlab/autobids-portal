@@ -72,9 +72,9 @@
                     </tr>
                     <tr>
                         <td>
-                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') }}" role="button">Query DICOM server</a>
+                            <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}" role="button">Query DICOM server: Date and Description</a>
                             <br>
-                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') }}", role="button">Query DICOM server: Date only</a>
+                            <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}", role="button">Query DICOM server: Date only</a>
                             <br>
                             <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
                         </td>
