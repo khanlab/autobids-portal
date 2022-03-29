@@ -8,9 +8,6 @@ function TableLauncher(props) {
   const [activeIds, setActiveIds] = useState([]);
 
   function changeActiveId(id, isActive) {
-    console.log("changeActiveId");
-    console.log(id);
-    console.log(isActive);
     setActiveIds((state, props) => {
       console.log(state);
       const newState = [...state];
@@ -19,7 +16,6 @@ function TableLauncher(props) {
       } else if (!state.includes(id) && isActive) {
         newState.push(id);
       }
-      console.log(newState);
       return newState;
     });
   }
