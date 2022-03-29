@@ -143,36 +143,7 @@
         </div>
         <div class="col-6">
             <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
-
-            <form method="POST" action="{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}">
-                <div class="table-responsive" style="max-height: 400px;">
-                    <table class="table table-light overflow-auto">
-                        <tr>
-                            <th scope="col">Include in tar2bids</th>
-                            <th scope="col">Tar File</th>
-                            <th scope="col">Date</th>
-                            <th scope="col">Delete</th>
-                        </tr>
-
-                        {% for choice, name, out in form_data %}
-                        <tr>
-                            <td>
-                                <div class="form-check">
-                                    {{ choice(class="form-check-input") }}
-                                    {{ choice.label(class="form-check-label") }}
-                                </div>
-                            </td>
-                            <td>{{ name }}</td>
-                            <td>{% if out.date != None %} {{ out.date.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ out.date }} {% endif %}</td>
-                            <td class="col-md-4">
-                                <a class="btn btn-danger" href="{{ url_for('portal_blueprint.delete_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}" role="button">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                <input type="submit" value="Run tar2bids with selected files" class="btn btn-primary">
-            </form>
+            <div id="tar-table-mount" />
         </div>
     </div>
 
@@ -220,6 +191,24 @@
 <script type="text/javascript">
     const reactElement = genAccordion({{ json_filetree|safe }});
     ReactDOM.render(reactElement, document.querySelector("#filetree-mount"));
+
+    const tarTable = React.createElement(
+      TableLauncher,
+      {
+        cfmm2tarUrl: "{{ url_for('portal_blueprint.run_tar2bids', study_id=submitter_answer.id) }}",
+        rowInfo: [
+          {% for choice, name, out in form_data %}
+            {
+              id: {{ out.id }},
+              fileName: "{{ name }}",
+              date: "{{ out.date }}",
+              deleteUrl: "{{ url_for('portal_blueprint.delete_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}",
+            },
+          {% endfor %}
+        ]
+      }
+    )
+    ReactDOM.render(tarTable, document.querySelector("#tar-table-mount"))
 </script>
 {% endblock %}
 

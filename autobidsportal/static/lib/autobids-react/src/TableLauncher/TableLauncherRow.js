@@ -13,8 +13,9 @@ function TableLauncherRow(props) {
             type="checkbox"
             value={id}
             id={id}
+            name="tar_files"
             checked={isActive}
-            onChange={updateActive}
+            onChange={() => updateActive(id, !isActive)}
           />
           <label className="form-check-label" htmlFor={id}>
             Yes
