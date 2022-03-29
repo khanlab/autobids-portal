@@ -9,7 +9,6 @@ function TableLauncher(props) {
 
   function changeActiveId(id, isActive) {
     setActiveIds((state, props) => {
-      console.log(state);
       const newState = [...state];
       if (state.includes(id) && !isActive) {
         newState.splice(state.indexOf(id), 1);
