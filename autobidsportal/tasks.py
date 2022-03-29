@@ -21,7 +21,6 @@ from autobidsportal.models import (
 )
 from autobidsportal.dcm4cheutils import (
     gen_utils,
-    DicomQueryAttributes,
     Tar2bidsArgs,
     Cfmm2tarError,
     Cfmm2tarTimeoutError,
@@ -129,7 +128,7 @@ def record_cfmm2tar(tar_path, uid_path, study_id):
     cfmm2tar = Cfmm2tarOutput(
         study_id=study_id,
         tar_file=tar_path,
-        uid=uid,
+        uid=uid.strip(),
         date=datetime(
             int(date_match[0:4]),
             int(date_match[4:6]),
@@ -170,7 +169,7 @@ def get_info_from_cfmm2tar(study_id):
                 study, description=study_description
             )
             if record["StudyInstanceUID"]
-            not in {output.uid for output in existing_outputs}
+            not in {output.uid.strip() for output in existing_outputs}
         ]
         app.logger.info(
             "Running cfmm2tar for studies %s in study %i",
