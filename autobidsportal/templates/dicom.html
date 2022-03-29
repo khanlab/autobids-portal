@@ -29,7 +29,7 @@
                                         aria-expanded="false"
                                         aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
                                     {{ response["PatientName"] }}
-                                </a>
+                                </button>
                             </td>
                             <td>{{ response["PatientID"] }}</td>
                             <td>{{ response["PatientSex"] }}</td>
@@ -65,8 +65,8 @@
                                 </table>
                             </td>
                         </tr>
-                    </tbody>
                     {% endfor %}
+                    </tbody>
                 </table>
                 <input type="submit" name="update-exclusions" value="Update exclusions" class="btn btn-primary"></input>
                 <a href={{url_for('portal_blueprint.answer_info', study_id=submitter_answer.id)}} class="btn btn-link" role="button">Back to study</a>
