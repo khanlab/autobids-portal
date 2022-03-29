@@ -180,7 +180,7 @@ class Study(db.Model):
     principal = db.Column(db.String(20), nullable=False)
     project_name = db.Column(db.String(20), nullable=False)
     dataset_name = db.Column(db.String(20), nullable=False)
-    sample = db.Column(db.DateTime, nullable=False)
+    sample = db.Column(db.DateTime, nullable=True)
     retrospective_data = db.Column(db.Boolean, nullable=False)
     retrospective_start = db.Column(db.DateTime, nullable=True)
     retrospective_end = db.Column(db.DateTime, nullable=True)

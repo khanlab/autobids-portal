@@ -19,6 +19,10 @@
                         <li class="list-group-item">{{form.dataset_name.label(class="form-label")}}
                         {{form.dataset_name(class="form-control")}}</li>
                         <li class="list-group-item">
+                            {{ form.example_date.label(class="form-label") }}
+                            {{ form.example_date(class="form-control") }}
+                        </li>
+                        <li class="list-group-item">
                             <div class="form-check">
                             {{form.retrospective_data(class="form-check-input")}}
                             {{form.retrospective_data.label(class="form-check-label")}}

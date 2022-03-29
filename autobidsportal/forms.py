@@ -284,6 +284,7 @@ class StudyConfigForm(FlaskForm):
     pi_name = SelectField("PI", choices=[])
     project_name = StringField("Project Name")
     dataset_name = StringField("Dataset Name")
+    example_date = DateField("Example Date")
     retrospective_data = BooleanField("Retrospective?")
     retrospective_start = DateField("Start Date")
     retrospective_end = DateField("End Date")
