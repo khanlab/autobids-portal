@@ -1,7 +1,7 @@
 """All routes in the portal are defined here."""
 
 from datetime import datetime
-from json import JSONEncoder
+from json import JSONEncoder, loads, dumps
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
 import shutil
@@ -29,11 +29,10 @@ from autobidsportal.models import (
     Task,
     Cfmm2tarOutput,
     Tar2bidsOutput,
+    ExplicitPatient,
 )
 from autobidsportal.dcm4cheutils import (
-    gen_utils,
     Dcm4cheError,
-    DicomQueryAttributes,
 )
 from autobidsportal.forms import (
     LoginForm,
@@ -43,9 +42,12 @@ from autobidsportal.forms import (
     RemoveAccessForm,
     StudyConfigForm,
     Tar2bidsRunForm,
+    ExcludeScansForm,
+    IncludeScansForm,
     DEFAULT_HEURISTICS,
 )
 from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.dicom import get_study_records
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -376,7 +378,7 @@ def study_demographics(study_id):
 @portal_blueprint.route(
     "/results/<int:study_id>/config", methods=["GET", "POST"]
 )
-@login_required
+@login_required  # pylint: disable=too-many-statements,too-many-branches
 def study_config(study_id):
     """Page to display and edit study config."""
     # pylint: disable=too-many-statements,too-many-branches
@@ -406,6 +408,34 @@ def study_config(study_id):
         study.heuristic = form.heuristic.data
         study.subj_expr = form.subj_expr.data
         study.patient_str = form.patient_str.data
+        study.patient_name_re = form.patient_re.data
+        for explicit_patient in study.explicit_patients:
+            if explicit_patient.included and (
+                explicit_patient.study_instance_uid
+                not in form.included_patients.data
+            ):
+                db.session.delete(explicit_patient)
+            elif (not explicit_patient.included) and (
+                explicit_patient.study_instance_uid
+                not in form.excluded_patients.data
+            ):
+                db.session.delete(explicit_patient)
+        if form.newly_excluded.data != "":
+            db.session.add(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=form.newly_excluded.data,
+                    included=False,
+                )
+            )
+        if form.newly_included.data != "":
+            db.session.add(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=form.newly_included.data,
+                    included=True,
+                )
+            )
         study.users_authorized = [
             User.query.get(id) for id in form.users_authorized.data
         ]
@@ -450,6 +480,44 @@ def study_config(study_id):
     else:
         form.subj_expr.default = study.subj_expr
     form.patient_str.default = study.patient_str
+    if study.patient_name_re is None:
+        form.patient_re.default = ".*"
+    else:
+        form.patient_re.default = study.patient_name_re
+    form.excluded_patients.choices = [
+        (
+            patient.study_instance_uid,
+            (
+                f"Patient Name: {patient.patient_name}, "
+                f"Study ID: {patient.dicom_study_id}"
+            ),
+        )
+        for patient in study.explicit_patients
+        if not patient.included
+    ]
+    form.excluded_patients.default = [
+        patient.study_instance_uid
+        for patient in study.explicit_patients
+        if not patient.included
+    ]
+    form.newly_excluded.default = ""
+    form.included_patients.choices = [
+        (
+            patient.study_instance_uid,
+            (
+                f"Patient Name: {patient.patient_name}, "
+                f"Study ID: {patient.dicom_study_id}"
+            ),
+        )
+        for patient in study.explicit_patients
+        if patient.included
+    ]
+    form.included_patients.default = [
+        patient.study_instance_uid
+        for patient in study.explicit_patients
+        if patient.included
+    ]
+    form.newly_included.default = ""
     form.users_authorized.choices = [
         (user.id, user.email) for user in User.query.all()
     ]
@@ -739,6 +807,55 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
+@portal_blueprint.route("results/<int:study_id>/exclusions", methods=["POST"])
+@login_required
+def update_exclusions(study_id):
+    """Updates the excluded UIDs for a study."""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+
+    form_exclude = ExcludeScansForm()
+    for val_json in form_exclude.choices_to_exclude.data:
+        val = loads(loads(val_json))
+        old_uid = ExplicitPatient.query.filter_by(
+            study_instance_uid=val["StudyInstanceUID"]
+        ).one_or_none()
+        if old_uid is not None:
+            db.session.delete(old_uid)
+
+        excluded_uid = ExplicitPatient(
+            study_id=study.id,
+            study_instance_uid=val["StudyInstanceUID"],
+            patient_name=val["PatientName"],
+            dicom_study_id=val["StudyID"],
+            included=False,
+        )
+        db.session.add(excluded_uid)
+        db.session.commit()
+    form_include = IncludeScansForm()
+    for val_json in form_include.choices_to_include.data:
+        val = loads(loads(val_json))
+        old_uid = ExplicitPatient.query.filter_by(
+            study_instance_uid=val["StudyInstanceUID"]
+        ).one_or_none()
+        if old_uid is not None:
+            break
+        included_uid = ExplicitPatient(
+            study_id=study.id,
+            study_instance_uid=val["StudyInstanceUID"],
+            patient_name=val["PatientName"],
+            dicom_study_id=val["StudyID"],
+            included=True,
+        )
+        db.session.add(included_uid)
+        db.session.commit()
+
+    return dicom_verify(study_id, "description")
+
+
 @portal_blueprint.route(
     "/results/<int:study_id>/dicom/<string:method>", methods=["GET"]
 )
@@ -751,7 +868,6 @@ def dicom_verify(study_id, method):
     ):
         abort(404)
     study_info = f"{study.principal}^{study.project_name}"
-    patient_str = study.patient_str
     if method.lower() == "both":
         if study.sample is None:
             abort(404)
@@ -767,78 +883,10 @@ def dicom_verify(study_id, method):
         date = None
     else:
         abort(404)
-    try:
-        dicom_response = gen_utils().query_single_study(
-            [
-                "0020000D",  # StudyInstanceUID
-                "00100010",  # PatientName
-                "0008103E",  # SeriesDescription
-                "00200011",  # SeriesNumber
-                "00200010",  # StudyID
-                "00100020",  # PatientID
-                "00100040",  # PatientSex
-            ],
-            DicomQueryAttributes(
-                study_description=description,
-                study_date=date,
-                patient_name=patient_str,
-            ),
-            retrieve_level="SERIES",
-        )
-        responses = [
-            {
-                attribute["tag_name"]: attribute["tag_value"]
-                for attribute in response
-            }
-            for response in dicom_response
-        ]
-        patient_info = {
-            (
-                response["PatientID"],
-                response["PatientName"],
-                response["PatientSex"],
-                response["StudyID"],
-                response["StudyInstanceUID"],
-            )
-            for response in responses
-        }
-        responses = [
-            {
-                "PatientName": patient_name,
-                "PatientID": patient_id,
-                "PatientSex": patient_sex,
-                "StudyID": study_id,
-                "StudyInstanceUID": study_uid,
-                "series": sorted(
-                    [
-                        {
-                            "SeriesNumber": response["SeriesNumber"],
-                            "SeriesDescription": response["SeriesDescription"],
-                        }
-                        for response in responses
-                        if response["StudyInstanceUID"] == study_uid
-                    ],
-                    key=lambda series_dict: f'{int(series_dict["SeriesNumber"]):03d}',
-                ),
-            }
-            for (
-                patient_id,
-                patient_name,
-                patient_sex,
-                study_id,
-                study_uid,
-            ) in patient_info
-        ]
-        sorted_responses = sorted(
-            responses,
-            key=lambda attr_dict: f'{attr_dict["PatientName"]}',
-        )
 
-        return render_template(
-            "dicom.html",
-            title="Dicom Result",
-            dicom_response=sorted_responses,
-            submitter_answer=study,
+    try:
+        responses = get_study_records(
+            study, date=date, description=description
         )
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr
@@ -851,6 +899,48 @@ def dicom_verify(study_id, method):
             err_cause=err_cause,
             title="DICOM Result Not Found",
         )
+
+    sorted_responses = sorted(
+        responses,
+        key=lambda attr_dict: f'{attr_dict["PatientName"]}',
+    )
+    form_exclude = ExcludeScansForm()
+    form_exclude.choices_to_exclude.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                    "StudyID": response["StudyID"],
+                }
+            ),
+            "Exclude",
+        )
+        for response in sorted_responses
+    ]
+    form_include = IncludeScansForm()
+    form_include.choices_to_include.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                    "StudyID": response["StudyID"],
+                }
+            ),
+            "Include",
+        )
+        for response in responses
+    ]
+
+    return render_template(
+        "dicom.html",
+        title="Dicom Result",
+        dicom_response=sorted_responses,
+        submitter_answer=study,
+        form_exclude=form_exclude,
+        form_include=form_include,
+    )
 
 
 @portal_blueprint.route("/logout", methods=["GET", "POST"])

@@ -37,6 +37,8 @@
                         {{form.subj_expr(class="form-control")}}</li>
                         <li class="list-group-item">{{form.patient_str.label(class="form-label")}}
                         {{form.patient_str(class="form-control")}}</li>
+                        <li class="list-group-item">{{form.patient_re.label(class="form-label")}}
+                        {{form.patient_re(class="form-control")}}</li>
                         <li class="list-group-item">{{form.users_authorized.label(class="form-label")}}
                         {% for choice in form.users_authorized %}
                             <div class="form-check">
@@ -44,6 +46,30 @@
                                 {{choice.label(class="form-check-label")}}
                             </div>
                         {% endfor %}</li>
+                        <li class="list-group-item">
+                            {{ form.excluded_patients.label(class="form-label") }}
+                            {% for choice in form.excluded_patients %}
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                            <br>
+                            {{ form.newly_excluded.label(class="form-label") }}
+                            {{ form.newly_excluded(class="form-control") }}
+                        </li>
+                        <li class="list-group-item">
+                            {{ form.included_patients.label(class="form-label") }}
+                            {% for choice in form.included_patients %}
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                            {% endfor %}
+                            <br>
+                            {{ form.newly_included.label(class="form-label") }}
+                            {{ form.newly_included(class="form-control") }}
+                        </li>
                     </ul>
                     <div class="card-body">
                         <input type="submit" name="study-config" value="Update Config" class="btn btn-primary"></input>

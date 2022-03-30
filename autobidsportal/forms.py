@@ -1,5 +1,7 @@
 """Forms to be used in some views."""
 
+from json import dumps
+
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -291,6 +293,17 @@ class StudyConfigForm(FlaskForm):
     heuristic = SelectField("Heuristic", choices=[])
     subj_expr = StringField("Tar2bids Patient Name Search String")
     patient_str = StringField("DICOM PatientName Identifier")
+    patient_re = StringField(
+        "Regular expression to match with returned PatientNames"
+    )
+    excluded_patients = MultiCheckboxField(
+        "Excluded Patient StudyInstanceUIDs"
+    )
+    newly_excluded = StringField("New StudyInstanceUID to exclude")
+    included_patients = MultiCheckboxField(
+        "Included Patient StudyInstanceUIDs"
+    )
+    newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
 
 
@@ -310,3 +323,15 @@ class RemoveAccessForm(FlaskForm):
     """A field to pick studies for which to remove access."""
 
     choices_to_remove = MultiCheckboxField("Remove access", coerce=int)
+
+
+class ExcludeScansForm(FlaskForm):
+    """A form for picking specific scans to exclude from a study."""
+
+    choices_to_exclude = MultiCheckboxField("Exclude from study", coerce=dumps)
+
+
+class IncludeScansForm(FlaskForm):
+    """A form for picking specific scans to include from a study."""
+
+    choices_to_include = MultiCheckboxField("Include in study", coerce=dumps)

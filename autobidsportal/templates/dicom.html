@@ -6,56 +6,82 @@
 <div class="container">
     <div class="row my-3">
         <div class="col">
-            <table class="table table-light table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th scope="col">Patient Name</th>
-                        <th scope="col">Patient ID</th>
-                        <th scope="col">Patient Sex</th>
-                        <th scope="col">Study ID</th>
-                    </tr>
-                </thead>
-                <tbody>
-                {% for response in dicom_response %}
-                    <tr>
-                        <td>
-                            <button
-                                    class="btn btn-outline-dark"
-                                    data-bs-toggle="collapse"
-                                    data-bs-target="#collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}"
-                                    type="button"
-                                    aria-expanded="false"
-                                    aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
-                                {{ response["PatientName"] }}
-                            </a>
-                        </td>
-                        <td>{{ response["PatientID"] }}</td>
-                        <td>{{ response["PatientSex"] }}</td>
-                        <td>{{ response["StudyID"] }}</td>
-                    </tr>
-                    <tr class="collapse" id="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
-                        <td colspan="4">
-                            <table class="table table-light">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">Series Number</th>
-                                        <th scope="col">Series Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for series in response["series"] %}
+            <form action={{ url_for("portal_blueprint.update_exclusions", study_id=submitter_answer.id) }} method="post">
+                <table class="table table-light table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Patient Name</th>
+                            <th scope="col">Patient ID</th>
+                            <th scope="col">Patient Sex</th>
+                            <th scope="col">Study ID</th>
+                            <th scope="col">Exclude from study?</th>
+                            <th scope="col">Include in study, ignoring filters?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for response in dicom_response %}
+                        <tr>
+                            <td>
+                                <button
+                                        class="btn btn-outline-dark"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}"
+                                        type="button"
+                                        aria-expanded="false"
+                                        aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
+                                    {{ response["PatientName"] }}
+                                </button>
+                            </td>
+                            <td>{{ response["PatientID"] }}</td>
+                            <td>{{ response["PatientSex"] }}</td>
+                            <td>{{ response["StudyID"] }}</td>
+                            <td>
+                                {% for choice in form_exclude.choices_to_exclude %}
+                                {% if response["StudyInstanceUID"] in choice._value() %}
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for choice in form_include.choices_to_include %}
+                                {% if response["StudyInstanceUID"] in choice._value() %}
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        <tr class="collapse" id="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
+                            <td colspan="6">
+                                <table class="table table-light">
+                                    <thead>
                                         <tr>
-                                            <td>{{ series["SeriesNumber"] }}</td>
-                                            <td>{{ series["SeriesDescription"] }}</td>
+                                            <th scope="col">Series Number</th>
+                                            <th scope="col">Series Description</th>
                                         </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </tbody>
-                {% endfor %}
-            </table>
+                                    </thead>
+                                    <tbody>
+                                        {% for series in response["series"] %}
+                                            <tr>
+                                                <td>{{ series["SeriesNumber"] }}</td>
+                                                <td>{{ series["SeriesDescription"] }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                <input type="submit" name="update-exclusions" value="Update exclusions and inclusions" class="btn btn-primary"></input>
+                <a href={{url_for('portal_blueprint.answer_info', study_id=submitter_answer.id)}} class="btn btn-link" role="button">Back to study</a>
+            </form>
         </div>
     </div>
 </div>

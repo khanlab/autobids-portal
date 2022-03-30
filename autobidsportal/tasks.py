@@ -21,12 +21,12 @@ from autobidsportal.models import (
 )
 from autobidsportal.dcm4cheutils import (
     gen_utils,
-    DicomQueryAttributes,
     Tar2bidsArgs,
     Cfmm2tarError,
     Cfmm2tarTimeoutError,
     Tar2bidsError,
 )
+from autobidsportal.dicom import get_study_records
 
 
 app = create_app()
@@ -128,7 +128,7 @@ def record_cfmm2tar(tar_path, uid_path, study_id):
     cfmm2tar = Cfmm2tarOutput(
         study_id=study_id,
         tar_file=tar_path,
-        uid=uid,
+        uid=uid.strip(),
         date=datetime(
             int(date_match[0:4]),
             int(date_match[4:6]),
@@ -163,40 +163,17 @@ def get_info_from_cfmm2tar(study_id):
     existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
 
     try:
-        dicom_studies = gen_utils().query_single_study(
-            ["PatientName"],
-            DicomQueryAttributes(
-                study_description=study_description,
-                patient_name=study.patient_str,
-            ),
-        )
-        patient_names = [
-            [
-                attribute
-                for attribute in study
-                if attribute["tag_name"] == "PatientName"
-            ][0]["tag_value"]
-            for study in dicom_studies
-        ]
         studies_to_download = [
-            patient_name
-            for patient_name in patient_names
-            if not any(
-                patient_name in pathlib.Path(output.tar_file).name
-                for output in existing_outputs
+            record
+            for record in get_study_records(
+                study, description=study_description
             )
-        ]
-        studies_to_download = [
-            study[0]["tag_value"]
-            for study in dicom_studies
-            if not any(
-                study[0]["tag_value"] in pathlib.Path(output.tar_file).name
-                for output in existing_outputs
-            )
+            if record["StudyInstanceUID"]
+            not in {output.uid.strip() for output in existing_outputs}
         ]
         app.logger.info(
             "Running cfmm2tar for studies %s in study %i",
-            studies_to_download,
+            [record["PatientName"] for record in studies_to_download],
             study_id,
         )
         error_msgs = []
@@ -205,7 +182,7 @@ def get_info_from_cfmm2tar(study_id):
                 dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
             ) as download_dir:
                 result = run_cfmm2tar_with_retries(
-                    download_dir, target, study_description
+                    download_dir, target["PatientName"], study_description
                 )
                 app.logger.info(
                     "Successfully ran cfmm2tar for target %s.", target

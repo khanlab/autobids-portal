@@ -73,6 +73,7 @@ class DicomQueryAttributes:
     study_description: str = None
     study_date: date = None
     patient_name: str = None
+    study_instance_uids: Sequence[str] = None
 
     def __post_init__(self):
         if all(
@@ -80,6 +81,7 @@ class DicomQueryAttributes:
                 self.study_description is None,
                 self.study_date is None,
                 self.patient_name is None,
+                self.study_instance_uids in [None, []],
             ]
         ):
             raise Dcm4cheError(
@@ -267,7 +269,12 @@ class Dcm4cheUtils:
             )
         if attributes.patient_name is not None:
             cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
-        cmd = f'{cmd} -m StudyInstanceUID="*"'
+        if attributes.study_instance_uids not in [None, []]:
+            cmd = '{} -m StudyInstanceUID="{}"'.format(
+                cmd, "\\\\".join(attributes.study_instance_uids)
+            )
+        else:
+            cmd = f'{cmd} -m StudyInstanceUID="*"'
 
         cmd = " ".join([cmd] + [f"-r {field}" for field in output_fields])
         cmd = f"{cmd} -L {retrieve_level}"
