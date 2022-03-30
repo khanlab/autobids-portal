@@ -348,5 +348,7 @@ class ExplicitPatient(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
-    study_instance_uid = db.Column(db.String(64))
+    study_instance_uid = db.Column(db.String(64), unique=True)
+    patient_name = db.Column(db.String(194))
+    dicom_study_id = db.Column(db.String(16))
     included = db.Column(db.Boolean())

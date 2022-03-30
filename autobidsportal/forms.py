@@ -1,5 +1,7 @@
 """Forms to be used in some views."""
 
+from json import dumps
+
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -326,4 +328,10 @@ class RemoveAccessForm(FlaskForm):
 class ExcludeScansForm(FlaskForm):
     """A form for picking specific scans to exclude from a study."""
 
-    choices_to_exclude = MultiCheckboxField("Exclude from study")
+    choices_to_exclude = MultiCheckboxField("Exclude from study", coerce=dumps)
+
+
+class IncludeScansForm(FlaskForm):
+    """A form for picking specific scans to include from a study."""
+
+    choices_to_include = MultiCheckboxField("Include in study", coerce=dumps)

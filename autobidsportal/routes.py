@@ -1,7 +1,7 @@
 """All routes in the portal are defined here."""
 
 from datetime import datetime
-from json import JSONEncoder
+from json import JSONEncoder, loads, dumps
 from pathlib import Path
 from smtplib import SMTPAuthenticationError
 import shutil
@@ -43,6 +43,7 @@ from autobidsportal.forms import (
     StudyConfigForm,
     Tar2bidsRunForm,
     ExcludeScansForm,
+    IncludeScansForm,
     DEFAULT_HEURISTICS,
 )
 from autobidsportal.filesystem import gen_dir_dict
@@ -484,7 +485,13 @@ def study_config(study_id):
     else:
         form.patient_re.default = study.patient_name_re
     form.excluded_patients.choices = [
-        (patient.study_instance_uid, patient.study_instance_uid)
+        (
+            patient.study_instance_uid,
+            (
+                f"Patient Name: {patient.patient_name}, "
+                f"Study ID: {patient.dicom_study_id}"
+            ),
+        )
         for patient in study.explicit_patients
         if not patient.included
     ]
@@ -495,7 +502,13 @@ def study_config(study_id):
     ]
     form.newly_excluded.default = ""
     form.included_patients.choices = [
-        (patient.study_instance_uid, patient.study_instance_uid)
+        (
+            patient.study_instance_uid,
+            (
+                f"Patient Name: {patient.patient_name}, "
+                f"Study ID: {patient.dicom_study_id}"
+            ),
+        )
         for patient in study.explicit_patients
         if patient.included
     ]
@@ -804,12 +817,40 @@ def update_exclusions(study_id):
     ):
         abort(404)
 
-    form = ExcludeScansForm()
-    for uid in form.choices_to_exclude.data:
+    form_exclude = ExcludeScansForm()
+    for val_json in form_exclude.choices_to_exclude.data:
+        val = loads(loads(val_json))
+        old_uid = ExplicitPatient.query.filter_by(
+            study_instance_uid=val["StudyInstanceUID"]
+        ).one_or_none()
+        if old_uid is not None:
+            db.session.delete(old_uid)
+
         excluded_uid = ExplicitPatient(
-            study_id=study.id, study_instance_uid=uid, included=False
+            study_id=study.id,
+            study_instance_uid=val["StudyInstanceUID"],
+            patient_name=val["PatientName"],
+            dicom_study_id=val["StudyID"],
+            included=False,
         )
         db.session.add(excluded_uid)
+        db.session.commit()
+    form_include = IncludeScansForm()
+    for val_json in form_include.choices_to_include.data:
+        val = loads(loads(val_json))
+        old_uid = ExplicitPatient.query.filter_by(
+            study_instance_uid=val["StudyInstanceUID"]
+        ).one_or_none()
+        if old_uid is not None:
+            break
+        included_uid = ExplicitPatient(
+            study_id=study.id,
+            study_instance_uid=val["StudyInstanceUID"],
+            patient_name=val["PatientName"],
+            dicom_study_id=val["StudyID"],
+            included=True,
+        )
+        db.session.add(included_uid)
         db.session.commit()
 
     return dicom_verify(study_id, "description")
@@ -863,10 +904,33 @@ def dicom_verify(study_id, method):
         responses,
         key=lambda attr_dict: f'{attr_dict["PatientName"]}',
     )
-    form = ExcludeScansForm()
-    form.choices_to_exclude.choices = [
-        (response["StudyInstanceUID"], "Exclude")
+    form_exclude = ExcludeScansForm()
+    form_exclude.choices_to_exclude.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                    "StudyID": response["StudyID"],
+                }
+            ),
+            "Exclude",
+        )
         for response in sorted_responses
+    ]
+    form_include = IncludeScansForm()
+    form_include.choices_to_include.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                    "StudyID": response["StudyID"],
+                }
+            ),
+            "Include",
+        )
+        for response in responses
     ]
 
     return render_template(
@@ -874,7 +938,8 @@ def dicom_verify(study_id, method):
         title="Dicom Result",
         dicom_response=sorted_responses,
         submitter_answer=study,
-        form=form,
+        form_exclude=form_exclude,
+        form_include=form_include,
     )
 
 
