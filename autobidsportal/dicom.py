@@ -76,12 +76,20 @@ def get_description_records(study, date=None, description=None):
         for explicit_patient in study.explicit_patients
         if not explicit_patient.included
     ]
+    if (date is None) and study.retrospective_data:
+        start = study.retrospective_start
+        end = study.retrospective_end
+    else:
+        start = None
+        end = None
     responses_description = rearrange_response(
         gen_utils().query_single_study(
             ATTRIBUTES_QUERIED,
             DicomQueryAttributes(
                 study_description=description,
                 study_date=date,
+                date_range_start=start,
+                date_range_end=end,
                 patient_name=study.patient_str,
             ),
             retrieve_level="SERIES",

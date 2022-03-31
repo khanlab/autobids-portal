@@ -286,6 +286,20 @@ class Dcm4cheUtils:
                 f"{cmd} "
                 f'-m StudyDate="{attributes.study_date.strftime("%Y%m%d")}"'
             )
+        elif (attributes.date_range_start is not None) or (
+            attributes.date_range_end is not None
+        ):
+            start = (
+                attributes.date_range_start.strftime("%Y%m%d")
+                if attributes.date_range_start is not None
+                else ""
+            )
+            end = (
+                attributes.date_range_end.strftime("%Y%m%d")
+                if attributes.date_range_end is not None
+                else ""
+            )
+            cmd = f'{cmd} -m StudyDate="{start}-{end}"'
         if attributes.patient_name is not None:
             cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
         if attributes.study_instance_uids not in [None, []]:
