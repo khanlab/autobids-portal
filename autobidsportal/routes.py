@@ -340,7 +340,11 @@ def answer_info(study_id):
         )
     )
 
-    bids_dict = gen_dir_dict(tar2bids_path) if tar2bids_path.exists() else {}
+    bids_dict = (
+        gen_dir_dict(tar2bids_path)
+        if tar2bids_path.exists()
+        else {"files": [], "dirs": []}
+    )
     json_filetree = JSONEncoder().encode(bids_dict)
 
     form = Tar2bidsRunForm()
