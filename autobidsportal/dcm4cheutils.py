@@ -68,12 +68,20 @@ class DicomQueryAttributes:
         queries the "StudyDate" tag.
     patient_name : str, optional
         Search string for the patient names to retrieve.
+    study_instance_uids : list of str
+        Specific StudyInstanceUIDs to match.
+    date_range_start : date, optional
+        The start, inclusive, of a range of dates to query.
+    date_range_end : date, optional
+        The end, inclusive, of a range of dates to query.
     """
 
     study_description: str = None
     study_date: date = None
     patient_name: str = None
     study_instance_uids: Sequence[str] = None
+    date_range_start: date = None
+    date_range_end: date = None
 
     def __post_init__(self):
         if all(
@@ -82,11 +90,22 @@ class DicomQueryAttributes:
                 self.study_date is None,
                 self.patient_name is None,
                 self.study_instance_uids in [None, []],
+                self.date_range_start is None,
+                self.date_range_end is None,
             ]
         ):
             raise Dcm4cheError(
                 "You must specify at least one of study_description, "
                 "study_date, or patient_name"
+            )
+        if (self.study_date is not None) and (
+            (self.date_range_start is not None)
+            or (self.date_range_end is not None)
+        ):
+            raise Dcm4cheError(
+                "You may not define both study_date and either of "
+                "date_range_start or date_range_end. Choose only one way to "
+                "filter StudyDate."
             )
 
 
@@ -267,6 +286,20 @@ class Dcm4cheUtils:
                 f"{cmd} "
                 f'-m StudyDate="{attributes.study_date.strftime("%Y%m%d")}"'
             )
+        elif (attributes.date_range_start is not None) or (
+            attributes.date_range_end is not None
+        ):
+            start = (
+                attributes.date_range_start.strftime("%Y%m%d")
+                if attributes.date_range_start is not None
+                else ""
+            )
+            end = (
+                attributes.date_range_end.strftime("%Y%m%d")
+                if attributes.date_range_end is not None
+                else ""
+            )
+            cmd = f'{cmd} -m StudyDate="{start}-{end}"'
         if attributes.patient_name is not None:
             cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
         if attributes.study_instance_uids not in [None, []]:

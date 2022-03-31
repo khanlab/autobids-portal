@@ -185,7 +185,8 @@ def get_info_from_cfmm2tar(study_id):
                     download_dir, target["PatientName"], study_description
                 )
                 app.logger.info(
-                    "Successfully ran cfmm2tar for target %s.", target
+                    "Successfully ran cfmm2tar for target %s.",
+                    target["PatientName"],
                 )
                 app.logger.info("Result: %s", result)
 
