@@ -6,7 +6,7 @@
 <div class="container">
     <div class="row my-3">
         <div class="col">
-            <form action={{ url_for("portal_blueprint.update_exclusions", study_id=submitter_answer.id) }} method="post">
+            <form action={{ url_for("portal_blueprint.process_dicom_form", study_id=submitter_answer.id) }} method="post">
                 <table class="table table-light table-hover align-middle">
                     <thead>
                         <tr>
@@ -16,6 +16,7 @@
                             <th scope="col">Study ID</th>
                             <th scope="col">Exclude from study?</th>
                             <th scope="col">Include in study, ignoring filters?</th>
+                            <th scope="col">Include in this cfmm2tar run?</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -55,9 +56,19 @@
                                 {% endif %}
                                 {% endfor %}
                             </td>
+                            <td>
+                                {% for choice in form_cfmm2tar.choices_to_run %}
+                                {% if response["StudyInstanceUID"] in choice._value() %}
+                                <div class="form-check">
+                                    {{ choice(class="form-check-input") }}
+                                    {{ choice.label(class="form-check-label") }}
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </td>
                         </tr>
                         <tr class="collapse" id="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
-                            <td colspan="6">
+                            <td colspan="7">
                                 <table class="table table-light">
                                     <thead>
                                         <tr>
@@ -80,6 +91,7 @@
                     </tbody>
                 </table>
                 <input type="submit" name="update-exclusions" value="Update exclusions and inclusions" class="btn btn-primary"></input>
+                <input type="submit" name="run-cfmm2tar" value="Run cfmm2tar on selected files" class="btn btn-secondary"></input>
                 <a href={{url_for('portal_blueprint.answer_info', study_id=submitter_answer.id)}} class="btn btn-link" role="button">Back to study</a>
             </form>
         </div>

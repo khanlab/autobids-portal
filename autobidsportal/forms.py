@@ -335,3 +335,11 @@ class IncludeScansForm(FlaskForm):
     """A form for picking specific scans to include from a study."""
 
     choices_to_include = MultiCheckboxField("Include in study", coerce=dumps)
+
+
+class ExplicitCfmm2tarForm(FlaskForm):
+    """A form for picking specific scans to include in a cfmm2tar run."""
+
+    choices_to_run = MultiCheckboxField(
+        "Include in cfmm2tar run", coerce=dumps
+    )

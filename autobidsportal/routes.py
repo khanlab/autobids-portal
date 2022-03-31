@@ -44,6 +44,7 @@ from autobidsportal.forms import (
     Tar2bidsRunForm,
     ExcludeScansForm,
     IncludeScansForm,
+    ExplicitCfmm2tarForm,
     DEFAULT_HEURISTICS,
 )
 from autobidsportal.filesystem import gen_dir_dict
@@ -554,14 +555,23 @@ def run_cfmm2tar(study_id):
         > 0
     ):
         flash("An Cfmm2tar run is currently in progress")
+        return answer_info(study_id)
+
+    form = ExplicitCfmm2tarForm()
+    if form.choices_to_run.data is not None:
+        explicit_scans = [
+            loads(loads(val_json)) for val_json in form.choices_to_run.data
+        ]
     else:
-        current_user.launch_task(
-            "get_info_from_cfmm2tar",
-            f"cfmm2tar for study {study_id}",
-            study_id,
-        )
-        current_app.logger.info("Launched cfmm2tar for study %i", study_id)
-        db.session.commit()
+        explicit_scans = None
+    current_user.launch_task(
+        "get_info_from_cfmm2tar",
+        f"cfmm2tar for study {study_id}",
+        study_id,
+        explicit_scans=explicit_scans,
+    )
+    current_app.logger.info("Launched cfmm2tar for study %i", study_id)
+    db.session.commit()
     if current_app.config["MAIL_ENABLED"]:
         subject = (
             f"A Cfmm2tar run for {study.prinicipal}^{study.project_name} "
@@ -811,6 +821,24 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
+@portal_blueprint.route(
+    "results/<int:study_id>/dicom/process", methods=["POST"]
+)
+@login_required
+def process_dicom_form(study_id):
+    """Pass off processing to run cfmm2tar or update exclusions"""
+    study = Study.query.get_or_404(study_id)
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
+    if "update-exclusions" in request.form:
+        return update_exclusions(study_id)
+    if "run-cfmm2tar" in request.form:
+        return run_cfmm2tar(study_id)
+    return abort(404)
+
+
 @portal_blueprint.route("results/<int:study_id>/exclusions", methods=["POST"])
 @login_required
 def update_exclusions(study_id):
@@ -936,6 +964,19 @@ def dicom_verify(study_id, method):
         )
         for response in responses
     ]
+    form_cfmm2tar = ExplicitCfmm2tarForm()
+    form_cfmm2tar.choices_to_run.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                }
+            ),
+            "Include in cfmm2tar",
+        )
+        for response in responses
+    ]
 
     return render_template(
         "dicom.html",
@@ -944,6 +985,7 @@ def dicom_verify(study_id, method):
         submitter_answer=study,
         form_exclude=form_exclude,
         form_include=form_include,
+        form_cfmm2tar=form_cfmm2tar,
     )
 
 
