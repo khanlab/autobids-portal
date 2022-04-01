@@ -129,6 +129,7 @@ def index():
             retrospective_end=retrospective_end,
             consent=form.consent.data,
             comment=form.comment.data,
+            tar2bids_img=current_app.config["TAR2BIDS_DEFAULT_IMAGE"],
         )
 
         db.session.add(answer)
@@ -410,6 +411,7 @@ def study_config(study_id):
             study.retrospective_start = None
             study.retrospective_end = None
         study.heuristic = form.heuristic.data
+        study.tar2bids_img = form.tar2bids_img.data
         study.subj_expr = form.subj_expr.data
         study.patient_str = form.patient_str.data
         study.patient_name_re = form.patient_re.data
@@ -460,6 +462,15 @@ def study_config(study_id):
         ],
         key=lambda option: option[1].lower(),
     )
+    available_tar2bids_imgs = sorted(
+        [
+            (path.name, path.name)
+            for path in Path(
+                current_app.config["TAR2BIDS_IMAGE_DIR"]
+            ).iterdir()
+        ],
+        key=lambda option: option[1].lower(),
+    )
 
     principal_names = [
         p.principal_name for p in db.session.query(Principal).all()
@@ -482,6 +493,8 @@ def study_config(study_id):
         form.heuristic.default = "cfmm_base.py"
     else:
         form.heuristic.default = study.heuristic
+    form.tar2bids_img.choices = available_tar2bids_imgs
+    form.tar2bids_img.default = study.tar2bids_img
     if study.subj_expr is None:
         form.subj_expr.default = "*_{subject}"
     else:
