@@ -448,13 +448,16 @@ def study_config(study_id):
 
     available_heuristics = sorted(
         [
-            (str(heuristic_path), heuristic_path.name)
+            (str(heuristic_path), f"{heuristic_path.name} (git)")
             for heuristic_path in (
                 Path(current_app.config["HEURISTIC_REPO_PATH"])
                 / current_app.config["HEURISTIC_DIR_PATH"]
             ).iterdir()
         ]
-        + [(heuristic, heuristic) for heuristic in DEFAULT_HEURISTICS],
+        + [
+            (heuristic, f"{heuristic} (container)")
+            for heuristic in DEFAULT_HEURISTICS
+        ],
         key=lambda option: option[1].lower(),
     )
 
