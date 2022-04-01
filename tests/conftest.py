@@ -36,6 +36,8 @@ class TestConfig:
 
     DCM4CHE_PREFIX = "singularity exec -B /tmp:/tmp /home/tk/Code/western_ossd/singularity_containers/khanlab_cfmm2tar_v0.0.3.sif"
     TAR2BIDS_PREFIX = ""
+    TAR2BIDS_DEFAULT_IMAGE = "tar2bids.sif"
+    TAR2BIDS_IMAGE_DIR = "/tmp"
 
     MAIL_ENABLED = False
 

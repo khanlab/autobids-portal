@@ -22,6 +22,8 @@ class Config(object):
     DCM4CHE_PREFIX = ""
     TAR2BIDS_PREFIX = ""
     TAR2BIDS_TEMP_DIR = "/tmp"
+    TAR2BIDS_IMAGE_DIR = "/etc/images"
+    TAR2BIDS_DEFAULT_IMAGE = "tar2bids.sif"
 
     # List of PIs accessible on the DICOM server that shouldn't be presented
     # as options in the study form.

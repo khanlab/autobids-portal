@@ -261,7 +261,9 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
             dir=app.config["TAR2BIDS_TEMP_DIR"]
         ) as temp_dir:
             app.logger.info("Running tar2bids for study %i", study.id)
-            tar2bids_results = gen_utils().run_tar2bids(
+            tar2bids_results = gen_utils(
+                tar2bids_img=study.tar2bids_img
+            ).run_tar2bids(
                 Tar2bidsArgs(
                     output_dir=data,
                     tar_files=tar_files,

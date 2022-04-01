@@ -449,8 +449,16 @@ class Dcm4cheUtils:
         return args.output_dir
 
 
-def gen_utils():
+def gen_utils(tar2bids_img=None):
     """Generate a Dcm4cheUtils with values from the current_app config."""
+    tar2bids_path = (
+        str(
+            pathlib.Path(current_app.config["TAR2BIDS_IMAGE_DIR"])
+            / tar2bids_img
+        )
+        if tar2bids_img is not None
+        else ""
+    )
     return Dcm4cheUtils(
         DicomConnectionDetails(
             connect=current_app.config["DICOM_SERVER_URL"],
@@ -461,7 +469,7 @@ def gen_utils():
             current_app.config["DICOM_SERVER_PASSWORD"],
         ),
         current_app.config["DCM4CHE_PREFIX"],
-        current_app.config["TAR2BIDS_PREFIX"],
+        " ".join([current_app.config["TAR2BIDS_PREFIX"], tar2bids_path]),
     )
 
 
