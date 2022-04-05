@@ -1,0 +1,6 @@
+venv*
+build
+app.db
+./config*
+__pycache__
+postgres-db

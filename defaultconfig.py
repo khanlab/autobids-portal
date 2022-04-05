@@ -10,7 +10,7 @@ class Config(object):
     ) or "sqlite:///" + os.path.join(basedir, "app.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    LOG_LEVEL = "WARNING"
+    LOG_LEVEL = "INFO"
 
     DICOM_SERVER_URL = "0.0.0.0:11112"
     DICOM_SERVER_USERNAME = "username"
@@ -28,7 +28,7 @@ class Config(object):
     DICOM_PI_BLACKLIST = []
 
     # Feature flag for email (No email if false)
-    MAIL_ENABLED = True
+    MAIL_ENABLED = False
 
     MAIL_SERVER = "smtp.gmail.com"
     MAIL_PORT = 465
