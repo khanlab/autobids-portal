@@ -27,7 +27,15 @@ def create_app(config_object=None, override_dict=None):
     """
     app = Flask(__name__)
     if config_object is None:
-        app.config.from_object(os.environ["AUTOBIDSPORTAL_CONFIG"])
+        app.config.from_prefixed_env(prefix="AUTOBIDS")
+        app.config["REDIS_URL"] = os.environ["REDIS_URL"]
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.environ[
+            "SQLALCHEMY_DATABASE_URI"
+        ]
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = os.environ[
+            "SQLALCHEMY_TRACK_MODIFICATIONS"
+        ]
+
     else:
         app.config.from_object(config_object)
     if override_dict is not None:
