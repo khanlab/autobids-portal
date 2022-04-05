@@ -1,0 +1,35 @@
+services:
+  autobidsportal:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:example@postgres:5432
+      AUTOBIDSPORTAL_CONFIG: defaultconfig.Config
+      FLASK_APP: bids_form.py
+      REDIS_URL: "redis://redis:6379"
+    ports: ["5000:5000"]
+    depends_on:
+      - postgres
+      - redis
+      - rq
+  rq:
+    build: .
+    command: rq worker
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:example@postgres:5432
+      AUTOBIDSPORTAL_CONFIG: defaultconfig.Config
+      FLASK_APP: bids_form.py
+      REDIS_URL: "redis://redis:6379"
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure
+  redis:
+    image: redis:5.0.14
+  postgres:
+    image: postgres:11
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - "./postgres-db:/var/lib/postgresql/data"
+    ports: ["5432:5432"]
