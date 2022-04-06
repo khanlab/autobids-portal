@@ -3,17 +3,26 @@ services:
     build: .
     environment: &idautobidsenv
       SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:example@postgres:5432
-      SQLALCHEMY_TRACK_MODIFICATIONS: "False"
+      SQLALCHEMY_TRACK_MODIFICATIONS: ""
       REDIS_URL: "redis://redis:6379"
       FLASK_APP: bids_form.py
       AUTOBIDS_SECRET_KEY: secret
       AUTOBIDS_LOG_LEVEL: INFO
-      AUTOBIDS_CFMM2TAR_STORAGE_DIR: /home
+      AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /tar-files
+      AUTOBIDS_CFMM2TAR_STORAGE_DIR: /tar-files
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /home
       AUTOBIDS_HEURISTIC_REPO_PATH: /home
+      AUTOBIDS_DCM4CHE_PREFIX: ""
+      AUTOBIDS_TAR2BIDS_PREFIX: ""
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
-      AUTOBIDS_MAIL_ENABLED: "False"
+      AUTOBIDS_MAIL_ENABLED: ""
+      AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
+      AUTOBIDS_DICOM_SERVER_USERNAME: "user"
+      AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
+      AUTOBIDS_DICOM_SERVER_TLS: ""
     ports: ["5000:5000"]
+    volumes:
+      - "./compose/tar-files:/tar-files"
     depends_on:
       - postgres
       - redis
@@ -34,5 +43,14 @@ services:
     environment:
       POSTGRES_PASSWORD: example
     volumes:
-      - "./postgres-db:/var/lib/postgresql/data"
+      - "./compose/postgres-db:/var/lib/postgresql/data"
     ports: ["5432:5432"]
+  orthanc:
+    image: jodogne/orthanc:1.10.1
+    command: /run/secrets/
+    secrets:
+      - orthanc.json
+    ports: ["4242:4242", "8042:8042"]
+secrets:
+  orthanc.json:
+    file: compose/orthanc.json

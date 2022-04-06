@@ -14,6 +14,7 @@ RUN apt-get update \
         python3=3.9.2-3 \
         python3-pip=20.3.4-4+deb11u1 \
         python3-setuptools=52.0.0-4 \
+        python-is-python3=3.9.2-1 \
         unzip=6.0-26 \
         wget=1.21-1+deb11u1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \

@@ -1,0 +1,7 @@
+{
+  "DicomModalities": {
+    "autobids": ["DEFAULT", "172.20.0.6", 104]
+  },
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false
+}

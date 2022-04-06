@@ -371,6 +371,7 @@ class Dcm4cheUtils:
                 + date_query
                 + name_query
                 + project_query
+                + ["-s", current_app.config["DICOM_SERVER_URL"]]
                 + [out_dir]
             )
 
