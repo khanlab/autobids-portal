@@ -1,11 +1,18 @@
 services:
   autobidsportal:
     build: .
-    environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:example@postgres:5432
-      AUTOBIDSPORTAL_CONFIG: defaultconfig.Config
-      FLASK_APP: bids_form.py
+    environment: &idautobidsenv
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:example@postgres:5432
+      SQLALCHEMY_TRACK_MODIFICATIONS: "False"
       REDIS_URL: "redis://redis:6379"
+      FLASK_APP: bids_form.py
+      AUTOBIDS_SECRET_KEY: secret
+      AUTOBIDS_LOG_LEVEL: INFO
+      AUTOBIDS_CFMM2TAR_STORAGE_DIR: /home
+      AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /home
+      AUTOBIDS_HEURISTIC_REPO_PATH: /home
+      AUTOBIDS_HEURISTIC_DIR_PATH: /home
+      AUTOBIDS_MAIL_ENABLED: "False"
     ports: ["5000:5000"]
     depends_on:
       - postgres
@@ -14,11 +21,7 @@ services:
   rq:
     build: .
     command: rq worker
-    environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:example@postgres:5432
-      AUTOBIDSPORTAL_CONFIG: defaultconfig.Config
-      FLASK_APP: bids_form.py
-      REDIS_URL: "redis://redis:6379"
+    environment: *idautobidsenv
     depends_on:
       - postgres
       - redis
