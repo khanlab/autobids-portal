@@ -83,7 +83,8 @@ ENV LANG "en_US.UTF-8"
 WORKDIR /src
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && bash ./compose/add_orthanc_certs.sh
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
