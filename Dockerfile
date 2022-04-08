@@ -84,7 +84,15 @@ WORKDIR /src
 COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt \
-    && bash ./compose/add_orthanc_certs.sh
+    && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 -storepass secret -v \
+    && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks -storepass secret -v \
+    && keytool -noprompt -importcert -trustcacerts -alias mycert -file ./compose/dcm4che-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 -storepass secret -v \
+    && keytool -noprompt -importcert -trustcacerts -alias mycert -file ./compose/dcm4che-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks -storepass secret -v \
+    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.p12 \
+    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.jks \
+    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.p12 \
+    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.jks \
+    && cat ./compose/orthanc.crt >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"

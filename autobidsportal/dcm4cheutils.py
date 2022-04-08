@@ -306,7 +306,7 @@ class Dcm4cheUtils:
             cmd = '{} -m StudyInstanceUID="{}"'.format(
                 cmd, "\\\\".join(attributes.study_instance_uids)
             )
-        else:
+        elif current_app.config["DICOM_SERVER_STUDYINSTANCEUID_WILDCARD"]:
             cmd = f'{cmd} -m StudyInstanceUID="*"'
 
         cmd = " ".join([cmd] + [f"-r {field}" for field in output_fields])

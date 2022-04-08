@@ -20,6 +20,7 @@ services:
       AUTOBIDS_DICOM_SERVER_USERNAME: "user"
       AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
       AUTOBIDS_DICOM_SERVER_TLS: "True"
+      AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: ""
     ports: ["5000:5000"]
     volumes:
       - "./compose/tar-files:/tar-files"
@@ -52,9 +53,10 @@ services:
       - orthanc.json
     ports: ["4242:4242", "8042:8042"]
     volumes:
-      - "./compose/orthanc.key:/certs/orthanc.key"
-      - "./compose/orthanc.crt:/certs/orthanc.crt"
-      - "./compose/cert.pem:/certs/cert.pem"
+      - "./compose/orthanc-key.pem:/certs/orthanc.key"
+      - "./compose/orthanc-crt.pem:/certs/orthanc.crt"
+      - "./compose/dcm4che-crt.pem:/certs/cert.pem"
+      - "./compose/orthanc-db:/var/lib/orthanc/db"
 secrets:
   orthanc.json:
     file: compose/orthanc.json
