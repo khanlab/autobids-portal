@@ -3,5 +3,10 @@ build
 app.db
 ./config*
 __pycache__
-postgres-db
 .env
+.git*
+*.egg-info
+__pycache__
+compose/tar-files
+compose/postgres-db
+compose/datasets
