@@ -25,7 +25,7 @@ RUN apt-get update \
 WORKDIR /apps/DicomRaw
 RUN git clone https://gitlab.com/cfmm/DicomRaw . \
     && git checkout 00256d486fc790da4fa852c00cb27f42e77b1a99 \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir pydicom==1.4.2 zipstream==1.1.4
 
 WORKDIR /apps/cfmm2tar
 RUN git clone https://github.com/khanlab/cfmm2tar.git . \
@@ -33,7 +33,11 @@ RUN git clone https://github.com/khanlab/cfmm2tar.git . \
     && chmod a+x ./*.py \
     && bash install_dcm4che_ubuntu.sh /apps/dcm4che \
     && echo '1.3.12.2.1107.5.9.1:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> /apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties \
-    && echo 'EnhancedMRImageStorage:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> /apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties
+    && echo 'EnhancedMRImageStorage:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> /apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties \
+    && sed -i -e 's/shell=True)/shell=True, universal_newlines=True)/g' /apps/cfmm2tar/Dcm4cheUtils.py \
+    && sed -i -e 's/return tar_full_filenames + attached_tar_full_filenames/return list(tar_full_filenames) + attached_tar_full_filenames/g' /apps/cfmm2tar/DicomSorter.py \
+    && sed -i -e 's/dataset\.PatientName/str(dataset\.PatientName)/g' /apps/cfmm2tar/sort_rules.py
+ENV OTHER_OPTIONS='--tls-aes'
 
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
@@ -92,7 +96,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.jks \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.p12 \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.jks \
-    && cat ./compose/orthanc.crt >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem
+    && cat ./compose/orthanc-crt.pem >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
