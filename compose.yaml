@@ -3,12 +3,12 @@ services:
     build: .
     environment: &idautobidsenv
       SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:example@postgres:5432
-      SQLALCHEMY_TRACK_MODIFICATIONS: ""
+      SQLALCHEMY_TRACK_MODIFICATIONS: "false"
       REDIS_URL: "redis://redis:6379"
       FLASK_APP: bids_form.py
       AUTOBIDS_SECRET_KEY: secret
       AUTOBIDS_LOG_LEVEL: INFO
-      AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /tmp
+      AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /cfmm2tar-download
       AUTOBIDS_CFMM2TAR_STORAGE_DIR: /tar-files
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
       AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
@@ -16,14 +16,15 @@ services:
       AUTOBIDS_DCM4CHE_PREFIX: ""
       AUTOBIDS_TAR2BIDS_PREFIX: ""
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
-      AUTOBIDS_MAIL_ENABLED: ""
+      AUTOBIDS_MAIL_ENABLED: "false"
       AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
       AUTOBIDS_DICOM_SERVER_USERNAME: "user"
       AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
-      AUTOBIDS_DICOM_SERVER_TLS: "True"
-      AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: ""
+      AUTOBIDS_DICOM_SERVER_TLS: "true"
+      AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: "false"
     ports: ["5000:5000"]
-    volumes:
+    volumes: &idautobidsvolumes
+      - "./compose/cfmm2tar-download:/cfmm2tar-download"
       - "./compose/tar-files:/tar-files"
       - "./compose/datasets:/datasets"
     depends_on:
@@ -34,9 +35,7 @@ services:
     build: .
     command: rq worker
     environment: *idautobidsenv
-    volumes:
-      - "./compose/tar-files:/tar-files"
-      - "./compose/datasets:/datasets"
+    volumes: *idautobidsvolumes
     depends_on:
       - postgres
       - redis

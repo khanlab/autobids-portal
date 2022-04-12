@@ -24,7 +24,7 @@ from wtforms.validators import (
     EqualTo,
 )
 
-from autobidsportal.models import User
+from autobidsportal.models import User, ExplicitPatient, Study
 
 
 DEFAULT_HEURISTICS = [
@@ -41,6 +41,22 @@ DEFAULT_HEURISTICS = [
     "Kohler_HcECT.py",
     "Menon_CogMS.py",
 ]
+
+CHOICES_FAMILIARITY = [
+    ("1", "Not familiar at all"),
+    ("2", "Have heard of it"),
+    ("3", "Have used of it"),
+    ("4", "Used it regularly"),
+    ("5", "I consider myself an expert"),
+]
+
+
+def _gen_familiarity_field(label):
+    return SelectField(
+        label,
+        choices=CHOICES_FAMILIARITY,
+        validators=[InputRequired()],
+    )
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -122,101 +138,14 @@ class BidsForm(FlaskForm):
         validators=[Optional()],
     )
 
-    familiarity_bids = SelectField(
-        "BIDS:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_bidsapp = SelectField(
-        "BIDS Apps:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_python = SelectField(
-        "Python:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_linux = SelectField(
-        "Linux:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_bash = SelectField(
-        "BASH:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_hpc = SelectField(
-        "HPC Systems:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_openneuro = SelectField(
-        "Open Neuro:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
-
-    familiarity_cbrain = SelectField(
-        "CBRAIN:",
-        choices=[
-            ("1", "Not familiar at all"),
-            ("2", "Have heard of it"),
-            ("3", "Have used of it"),
-            ("4", "Used it regularly"),
-            ("5", "I consider myself an expert"),
-        ],
-        validators=[InputRequired()],
-    )
+    familiarity_bids = _gen_familiarity_field("BIDS:")
+    familiarity_bidsapp = _gen_familiarity_field("BIDS Apps:")
+    familiarity_python = _gen_familiarity_field("Python:")
+    familiarity_linux = _gen_familiarity_field("Linux:")
+    familiarity_bash = _gen_familiarity_field("BASH:")
+    familiarity_hpc = _gen_familiarity_field("HPC Systems:")
+    familiarity_openneuro = _gen_familiarity_field("Open Neuro:")
+    familiarity_cbrain = _gen_familiarity_field("CBRAIN:")
 
     principal = SelectField(
         'What is the "Principal" or "PI" identifier for this study?:',
@@ -279,6 +208,53 @@ class BidsForm(FlaskForm):
 
     submit = SubmitField("Submit")
 
+    def gen_study(self):
+        """Generate a study from this form."""
+        principal = (
+            self.principal_other.data
+            if self.principal.data == "Other"
+            else self.principal.data
+        )
+
+        if self.retrospective_data.data:
+            retrospective_start = self.retrospective_start.data
+            retrospective_end = self.retrospective_end.data
+        else:
+            retrospective_start = None
+            retrospective_end = None
+
+        dataset_name = (
+            self.dataset_name.data
+            if self.dataset_name.data != ""
+            else self.project_name.data
+        )
+
+        return Study(
+            submitter_name=self.name.data,
+            submitter_email=self.email.data,
+            status=self.status.data,
+            scanner=self.scanner.data,
+            scan_number=self.scan_number.data,
+            study_type=self.study_type.data,
+            familiarity_bids=self.familiarity_bids.data,
+            familiarity_bidsapp=self.familiarity_bidsapp.data,
+            familiarity_python=self.familiarity_python.data,
+            familiarity_linux=self.familiarity_linux.data,
+            familiarity_bash=self.familiarity_bash.data,
+            familiarity_hpc=self.familiarity_hpc.data,
+            familiarity_openneuro=self.familiarity_openneuro.data,
+            familiarity_cbrain=self.familiarity_cbrain.data,
+            principal=principal,
+            project_name=self.project_name.data,
+            dataset_name=dataset_name,
+            sample=self.sample.data,
+            retrospective_data=self.retrospective_data.data,
+            retrospective_start=retrospective_start,
+            retrospective_end=retrospective_end,
+            consent=self.consent.data,
+            comment=self.comment.data,
+        )
+
 
 class StudyConfigForm(FlaskForm):
     """Form for editing an existing study."""
@@ -305,6 +281,147 @@ class StudyConfigForm(FlaskForm):
     )
     newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
+
+    def defaults_from_study(self, study, principals, heuristics, users):
+        """Set up form defaults given options from the DB."""
+        self.pi_name.choices = principals
+        self.pi_name.default = study.principal
+        self.project_name.default = study.project_name
+        if study.dataset_name is not None:
+            self.dataset_name.default = study.dataset_name
+        if study.sample is not None:
+            self.example_date.default = study.sample
+        self.retrospective_data.default = study.retrospective_data
+        if study.retrospective_data:
+            self.retrospective_start.default = study.retrospective_start
+            self.retrospective_end.default = study.retrospective_end
+        self.heuristic.choices = heuristics
+        if study.heuristic is None:
+            self.heuristic.default = "cfmm_base.py"
+        else:
+            self.heuristic.default = study.heuristic
+        if study.subj_expr is None:
+            self.subj_expr.default = "*_{subject}"
+        else:
+            self.subj_expr.default = study.subj_expr
+        self.patient_str.default = study.patient_str
+        if study.patient_name_re is None:
+            self.patient_re.default = ".*"
+        else:
+            self.patient_re.default = study.patient_name_re
+        self.excluded_patients.choices = [
+            (
+                patient.study_instance_uid,
+                (
+                    f"Patient Name: {patient.patient_name}, "
+                    f"Study ID: {patient.dicom_study_id}"
+                ),
+            )
+            for patient in study.explicit_patients
+            if not patient.included
+        ]
+        self.excluded_patients.default = [
+            patient.study_instance_uid
+            for patient in study.explicit_patients
+            if not patient.included
+        ]
+        self.newly_excluded.default = ""
+        self.included_patients.choices = [
+            (
+                patient.study_instance_uid,
+                (
+                    f"Patient Name: {patient.patient_name}, "
+                    f"Study ID: {patient.dicom_study_id}"
+                ),
+            )
+            for patient in study.explicit_patients
+            if patient.included
+        ]
+        self.included_patients.default = [
+            patient.study_instance_uid
+            for patient in study.explicit_patients
+            if patient.included
+        ]
+        self.newly_included.default = ""
+        self.users_authorized.choices = [
+            (user.id, user.email) for user in users
+        ]
+        self.users_authorized.default = [
+            user.id for user in study.users_authorized
+        ]
+
+        self.process()
+
+    def update_study(self, study):
+        """Process updates to a study from this form.
+
+        Parameters
+        ----------
+        study : Study
+            The study to update
+
+        Returns
+        -------
+        study : Study
+            The updated study.
+        to_add : list of ExplicitPatient
+            New ExplicitPatients to add.
+        to_delete : list of ExplicitPatient
+            Existing ExplicitPatients to delete.
+        ids_authorized : list of int
+            IDs of users to add to the authorized list.
+        """
+        study.principal = self.pi_name.data
+        study.project_name = self.project_name.data
+        study.dataset_name = self.dataset_name.data
+        if self.example_date.data:
+            study.sample = self.example_date.data
+        else:
+            study.sample = None
+        if self.retrospective_data.data:
+            study.retrospective_data = True
+            study.retrospective_start = self.retrospective_start.data
+            study.retrospective_end = self.retrospective_end.data
+        else:
+            study.retrospective_data = False
+            study.retrospective_start = None
+            study.retrospective_end = None
+        study.heuristic = self.heuristic.data
+        study.subj_expr = self.subj_expr.data
+        study.patient_str = self.patient_str.data
+        study.patient_name_re = self.patient_re.data
+        to_delete = []
+        for explicit_patient in study.explicit_patients:
+            if explicit_patient.included and (
+                explicit_patient.study_instance_uid
+                not in self.included_patients.data
+            ):
+                to_delete.append(explicit_patient)
+            elif (not explicit_patient.included) and (
+                explicit_patient.study_instance_uid
+                not in self.excluded_patients.data
+            ):
+                to_delete.append(explicit_patient)
+        to_add = []
+        if self.newly_excluded.data != "":
+            to_add.append(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=self.newly_excluded.data,
+                    included=False,
+                )
+            )
+        if self.newly_included.data != "":
+            to_add.append(
+                ExplicitPatient(
+                    study_id=study.id,
+                    study_instance_uid=self.newly_included.data,
+                    included=True,
+                )
+            )
+        ids_authorized = self.users_authorized.data
+
+        return study, to_add, to_delete, ids_authorized
 
 
 class Tar2bidsRunForm(FlaskForm):
