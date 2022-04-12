@@ -1,0 +1,17 @@
+{
+  "DicomModalities": {
+    "autobids": {
+      "AET": "DEFAULT",
+      "Host": "autobidsportal", 
+      "Port": 104,
+      "UseDicomTls": true
+    }
+  },
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": false,
+  "DicomTlsEnabled": true,
+  "DicomTlsPrivateKey": "/certs/orthanc.key",
+  "DicomTlsCertificate": "/certs/orthanc.crt",
+  "DicomTlsTrustedCertificates": "/certs/cert.pem",
+  "DicomTlsRemoteCertificateRequired": false
+}

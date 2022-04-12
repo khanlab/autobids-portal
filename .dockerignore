@@ -1,0 +1,12 @@
+venv*
+build
+app.db
+./config*
+__pycache__
+.env
+.git*
+*.egg-info
+__pycache__
+compose/tar-files
+compose/postgres-db
+compose/datasets

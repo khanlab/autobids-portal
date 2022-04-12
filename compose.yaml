@@ -1,0 +1,67 @@
+services:
+  autobidsportal:
+    build: .
+    environment: &idautobidsenv
+      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:example@postgres:5432
+      SQLALCHEMY_TRACK_MODIFICATIONS: ""
+      REDIS_URL: "redis://redis:6379"
+      FLASK_APP: bids_form.py
+      AUTOBIDS_SECRET_KEY: secret
+      AUTOBIDS_LOG_LEVEL: INFO
+      AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /tmp
+      AUTOBIDS_CFMM2TAR_STORAGE_DIR: /tar-files
+      AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
+      AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
+      AUTOBIDS_HEURISTIC_REPO_PATH: /home
+      AUTOBIDS_DCM4CHE_PREFIX: ""
+      AUTOBIDS_TAR2BIDS_PREFIX: ""
+      AUTOBIDS_HEURISTIC_DIR_PATH: /home
+      AUTOBIDS_MAIL_ENABLED: ""
+      AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
+      AUTOBIDS_DICOM_SERVER_USERNAME: "user"
+      AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
+      AUTOBIDS_DICOM_SERVER_TLS: "True"
+      AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: ""
+    ports: ["5000:5000"]
+    volumes:
+      - "./compose/tar-files:/tar-files"
+      - "./compose/datasets:/datasets"
+    depends_on:
+      - postgres
+      - redis
+      - rq
+  rq:
+    build: .
+    command: rq worker
+    environment: *idautobidsenv
+    volumes:
+      - "./compose/tar-files:/tar-files"
+      - "./compose/datasets:/datasets"
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure
+  redis:
+    image: redis:5.0.14
+  postgres:
+    image: postgres:11
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - "./compose/postgres-db:/var/lib/postgresql/data"
+    ports: ["5432:5432"]
+  orthanc:
+    image: jodogne/orthanc:1.10.1
+    command: /run/secrets/
+    secrets:
+      - orthanc.json
+    ports: ["4242:4242", "8042:8042"]
+    volumes:
+      - "./compose/orthanc-key.pem:/certs/orthanc.key"
+      - "./compose/orthanc-crt.pem:/certs/orthanc.crt"
+      - "./compose/dcm4che-crt.pem:/certs/cert.pem"
+      - "./compose/orthanc-db:/var/lib/orthanc/db"
+secrets:
+  orthanc.json:
+    file: compose/orthanc.json
