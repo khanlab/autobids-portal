@@ -140,7 +140,7 @@ def record_cfmm2tar(tar_path, uid_path, study_id):
     pathlib.Path(uid_path).unlink()
 
 
-def get_info_from_cfmm2tar(study_id):
+def get_info_from_cfmm2tar(study_id, explicit_scans=None):
     """Run cfmm2tar for a given study
 
     This will check which patients have already been downloaded, download any
@@ -150,6 +150,9 @@ def get_info_from_cfmm2tar(study_id):
     ----------
     study_id : int
         ID of the study for which to run cfmm2tar.
+    explicit_scans : list of dict, optional
+        List of scans to get with cfmm2tar, where each scan is represented by
+        a dict with keys "StudyInstanceUID" and "PatientName".
     """
     job = get_current_job()
     _set_task_progress(job.id, 0)
@@ -163,14 +166,22 @@ def get_info_from_cfmm2tar(study_id):
     existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
 
     try:
-        studies_to_download = [
-            record
-            for record in get_study_records(
-                study, description=study_description
-            )
-            if record["StudyInstanceUID"]
-            not in {output.uid.strip() for output in existing_outputs}
-        ]
+        if explicit_scans is not None:
+            studies_to_download = [
+                scan
+                for scan in explicit_scans
+                if scan["StudyInstanceUID"]
+                not in {output.uid.strip() for output in existing_outputs}
+            ]
+        else:
+            studies_to_download = [
+                record
+                for record in get_study_records(
+                    study, description=study_description
+                )
+                if record["StudyInstanceUID"]
+                not in {output.uid.strip() for output in existing_outputs}
+            ]
         app.logger.info(
             "Running cfmm2tar for studies %s in study %i",
             [record["PatientName"] for record in studies_to_download],

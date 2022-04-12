@@ -44,6 +44,7 @@ from autobidsportal.forms import (
     Tar2bidsRunForm,
     ExcludeScansForm,
     IncludeScansForm,
+    ExplicitCfmm2tarForm,
     DEFAULT_HEURISTICS,
 )
 from autobidsportal.filesystem import gen_dir_dict
@@ -54,6 +55,20 @@ portal_blueprint = Blueprint(
 )
 
 mail = Mail()
+
+
+def check_current_authorized(study):
+    """Check that the current_user is authorized to view this study.
+
+    Parameters
+    ----------
+    study : Study
+        Study to check the current user against.
+    """
+    if (not current_user.admin) and (
+        current_user not in study.users_authorized
+    ):
+        abort(404)
 
 
 @portal_blueprint.route("/", methods=["GET", "POST"])
@@ -315,10 +330,7 @@ def results():
 def answer_info(study_id):
     """Obtains complete survey response based on the submission id"""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     cfmm2tar_tasks = Task.query.filter_by(
         study_id=study_id, name="get_info_from_cfmm2tar"
     ).all()
@@ -372,10 +384,7 @@ def answer_info(study_id):
 def study_demographics(study_id):
     """Render page with information about a study's submitter."""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     return render_template("study_demographics.html", study=study)
 
 
@@ -387,10 +396,7 @@ def study_config(study_id):
     """Page to display and edit study config."""
     # pylint: disable=too-many-statements,too-many-branches
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
 
     form = StudyConfigForm()
     if request.method == "POST":
@@ -542,10 +548,7 @@ def study_config(study_id):
 def run_cfmm2tar(study_id):
     """Launch cfmm2tar task and refresh answer_info.html"""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     if (
         len(
             Task.query.filter_by(
@@ -557,14 +560,23 @@ def run_cfmm2tar(study_id):
         > 0
     ):
         flash("An Cfmm2tar run is currently in progress")
+        return answer_info(study_id)
+
+    form = ExplicitCfmm2tarForm()
+    if form.choices_to_run.data is not None:
+        explicit_scans = [
+            loads(loads(val_json)) for val_json in form.choices_to_run.data
+        ]
     else:
-        current_user.launch_task(
-            "get_info_from_cfmm2tar",
-            f"cfmm2tar for study {study_id}",
-            study_id,
-        )
-        current_app.logger.info("Launched cfmm2tar for study %i", study_id)
-        db.session.commit()
+        explicit_scans = None
+    current_user.launch_task(
+        "get_info_from_cfmm2tar",
+        f"cfmm2tar for study {study_id}",
+        study_id,
+        explicit_scans=explicit_scans,
+    )
+    current_app.logger.info("Launched cfmm2tar for study %i", study_id)
+    db.session.commit()
     if current_app.config["MAIL_ENABLED"]:
         subject = (
             f"A Cfmm2tar run for {study.prinicipal}^{study.project_name} "
@@ -602,10 +614,7 @@ def run_cfmm2tar(study_id):
 def delete_cfmm2tar(study_id, cfmm2tar_id):
     """Delete a single tar file."""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     cfmm2tar_output = Cfmm2tarOutput.query.get(cfmm2tar_id)
     if (cfmm2tar_output is not None) and (
         cfmm2tar_output.study_id == study_id
@@ -633,10 +642,7 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
 def delete_tar2bids(study_id):
     """Delete a study's BIDS directory."""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     tar2bids_outputs = Tar2bidsOutput.query.filter_by(study_id=study_id).all()
     if len(tar2bids_outputs) > 0:
         for tar2bids_output in tar2bids_outputs:
@@ -657,10 +663,7 @@ def delete_tar2bids(study_id):
 def run_tar2bids(study_id):
     """Launch tar2bids task and refresh answer_info.html"""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     form = Tar2bidsRunForm()
     tar_files = [
         Cfmm2tarOutput.query.get_or_404(tar_file_id)
@@ -814,15 +817,27 @@ def download():
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
+@portal_blueprint.route(
+    "results/<int:study_id>/dicom/process", methods=["POST"]
+)
+@login_required
+def process_dicom_form(study_id):
+    """Pass off processing to run cfmm2tar or update exclusions"""
+    study = Study.query.get_or_404(study_id)
+    check_current_authorized(study)
+    if "update-exclusions" in request.form:
+        return update_exclusions(study_id)
+    if "run-cfmm2tar" in request.form:
+        return run_cfmm2tar(study_id)
+    return abort(404)
+
+
 @portal_blueprint.route("results/<int:study_id>/exclusions", methods=["POST"])
 @login_required
 def update_exclusions(study_id):
     """Updates the excluded UIDs for a study."""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
 
     form_exclude = ExcludeScansForm()
     for val_json in form_exclude.choices_to_exclude.data:
@@ -870,10 +885,7 @@ def update_exclusions(study_id):
 def dicom_verify(study_id, method):
     """Gets all DICOM results for a specific study."""
     study = Study.query.get_or_404(study_id)
-    if (not current_user.admin) and (
-        current_user not in study.users_authorized
-    ):
-        abort(404)
+    check_current_authorized(study)
     study_info = f"{study.principal}^{study.project_name}"
     if method.lower() == "both":
         if study.sample is None:
@@ -939,6 +951,19 @@ def dicom_verify(study_id, method):
         )
         for response in responses
     ]
+    form_cfmm2tar = ExplicitCfmm2tarForm()
+    form_cfmm2tar.choices_to_run.choices = [
+        (
+            dumps(
+                {
+                    "StudyInstanceUID": response["StudyInstanceUID"],
+                    "PatientName": response["PatientName"],
+                }
+            ),
+            "Include in cfmm2tar",
+        )
+        for response in responses
+    ]
 
     return render_template(
         "dicom.html",
@@ -947,6 +972,7 @@ def dicom_verify(study_id, method):
         submitter_answer=study,
         form_exclude=form_exclude,
         form_include=form_include,
+        form_cfmm2tar=form_cfmm2tar,
     )
 
 
