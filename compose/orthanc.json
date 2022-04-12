@@ -13,5 +13,6 @@
   "DicomTlsPrivateKey": "/certs/orthanc.key",
   "DicomTlsCertificate": "/certs/orthanc.crt",
   "DicomTlsTrustedCertificates": "/certs/cert.pem",
-  "DicomTlsRemoteCertificateRequired": false
+  "DicomTlsRemoteCertificateRequired": false,
+  "UnknownSopClassAccepted": true
 }

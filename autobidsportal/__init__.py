@@ -8,9 +8,10 @@ import flask_excel as excel
 from redis import Redis
 import rq
 
-from autobidsportal.routes import portal_blueprint, mail
+from autobidsportal.routes import portal_blueprint
 from autobidsportal.models import db, login
 from autobidsportal.errors import bad_request, not_found_error, internal_error
+from autobidsportal.email import mail
 
 
 def create_app(config_object=None, override_dict=None):

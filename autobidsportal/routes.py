@@ -704,7 +704,7 @@ def dicom_verify(study_id, method):
             study, date=date, description=description
         )
     except Dcm4cheError as err:
-        err_cause = err.__cause__.stderr if err.__cause__ else ""
+        err_cause = err.__cause__.stderr if err.__cause__ is not None else ""
         current_app.logger.warning(
             "Failed to get DICOM info for study %i: %s", study_id, err
         )
