@@ -3,7 +3,6 @@
 from datetime import datetime
 from json import JSONEncoder, loads, dumps
 from pathlib import Path
-from smtplib import SMTPAuthenticationError
 import shutil
 
 from flask import (
@@ -17,7 +16,6 @@ from flask import (
     abort,
 )
 from flask_login import login_user, logout_user, current_user, login_required
-from flask_mail import Mail, Message
 import flask_excel as excel
 
 from werkzeug.urls import url_parse
@@ -49,12 +47,11 @@ from autobidsportal.forms import (
 )
 from autobidsportal.filesystem import gen_dir_dict
 from autobidsportal.dicom import get_study_records
+from autobidsportal.email import send_email
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
 )
-
-mail = Mail()
 
 
 def check_current_authorized(study):
@@ -89,86 +86,21 @@ def index():
     form.principal.choices.insert(0, ("Other", "Other"))
 
     if form.validate_on_submit():
-        principal = (
-            form.principal_other.data
-            if form.principal.data == "Other"
-            else form.principal.data
-        )
-
-        if (
-            len(
-                Study.query.filter(
-                    Study.principal == principal,
-                    Study.project_name == form.project_name.data,
-                ).all()
-            )
-            > 0
-        ):
-            flash("That study already exists.")
-            abort(400)
-
-        if form.retrospective_data.data:
-            retrospective_start = form.retrospective_start.data
-            retrospective_end = form.retrospective_end.data
-        else:
-            retrospective_start = None
-            retrospective_end = None
-
-        dataset_name = (
-            form.dataset_name.data
-            if form.dataset_name.data != ""
-            else form.project_name.data
-        )
-
-        answer = Study(
-            submitter_name=form.name.data,
-            submitter_email=form.email.data,
-            status=form.status.data,
-            scanner=form.scanner.data,
-            scan_number=form.scan_number.data,
-            study_type=form.study_type.data,
-            familiarity_bids=form.familiarity_bids.data,
-            familiarity_bidsapp=form.familiarity_bidsapp.data,
-            familiarity_python=form.familiarity_python.data,
-            familiarity_linux=form.familiarity_linux.data,
-            familiarity_bash=form.familiarity_bash.data,
-            familiarity_hpc=form.familiarity_hpc.data,
-            familiarity_openneuro=form.familiarity_openneuro.data,
-            familiarity_cbrain=form.familiarity_cbrain.data,
-            principal=principal,
-            project_name=form.project_name.data,
-            dataset_name=dataset_name,
-            sample=form.sample.data,
-            retrospective_data=form.retrospective_data.data,
-            retrospective_start=retrospective_start,
-            retrospective_end=retrospective_end,
-            consent=form.consent.data,
-            comment=form.comment.data,
-        )
-
-        db.session.add(answer)
+        study = form.gen_study()
+        db.session.add(study)
         db.session.commit()
 
-        current_app.logger.info("Study %i successfully submitted.", answer.id)
+        current_app.logger.info("Study %i successfully submitted.", study.id)
 
         flash("Thanks, the survey has been submitted!")
 
-        if current_app.config["MAIL_ENABLED"]:
-            subject = (
+        send_email(
+            "New study request",
+            (
                 f"A new request has been submitted by {form.name.data}"
-                + f" {form.email.data}"
-            )
-            sender = current_app.config["MAIL_USERNAME"]
-            recipients = current_app.config["MAIL_RECIPIENTS"]
-
-            msg = Message(
-                subject=subject,
-                body="A new request has been submitted. Please login to "
-                + "see the submitter's response",
-                sender=sender,
-                recipients=recipients.split(),
-            )
-            mail.send(msg)
+                f" ({form.email.data}). ID: {study.id}"
+            ),
+        )
 
         return redirect(url_for("portal_blueprint.index"))
     return render_template("survey.html", form=form)
@@ -400,55 +332,14 @@ def study_config(study_id):
 
     form = StudyConfigForm()
     if request.method == "POST":
-        study.principal = form.pi_name.data
-        study.project_name = form.project_name.data
-        study.dataset_name = form.dataset_name.data
-        if form.example_date.data:
-            study.sample = form.example_date.data
-        else:
-            study.sample = None
-        if form.retrospective_data.data:
-            study.retrospective_data = True
-            study.retrospective_start = form.retrospective_start.data
-            study.retrospective_end = form.retrospective_end.data
-        else:
-            study.retrospective_data = False
-            study.retrospective_start = None
-            study.retrospective_end = None
-        study.heuristic = form.heuristic.data
-        study.subj_expr = form.subj_expr.data
-        study.patient_str = form.patient_str.data
-        study.patient_name_re = form.patient_re.data
-        for explicit_patient in study.explicit_patients:
-            if explicit_patient.included and (
-                explicit_patient.study_instance_uid
-                not in form.included_patients.data
-            ):
-                db.session.delete(explicit_patient)
-            elif (not explicit_patient.included) and (
-                explicit_patient.study_instance_uid
-                not in form.excluded_patients.data
-            ):
-                db.session.delete(explicit_patient)
-        if form.newly_excluded.data != "":
-            db.session.add(
-                ExplicitPatient(
-                    study_id=study.id,
-                    study_instance_uid=form.newly_excluded.data,
-                    included=False,
-                )
-            )
-        if form.newly_included.data != "":
-            db.session.add(
-                ExplicitPatient(
-                    study_id=study.id,
-                    study_instance_uid=form.newly_included.data,
-                    included=True,
-                )
-            )
+        study, to_add, to_delete, users_authorized = form.update_study(study)
         study.users_authorized = [
-            User.query.get(id) for id in form.users_authorized.data
+            User.query.get(user_id) for user_id in users_authorized
         ]
+        for patient in to_add:
+            db.session.add(patient)
+        for patient in to_delete:
+            db.session.delete(patient)
         current_app.logger.info("Updated study %i config", study.id)
         db.session.commit()
 
@@ -472,73 +363,10 @@ def study_config(study_id):
     ]
     if study.principal not in principal_names:
         principal_names.insert(0, study.principal)
-    form.pi_name.choices = principal_names
-    form.pi_name.default = study.principal
-    form.project_name.default = study.project_name
-    if study.dataset_name is not None:
-        form.dataset_name.default = study.dataset_name
-    if study.sample is not None:
-        form.example_date.default = study.sample
-    form.retrospective_data.default = study.retrospective_data
-    if study.retrospective_data:
-        form.retrospective_start.default = study.retrospective_start
-        form.retrospective_end.default = study.retrospective_end
-    form.heuristic.choices = available_heuristics
-    if study.heuristic is None:
-        form.heuristic.default = "cfmm_base.py"
-    else:
-        form.heuristic.default = study.heuristic
-    if study.subj_expr is None:
-        form.subj_expr.default = "*_{subject}"
-    else:
-        form.subj_expr.default = study.subj_expr
-    form.patient_str.default = study.patient_str
-    if study.patient_name_re is None:
-        form.patient_re.default = ".*"
-    else:
-        form.patient_re.default = study.patient_name_re
-    form.excluded_patients.choices = [
-        (
-            patient.study_instance_uid,
-            (
-                f"Patient Name: {patient.patient_name}, "
-                f"Study ID: {patient.dicom_study_id}"
-            ),
-        )
-        for patient in study.explicit_patients
-        if not patient.included
-    ]
-    form.excluded_patients.default = [
-        patient.study_instance_uid
-        for patient in study.explicit_patients
-        if not patient.included
-    ]
-    form.newly_excluded.default = ""
-    form.included_patients.choices = [
-        (
-            patient.study_instance_uid,
-            (
-                f"Patient Name: {patient.patient_name}, "
-                f"Study ID: {patient.dicom_study_id}"
-            ),
-        )
-        for patient in study.explicit_patients
-        if patient.included
-    ]
-    form.included_patients.default = [
-        patient.study_instance_uid
-        for patient in study.explicit_patients
-        if patient.included
-    ]
-    form.newly_included.default = ""
-    form.users_authorized.choices = [
-        (user.id, user.email) for user in User.query.all()
-    ]
-    form.users_authorized.default = [
-        user.id for user in study.users_authorized
-    ]
 
-    form.process()
+    form.defaults_from_study(
+        study, principal_names, available_heuristics, User.query.all()
+    )
 
     return render_template("study_config.html", form=form, study=study)
 
@@ -577,28 +405,13 @@ def run_cfmm2tar(study_id):
     )
     current_app.logger.info("Launched cfmm2tar for study %i", study_id)
     db.session.commit()
-    if current_app.config["MAIL_ENABLED"]:
-        subject = (
-            f"A Cfmm2tar run for {study.prinicipal}^{study.project_name} "
-            f"has been submitted by {current_user.email}."
-        )
-        body = (
+    send_email(
+        "New cfmm2tar run launched",
+        (
             f"A Cfmm2tar run for {study.principal}^{study.project_name} "
-            "has been submitted."
-        )
-        sender = current_app.config["MAIL_USERNAME"]
-        recipients = current_app.config["MAIL_RECIPIENTS"]
-
-        msg = Message(
-            subject=subject,
-            body=body,
-            sender=sender,
-            recipients=recipients.split(),
-        )
-        try:
-            mail.send(msg)
-        except SMTPAuthenticationError as err:
-            print(err)
+            f"has been submitted by {current_user.email}."
+        ),
+    )
 
     return answer_info(study_id)
 
@@ -697,30 +510,13 @@ def run_tar2bids(study_id):
             [tar_file.tar_file for tar_file in tar_files],
         )
         db.session.commit()
-
-        if current_app.config["MAIL_ENABLED"]:
-            subject = (
+        send_email(
+            "New tar2bids run launched",
+            (
                 f"A Tar2bids run for {study.principal}^{study.project_name} "
-                f"has been submitted by {current_user.email}"
-            )
-            body = (
-                f"A Tar2bids run for {study.principal}^{study.project_name} "
-                "has been submitted."
-            )
-            sender = current_app.config["MAIL_USERNAME"]
-            recipients = current_app.config["MAIL_RECIPIENTS"]
-
-            try:
-                mail.send(
-                    Message(
-                        subject=subject,
-                        body=body,
-                        sender=sender,
-                        recipients=recipients.split(),
-                    )
-                )
-            except SMTPAuthenticationError as err:
-                print(err)
+                f"has been submitted by {current_user.email}."
+            ),
+        )
 
     return answer_info(study_id)
 
@@ -908,7 +704,7 @@ def dicom_verify(study_id, method):
             study, date=date, description=description
         )
     except Dcm4cheError as err:
-        err_cause = err.__cause__.stderr
+        err_cause = err.__cause__.stderr if err.__cause__ else ""
         current_app.logger.warning(
             "Failed to get DICOM info for study %i: %s", study_id, err
         )
