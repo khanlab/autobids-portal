@@ -13,6 +13,8 @@ from autobidsportal.models import (
     db,
     DatasetType,
     DataladDataset,
+    SiblingHost,
+    ExternalSibling,
 )
 
 
@@ -73,6 +75,57 @@ def ensure_dataset_exists(study_id, dataset_type):
     return dataset
 
 
+def ensure_siblings_exist(dataset):
+    generated_siblings = set()
+    if (current_app.config["AUTOBIDS_GITHUB_ACTIVE"]) and not any(
+        sibling.host is SiblingHost.GITHUB
+        for sibling in dataset.external_siblings
+    ):
+        with tempfile.TemporaryDirectory(
+            dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+        ) as dir_temp, RiaDataset(dir_temp, dataset.ria_alias) as dataset_ria:
+            url = create_sibling_github(
+                dataset_ria.path_dataset, dataset.ria_alias, exists_ok=False
+            )
+            datalad_api.push(dataset=dataset_ria.path_dataset, to="github")
+            sibling = ExternalSibling(
+                dataset_id=dataset.id, url=url, host=SiblingHost.GITHUB
+            )
+            db.session.add(sibling)
+            db.session.commit()
+        generated_siblings.add(sibling)
+
+
+#    if current_app.config["AUTOBIDS_GITLAB_ACTIVE"] and not any(
+#        current_app.config["AUTOBIDS_GITLAB_URL"] in sibling.url
+#        for sibling in dataset.external_siblings
+#    ):
+#        with tempfile.TemporaryDirectory(
+#            dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+#        ) as dir_temp, RiaDataset(dir_temp, dataset.ria_alias) as dataset_ria:
+#            url = create_sibling_gitlab(
+#                dataset_ria.path_dataset, dataset.ria_alias
+#            )
+#            datalad_api.push(dataset=dataset_ria.path_dataset, to="gitlab")
+#            db.session.add(ExternalSibling(dataset_id=dataset.id, url=url))
+#
+#
+def push_to_siblings(path, dataset):
+    for sibling in dataset.external_siblings:
+        if sibling.host is SiblingHost.GITHUB:
+            create_sibling_github(
+                path, sibling.dataladdataset.ria_alias, exists_ok=True
+            )
+            datalad_api.push(dataset=path, to="github")
+
+
+#       elif sibling.host == "GitLab":
+#           create_sibling_gitlab(
+#               path, sibling.dataladdataset.ria_atlas, exists_ok=True
+#           )
+#           datalad_api.push(dataset=path, to="gitlab")
+
+
 def create_ria_dataset(path, alias):
     """Create a dataset in the configured RIA store."""
     datalad_api.create(path, cfg_proc="text2git")
@@ -84,6 +137,33 @@ def create_ria_dataset(path, alias):
         new_store_ok=True,
     )
     push_dataset(str(path))
+
+
+def create_sibling_github(path, name, exists_ok=False):
+    """Create a github sibling for a dataset.
+
+    Parameters
+    ----------
+    path : str
+        Path at which the dataset exists.
+    name : str
+        Name for the dataset on Github (can contain an organization)
+    """
+    return datalad_api.create_sibling_github(
+        name,
+        dataset=path,
+        api=current_app.config["AUTOBIDS_GITHUB_API"],
+        credential=current_app.config["AUTOBIDS_GITHUB_CREDENTIAL"],
+        existing="reconfigure" if exists_ok else "error",
+    )[0]["clone_url"]
+
+
+# def create_sibling_gitlab(path, alias, exists_ok=False):
+#    return datalad_api.create_sibling_gitlab(
+#        project=alias,
+#        dataset=path,
+#        existing="reconfigure" if exists_ok else "error",
+#    )[0]["clone_url"]
 
 
 def clone_ria_dataset(path, alias):

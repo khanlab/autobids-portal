@@ -88,6 +88,17 @@ services:
     volumes:
       - "./compose/ria-store-ssh:/ria-store"
       - "./compose/ssh:/ssh"
+  gitlab:
+    image: gitlab/gitlab-ee:latest
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://gitlab'
+        gitlab_rails['initial_root_password'] = 'gitlabpass'
+    ports: ["8080:80"]
+    volumes:
+      - "./compose/gitlab/config:/etc/config"
+      - "./compose/gitlab/logs:/var/log/gitlab"
+      - "./compose/gitlab/data:/var/opt/gitlab"
 secrets:
   orthanc.json:
     file: compose/orthanc.json

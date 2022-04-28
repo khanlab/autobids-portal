@@ -338,7 +338,6 @@ class Tar2bidsOutput(db.Model):
 
 class DatasetType(Enum):
     """Enum to describe the possible dataset types."""
-
     SOURCE_DATA = 1
     RAW_DATA = 2
     DERIVED_DATA = 3
@@ -352,6 +351,28 @@ class DataladDataset(db.Model):
     dataset_type = db.Column(db.Enum(DatasetType), nullable=False)
     ria_alias = db.Column(db.String, nullable=False, unique=True)
     db.UniqueConstraint(study_id, dataset_type)
+
+    external_siblings = db.relationship(
+        "ExternalSibling", backref="dataladdataset"
+    )
+
+
+class SiblingHost(Enum):
+    """Enum to describe the possible sibling hosts."""
+    GITHUB = 1
+    GITLAB = 2
+
+
+class ExternalSibling(db.Model):
+    """An external (i.e. non-RIA, usually GitHub or GitLab) remote of a
+    study."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    dataset_id = db.Column(
+        db.Integer, db.ForeignKey("datalad_dataset.id"), nullable=False
+    )
+    url = db.Column(db.String, nullable=False)
+    host = db.Column(db.Enum(SiblingHost), nullable=False)
 
 
 class Principal(db.Model):
