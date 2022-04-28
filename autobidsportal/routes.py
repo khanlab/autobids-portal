@@ -1,9 +1,9 @@
 """All routes in the portal are defined here."""
 
 from datetime import datetime
-from json import JSONEncoder, loads, dumps
+from json import loads, dumps
 from pathlib import Path
-import shutil
+import tempfile
 
 from flask import (
     current_app,
@@ -26,8 +26,9 @@ from autobidsportal.models import (
     Principal,
     Task,
     Cfmm2tarOutput,
-    Tar2bidsOutput,
     ExplicitPatient,
+    DatasetType,
+    DataladDataset,
 )
 from autobidsportal.dcm4cheutils import (
     Dcm4cheError,
@@ -45,7 +46,11 @@ from autobidsportal.forms import (
     ExplicitCfmm2tarForm,
     DEFAULT_HEURISTICS,
 )
-from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.datalad import (
+    delete_tar_file,
+    RiaDataset,
+    delete_all_content,
+)
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
 
@@ -274,22 +279,13 @@ def answer_info(study_id):
         study_id=study_id, name="get_info_from_tar2bids"
     ).all()
     tar2bids_files = study.tar2bids_outputs
-    tar2bids_path = (
-        Path(current_app.config["TAR2BIDS_DOWNLOAD_DIR"])
-        / str(study.id)
-        / (
-            study.dataset_name
-            if study.dataset_name not in [None, ""]
-            else study.project_name
-        )
-    )
 
     bids_dict = (
-        gen_dir_dict(tar2bids_path)
-        if tar2bids_path.exists()
+        study.dataset_content
+        if study.dataset_content is not None
         else {"files": [], "dirs": []}
     )
-    json_filetree = JSONEncoder().encode(bids_dict)
+    json_filetree = dumps(bids_dict)
 
     form = Tar2bidsRunForm()
     form.tar_files.choices = [
@@ -432,17 +428,9 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
     if (cfmm2tar_output is not None) and (
         cfmm2tar_output.study_id == study_id
     ):
-        cfmm2tar_file = Path(cfmm2tar_output.tar_file).resolve()
-        cfmm2tar_dir = cfmm2tar_file.parent
-        cfmm2tar_file.unlink()
-        if len(list(cfmm2tar_dir.iterdir())) == 0:
-            cfmm2tar_dir.rmdir()
+        delete_tar_file(study_id, cfmm2tar_output.tar_file)
         db.session.delete(cfmm2tar_output)
-        current_app.logger.info(
-            "Deleted tar file %s for study %i", cfmm2tar_file, study_id
-        )
         db.session.commit()
-
     return answer_info(study_id)
 
 
@@ -456,17 +444,16 @@ def delete_tar2bids(study_id):
     """Delete a study's BIDS directory."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
-    tar2bids_outputs = Tar2bidsOutput.query.filter_by(study_id=study_id).all()
-    if len(tar2bids_outputs) > 0:
-        for tar2bids_output in tar2bids_outputs:
-            tar2bids_path = Path(tar2bids_output.bids_dir).resolve()
-            if tar2bids_path.exists():
-                shutil.rmtree(str(tar2bids_path))
-            db.session.delete(tar2bids_output)
-            current_app.logger.info(
-                "Deleted BIDS dir %s for study %i", tar2bids_path, study_id
-            )
-            db.session.commit()
+
+    dataset = DataladDataset.query.filter_by(
+        study_id=study_id, dataset_type=DatasetType.RAW_DATA
+    ).first_or_404()
+    with tempfile.TemporaryDirectory(
+        dir=current_app.config["TAR2BIDS_DOWNLOAD_DIR"]
+    ) as bids_dir, RiaDataset(bids_dir, dataset.ria_alias) as path_dataset:
+        delete_all_content(path_dataset)
+        study.dataset_content = None
+        db.session.commit()
 
     return answer_info(study_id)
 

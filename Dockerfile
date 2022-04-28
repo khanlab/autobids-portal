@@ -11,10 +11,12 @@ RUN apt-get update \
     && apt-get install -y -q --no-install-recommends \
         default-jre=2:1.11-72 \
         git=1:2.30.2-1 \
+        git-annex=8.20210223-2 \
         python3=3.9.2-3 \
         python3-pip=20.3.4-4+deb11u1 \
         python3-setuptools=52.0.0-4 \
         python-is-python3=3.9.2-1 \
+        ssh=1:8.4p1-5 \
         unzip=6.0-26 \
         wget=1.21-1+deb11u1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
@@ -96,7 +98,12 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.jks \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.p12 \
     && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.jks \
-    && cat ./compose/orthanc-crt.pem >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem
+    && cat ./compose/orthanc-crt.pem >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem \
+#    && echo "Host ria" >> /etc/ssh/ssh_config \
+#    && echo "    Port 2222" >> /etc/ssh/ssh_config \
+    && echo "[ria]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrYOPbWqP1my/WUP3KEX57u2PpUMgyLjUek5jKCXcAvDufE2oj/mO4rqSDlIGSgaxkStN+vaWDasTA1jHJsYOlUTqoiTx7oO3HetDClcIhqSjZtqEs2BVPBd3IoelAVC+JYLOOcea3Tvb+6rhnZMHgpyGmAqzZxuEiflAvcwAbBBXugok1hTbNJ8mUk6n23AFUHW3srfPuOV1Pi2CCyuHJHrAJIcUr5ZV3HWfF54s3MZXFq8mjiOULulQIyZHYMJ5MhcSY8qJKX61mikMYcoETa3/OuD3505HRxy3tcawV0epRyw3useOBr13gvKkregJakMeKWIb8rONWiubkYcsbFrMj108XRuNmwYQWN1YT7D4yOFuAw/4v0qx8bVZ2yp9cbIKSa8JD4c7EkUUdtop+wjM6NEpyvhFwD1V54/5gEaEtFCEvg4e6IUTZ0zHfac1Cx6uvms47iJ38+c5R+l9/F8z2/ieBV6C0QO6pOAHTqeeRm9dKNnIYt7087FVGb3E=" >> /etc/ssh/ssh_known_hosts \
+    && git config --system user.name "Autobids Portal" \
+    && git config --system user.email "autobids@dummy.com"
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"

@@ -7,6 +7,7 @@ __pycache__
 .git*
 *.egg-info
 __pycache__
-compose/tar-files
-compose/postgres-db
-compose/datasets
+autobidsportal/static/lib/autobids-react/*
+!autobidsportal/static/lib/autobids-react/dist
+compose/*
+!compose/*.pem

@@ -4,6 +4,7 @@
 # Table classes are useful without public methods
 
 from datetime import datetime
+from enum import Enum
 from time import time
 import json
 
@@ -213,6 +214,8 @@ class Study(db.Model):
     tar2bids_outputs = db.relationship(
         "Tar2bidsOutput", backref="study", lazy=True
     )
+    dataset_content = db.Column(db.JSON(), nullable=True)
+    datalad_datasets = db.relationship("DataladDataset", backref="study")
 
     def __repr__(self):
         answer_cols = (
@@ -325,12 +328,30 @@ class Tar2bidsOutput(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
-    bids_dir = db.Column(db.String(200), index=True)
+    bids_dir = db.Column(db.String(200), index=True, nullable=True)
     heuristic = db.Column(db.String(200), index=True)
 
     def __repr__(self):
         out_fields = (self.cfmm2tar_output_id, self.bids_dir, self.heuristic)
         return f"<Tar2bids {out_fields}>"
+
+
+class DatasetType(Enum):
+    """Enum to describe the possible dataset types."""
+
+    SOURCE_DATA = 1
+    RAW_DATA = 2
+    DERIVED_DATA = 3
+
+
+class DataladDataset(db.Model):
+    """A datalad dataset relating to a study."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    dataset_type = db.Column(db.Enum(DatasetType), nullable=False)
+    ria_alias = db.Column(db.String, nullable=False, unique=True)
+    db.UniqueConstraint(study_id, dataset_type)
 
 
 class Principal(db.Model):
