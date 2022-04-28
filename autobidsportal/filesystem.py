@@ -3,13 +3,15 @@
 import os
 
 
-def gen_dir_dict(path):
+def gen_dir_dict(path, ignore=frozenset()):
     """Generate a dictionary representing a file tree.
 
     Parameters
     ----------
     path : str
         The root path of the file tree to convert to dict.
+    ignore : Collection
+        File/directory names to ignore.
 
     Returns
     -------
@@ -33,10 +35,14 @@ def gen_dir_dict(path):
     """
 
     return {
-        "files": [entry.name for entry in os.scandir(path) if entry.is_file()],
-        "dirs": {
-            entry.name: gen_dir_dict(entry.path)
+        "files": [
+            entry.name
             for entry in os.scandir(path)
-            if entry.is_dir()
+            if entry.is_file() and entry.name not in ignore
+        ],
+        "dirs": {
+            entry.name: gen_dir_dict(entry.path, ignore)
+            for entry in os.scandir(path)
+            if entry.is_dir() and entry.name not in ignore
         },
     }
