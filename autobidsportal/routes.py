@@ -387,7 +387,7 @@ def run_cfmm2tar(study_id):
         return answer_info(study_id)
 
     form = ExplicitCfmm2tarForm()
-    if form.choices_to_run.data is not None:
+    if form.choices_to_run.data not in [None, []]:
         explicit_scans = [
             loads(loads(val_json)) for val_json in form.choices_to_run.data
         ]
