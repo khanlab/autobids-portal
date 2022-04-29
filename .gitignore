@@ -8,3 +8,6 @@ build/
 dist/
 *.egg-info
 .env
+compose/*
+!compose/*.pem
+!compose/ssh

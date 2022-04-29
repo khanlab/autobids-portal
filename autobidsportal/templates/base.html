@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width-device-width, initial-scale=1">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='styles/survey.css') }}">
-    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans" rel="stylesheet">
-
-    <title>{% block title %}{% endblock %} - Autobids Portal</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width-device-width, initial-scale=1" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+          crossorigin="anonymous"/>
+    <link rel="stylesheet"
+          type="text/css"
+          href="{{ url_for('static',filename='styles/survey.css') }}"/>
+    <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans"
+          rel="stylesheet"/>
+    <title>
+      {% block title %}
+      {% endblock title %}
+    - Autobids Portal</title>
   </head>
   <body>
     <nav class="navbar navbar-default navbar-expand-md navbar-light bg-light">
@@ -20,39 +27,46 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="navbar-nav navbar-right">
             {% if current_user.is_anonymous %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.login') }}">Login</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('portal_blueprint.login') }}">Login</a>
+              </li>
             {% else %}
               {% if current_user.admin == True %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.user_list') }}">Admin</a></li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('portal_blueprint.user_list') }}">Admin</a>
+                </li>
               {% endif %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Results</a></li>
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('portal_blueprint.logout') }}">Logout</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Results</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('portal_blueprint.logout') }}">Logout</a>
+              </li>
             {% endif %}
           </ul>
         </div>
       </div>
     </nav>
-
     {% block content %}
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for message in messages %}
-          <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for message in messages %}
+            <div class="container">
               <div class="row my-3">
-                  <div class="col">
-                      <div class="alert alert-info" role="alert">{{ message }}</div>
-                  </div>
+                <div class="col">
+                  <div class="alert alert-info" role="alert">{{ message }}</div>
+                </div>
               </div>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-    {% block app_content %}{% endblock %}
-    </div>
-    {% endblock %}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block app_content %}
+      {% endblock app_content %}
+    {% endblock content %}
     {% block scripts %}
-    <script type="text/javascript" src={{url_for("static", filename="lib/autobids-react/dist/index.js") }}></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
-    {% endblock %}
+      <script type="text/javascript" src={{url_for("static", filename="lib/autobids-react/dist/index.js") }}></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    {% endblock scripts %}
   </body>
 </html>
