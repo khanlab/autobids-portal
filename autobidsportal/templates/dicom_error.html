@@ -1,19 +1,21 @@
 {% extends "base.html" %}
-
-{% block title %}DICOM Error{% endblock %}
-
+{% block title %}
+  DICOM Error
+{% endblock title %}
 {% block app_content %}
-<div class="container">
+  <div class="container">
     <div class="row my-3">
-        <div class="col">
-            <div class="card">
-                <div class="card-body">
-                    <h1 class="card-title">{{ err }}</h1>
-                    <p class="card-text">{{ err_cause }}</p>
-                    <a class="card-link" href="{{ url_for('portal_blueprint.results') }}">Back</a>
-                </div>
-            </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h1 class="card-title">{{ err }}</h1>
+            <p class="card-text">
+              {{ err_cause }}
+            </p>
+            <a class="card-link" href="{{ url_for('portal_blueprint.results') }}">Back</a>
+          </div>
         </div>
+      </div>
     </div>
-</div>
-{% endblock %}
+  </div>
+{% endblock app_content %}

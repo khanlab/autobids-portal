@@ -1,194 +1,250 @@
 {% extends "base.html" %}
-
-{% block title %}Study {{ submitter_answer.id }}{% endblock %}
-
+{% block title %}
+  Study {{ submitter_answer.id }}
+{% endblock title %}
 {% block app_content %}
-<div class="container">
+  <div class="container">
     {% if current_user.is_authenticated %}
-        {% with current_tasks_in_progress = submitter_answer.get_tasks_in_progress() %}
-            {% if current_tasks_in_progress %}
-                {% for task in current_tasks_in_progress %}
-                    {% if task.task_button_id == button_id %}
-                        <div class="row my-3">
-                            <div class="col">
-                            {% if task.error == None %}
-                                <div class="alert alert-warning" role="alert">
-                                    {{ task.description }}
-                                    <span id="{{ task.id }}-progress">In Progress</span>
-                                </div>
-                            {% else %}
-                                <div class="alert alert-danger" role="alert">
-                                    {{ task.description }}
-                                    <span id="{{ task.id }}-progress">Failed</span>
-                                </div>
-                            {% endif %}
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+      {% with current_tasks_in_progress = submitter_answer.get_tasks_in_progress() %}
+        {% if current_tasks_in_progress %}
+          {% for task in current_tasks_in_progress %}
+            {% if task.task_button_id == button_id %}
+              <div class="row my-3">
+                <div class="col">
+                  {% if task.error == None %}
+                    <div class="alert alert-warning" role="alert">
+                      {{ task.description }}
+                      <span id="{{ task.id }}-progress">In Progress</span>
+                    </div>
+                  {% else %}
+                    <div class="alert alert-danger" role="alert">
+                      {{ task.description }}
+                      <span id="{{ task.id }}-progress">Failed</span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
             {% endif %}
-        {% endwith %}
-        {% with completed_tasks = current_user.get_completed_tasks() %}
-            {% if completed_tasks %}
-                {% for task in completed_tasks %}
-                    {% if task.task_button_id == button_id %}
-                        {% if task.end_time>=current_user.last_seen %}
-                            <div class="row my-3">
-                                <div class="col">
-                                {% if task.error == None %}
-                                    <div class="alert alert-success" role="alert">
-                                        {{ task.description }}
-                                        <span id="{{ task.id }}-progress">Complete</span>
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-danger" role="alert">
-                                        {{ task.description }}
-                                        <span id="{{ task.id }}-progress">Failed</span>
-                                    </div>
-                                {% endif %}
-                                </div>
-                            </div>
-                        {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% with completed_tasks = current_user.get_completed_tasks() %}
+        {% if completed_tasks %}
+          {% for task in completed_tasks %}
+            {% if task.task_button_id == button_id %}
+              {% if task.end_time>=current_user.last_seen %}
+                <div class="row my-3">
+                  <div class="col">
+                    {% if task.error == None %}
+                      <div class="alert alert-success" role="alert">
+                        {{ task.description }}
+                        <span id="{{ task.id }}-progress">Complete</span>
+                      </div>
+                    {% else %}
+                      <div class="alert alert-danger" role="alert">
+                        {{ task.description }}
+                        <span id="{{ task.id }}-progress">Failed</span>
+                      </div>
                     {% endif %}
-                {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
             {% endif %}
-        {% endwith %}
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
     {% endif %}
-
     <div class="row">
-        <div class="col-12">
-            <h2 class="sub-header">{{submitter_answer.principal}}^{{submitter_answer.project_name}} - {{submitter_answer.patient_str}}</h2>
-            <div class="table-responsive">
-                <table class="table table-light"></p>
-                    <tr>
-                        <th scope="col"></th>
-                        <th scope="col">Which Scanner</th>
-                        <th scope="col">Number of Expected Scans</th>
-                        <th scope="col">Is this Study Longitudinal or Multi-Session</th>
-                        <th scope="col">Principal or "PI" Identifier</th>
-                        <th scope="col">Project Name Identifier</th>
-                        <th scope="col">Overridden Dataset Name</th>
-                        <th scope="col">Comment</th>
-                    </tr>
-                    <tr>
-                        <td>
-                            <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}" role="button">Query DICOM server: Date and Description</a>
-                            <br>
-                            <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}", role="button">Query DICOM server: Date only</a>
-                            <br>
-                            <a class="btn btn-primary my-1" href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}" role="button">Query DICOM server: Description only</a>
-                        </td>
-                        <td>
-                            {% if submitter_answer.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                        </td>
-                        <td>{{ submitter_answer.scan_number }}</td>
-                        <td>
-                            {% if submitter_answer.study_type == True %} Yes {% else %} No {% endif %} 
-                        </td>
-                        <td>{{ submitter_answer.principal }}</td>
-                        <td>{{ submitter_answer.project_name }}</td>
-                        <td>{{ submitter_answer.dataset_name }}</td>
-                        <td>{{ submitter_answer.comment.capitalize() }}</td>
-                    </tr>
-                </table>
-            </div>
+      <div class="col-12">
+        <h2 class="sub-header">
+          {{ submitter_answer.principal }}^{{ submitter_answer.project_name }} - {{ submitter_answer.patient_str }}
+        </h2>
+        <div class="table-responsive">
+          <table class="table table-light">
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Which Scanner</th>
+              <th scope="col">Number of Expected Scans</th>
+              <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+              <th scope="col">Principal or "PI" Identifier</th>
+              <th scope="col">Project Name Identifier</th>
+              <th scope="col">Overridden Dataset Name</th>
+              <th scope="col">Comment</th>
+            </tr>
+            <tr>
+              <td>
+                <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}"
+                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}"
+                   role="button">Query DICOM server: Date and Description</a>
+                <br />
+                <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}"
+                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}"
+                   role="button">Query DICOM server: Date only</a>
+                <br />
+                <a class="btn btn-primary my-1"
+                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}"
+                   role="button">Query DICOM server: Description only</a>
+              </td>
+              <td>
+                {% if submitter_answer.scanner == 'type1' %}
+                  3T
+                {% else %}
+                  7T
+                {% endif %}
+              </td>
+              <td>{{ submitter_answer.scan_number }}</td>
+              <td>
+                {% if submitter_answer.study_type == True %}
+                  Yes
+                {% else %}
+                  No
+                {% endif %}
+              </td>
+              <td>{{ submitter_answer.principal }}</td>
+              <td>{{ submitter_answer.project_name }}</td>
+              <td>{{ submitter_answer.dataset_name }}</td>
+              <td>{{ submitter_answer.comment.capitalize() }}</td>
+            </tr>
+          </table>
         </div>
+      </div>
     </div>
-
     <div class="row mb-2">
-        <div class="col text-center">
-            <a href="{{url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}" class="btn btn-link" role="button">Study Config</a>
-            <a href="{{ url_for('portal_blueprint.study_demographics', study_id=submitter_answer.id) }}" class="btn btn-link" role="button">Submitter Demographics</a>
-        </div>
+      <div class="col text-center">
+        <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}"
+           class="btn btn-link"
+           role="button">Study Config</a>
+        <a href="{{ url_for('portal_blueprint.study_demographics', study_id=submitter_answer.id) }}"
+           class="btn btn-link"
+           role="button">Submitter Demographics</a>
+      </div>
     </div>
-
     <div class="row mb-2">
-        <div class="col text-center">
-            <form method="POST" action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
-                <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary"></input>
-            </form>
-        </div>
+      <div class="col text-center">
+        <form method="post"
+              action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
+          <input type="submit"
+                 name="cfmm2tar"
+                 value="Run cfmm2tar"
+                 class="btn btn-primary"/>
+        </form>
+      </div>
     </div>
-
     <div class="row">
-        <div class="col-6">
-            <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
-            <div class="table-responsive" style="max-height: 400px;">
-                <table class="table table-light overflow-auto">
-                    <tr>
-                        <th scope="col">Start Date and Time</th>
-                        <th scope="col">End Date and Time</th>
-                        <th scope="col">Completion Status</th>
-                    </tr>
-
-                    {% for t in cfmm2tar_tasks %}
-                    <tr>
-                        <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                        <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
-                        <td>
-                            {% if t.complete == True %}
-                                {% if t.success == True %}
-                                    Completed Successfully
-                                {% else %}
-                                    Failed
-                                {% endif %}
-                            {% else %} 
-                                In Progress
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
+      <div class="col-6">
+        <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
+        <div class="table-responsive" style="max-height: 400px;">
+          <table class="table table-light overflow-auto">
+            <tr>
+              <th scope="col">Start Date and Time</th>
+              <th scope="col">End Date and Time</th>
+              <th scope="col">
+                Completion Status
+              </th>
+            </tr>
+            {% for t in cfmm2tar_tasks %}
+              <tr>
+                <td>
+                  {% if t.start_time != None %}
+                    {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
+                  {% else %}
+                    {{ t.start_time }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if t.end_time != None %}
+                    {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
+                  {% else %}
+                    {{ t.end_time }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if t.complete == True %}
+                    {% if t.success == True %}
+                      Completed Successfully
+                    {% else %}
+                      Failed
+                    {% endif %}
+                  {% else %}
+                    In Progress
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
         </div>
-        <div class="col-6">
-            <h2 class="sub-header">Most Recent Cfmm2tar Results</h2>
-            <div id="tar-table-mount" />
-        </div>
+      </div>
+      <div class="col-6">
+        <h2 class="sub-header">
+          Most Recent Cfmm2tar Results
+        </h2>
+        <div id="tar-table-mount" />
+      </div>
     </div>
-
     <div class="row">
-        <div class="col-6">
-            <h2 class="sub-header">Previous Tar2bids Runs</h2>
-            <table class="table table-light">
-                <tr>
-                    <th scope="col">Start Date and Time</th>
-                    <th scope="col">End Date and Time</th>
-                    <th scope="col">Completion Status</th>
-                </tr>
-
-                {% for t in tar2bids_tasks %}
-                <tr>
-                    <td>{% if t.start_time != None %} {{ t.start_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.start_time }} {% endif %}</td>
-                    <td>{% if t.end_time != None %} {{ t.end_time.strftime("%Y-%m-%d %H:%M") }} {% else %} {{ t.end_time }} {% endif %}</td>
-                    <td>
-                        {% if t.complete == True %} 
-                            {% if t.success == True %} 
-                                Completed Successfully
-                            {% else %} 
-                                Failed
-                            {% endif %}
-                        {% else %} 
-                            In Progress
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
+      <div class="col-6">
+        <h2 class="sub-header">
+          Previous Tar2bids Runs
+        </h2>
+        <table class="table table-light">
+          <tr>
+            <th scope="col">
+              Start Date and Time
+            </th>
+            <th scope="col">
+              End Date and Time
+            </th>
+            <th scope="col">
+              Completion Status
+            </th>
+          </tr>
+          {% for t in tar2bids_tasks %}
+            <tr>
+              <td>
+                {% if t.start_time != None %}
+                  {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
+                {% else %}
+                  {{ t.start_time }}
+                {% endif %}
+              </td>
+              <td>
+                {% if t.end_time != None %}
+                  {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
+                {% else %}
+                  {{ t.end_time }}
+                {% endif %}
+              </td>
+              <td>
+                {% if t.complete == True %}
+                  {% if t.success == True %}
+                    Completed Successfully
+                  {% else %}
+                    Failed
+                  {% endif %}
+                {% else %}
+                  In Progress
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
+      <div class="col-6">
+        <h2 class="sub-header">
+          Bids Dataset
+        </h2>
+        <div id="filetree-mount">
         </div>
-        <div class="col-6">
-            <h2 class="sub-header">Bids Dataset</h2>
-            <div id="filetree-mount"></div>
-            <a class="btn btn-danger my-2" href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}", role="button">Delete BIDS dataset</a>
-        </div>
+        <a class="btn btn-danger my-2"
+           href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}"
+           role="button">Delete BIDS dataset</a>
+      </div>
     </div>
-</div>
-
-{% endblock %}
-
+  </div>
+{% endblock app_content %}
 {% block scripts %}
-{{ super() }}
-<script type="text/javascript">
+  {{ super() }}
+  <script type="text/javascript">
     const reactElement = genAccordion({{ json_filetree|safe }});
     ReactDOM.render(reactElement, document.querySelector("#filetree-mount"));
 
@@ -209,6 +265,5 @@
       }
     )
     ReactDOM.render(tarTable, document.querySelector("#tar-table-mount"))
-</script>
-{% endblock %}
-
+  </script>
+{% endblock scripts %}

@@ -1,100 +1,165 @@
 {% extends "base.html" %}
-
-{% block title %}Studies{% endblock %}
-
+{% block title %}
+  Studies
+{% endblock title %}
 {% block app_content %}
-<div class="container">
+  <div class="container">
     <div class="row my-3">
-        <div class="col">
-            <div class="card">
-                <div class="card-body">
-                    <h1>Studies</h1>
-                    <p>Want to export survey answers? <a class="download" href="{{ url_for('portal_blueprint.download') }}">Click to download!</a></p>
-                </div>
-            </div>
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h1>Studies</h1>
+            <p>
+              Want to export survey answers? <a class="download" href="{{ url_for('portal_blueprint.download') }}">Click to download!</a>
+            </p>
+          </div>
         </div>
+      </div>
     </div>
     <div class="row my-3">
-        <div class="col">
-            <table class="table table-light">
-                <tr>
-                    <th scope="col"></th>
-                    <th scope="col">Name</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Which Scanner</th>
-                    <th scope="col">Is this Study Longitudinal or Multi-Session</th>
-                    <th scope="col">Principal or "PI" Identifier</th>
-                    <th scope="col">Project Name Identifier</th>
-                    <th scope="col">Overridden Dataset Name</th>
-                    <th scope="col">Sample Date</th>
-                    <th scope="col">Retrospective Data</th>
-                    <th scope="col">Retrospective Data Start Date</th>
-                    <th scope="col">Retrospective Data End Date</th>
-                </tr>
-
-                {% for r in answers %}
-                    {% if r.submission_date > last %}
-                    <tr class="new">
-                        <td>
-                            <a class="btn btn-link" href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}" role="button">View more</a>
-                        </td>
-                        <td>{{ r.submitter_name }}</td>
-                        <td>{{ r.submitter_email }}</td>
-                        <td>
-                            {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.study_type == True %} Yes {% else %} No {% endif %} 
-                        </td>
-                        <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
-                        <td>{{ r.project_name }}</td>
-                        <td>{{ r.dataset_name }}</td>
-                        <td>
-                            {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td>
-                            <a class="btn btn-link" href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}" role="button">View more</a>
-                        </td>
-                        <td>{{ r.submitter_name }}</td>
-                        <td>{{ r.submitter_email }}</td>
-                        <td>
-                            {% if r.scanner == 'type1' %} 3T {% else %} 7T {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.study_type == True %} Yes {% else %} No {% endif %} 
-                        </td>
-                        <td>{% if r.principal == 'Other' %} {{ r.principal_other }} {% else %} {{ r.principal }} {% endif %} </td>
-                        <td>{{ r.project_name }}</td>
-                        <td>{{ r.dataset_name }}</td>
-                        <td>
-                            {% if r.sample != None %} {{ r.sample.date() }} {% else %} {{ r.sample }} {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_data == True %} Yes {% else %} None {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_start != None %} {{ r.retrospective_start.date() }} {% else %} {{ r.retrospective_start }} {% endif %} 
-                        </td>
-                        <td>
-                            {% if r.retrospective_end != None %} {{ r.retrospective_end.date() }} {% else %} {{ r.retrospective_end }} {% endif %} 
-                        </td>
-                    </tr>
-                    {% endif %}
-                {% endfor %}
-            </table>
-        </div>
+      <div class="col">
+        <table class="table table-light">
+          <tr>
+            <th scope="col"></th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Which Scanner</th>
+            <th scope="col">Is this Study Longitudinal or Multi-Session</th>
+            <th scope="col">Principal or "PI" Identifier</th>
+            <th scope="col">Project Name Identifier</th>
+            <th scope="col">Overridden Dataset Name</th>
+            <th scope="col">Sample Date</th>
+            <th scope="col">Retrospective Data</th>
+            <th scope="col">Retrospective Data Start Date</th>
+            <th scope="col">Retrospective Data End Date</th>
+          </tr>
+          {% for r in answers %}
+            {% if r.submission_date > last %}
+              <tr class="new">
+                <td>
+                  <a class="btn btn-link"
+                     href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}"
+                     role="button">View more</a>
+                </td>
+                <td>{{ r.submitter_name }}</td>
+                <td>{{ r.submitter_email }}</td>
+                <td>
+                  {% if r.scanner == 'type1' %}
+                    3T
+                  {% else %}
+                    7T
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.study_type == True %}
+                    Yes
+                  {% else %}
+                    No
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.principal == 'Other' %}
+                    {{ r.principal_other }}
+                  {% else %}
+                    {{ r.principal }}
+                  {% endif %}
+                </td>
+                <td>{{ r.project_name }}</td>
+                <td>{{ r.dataset_name }}</td>
+                <td>
+                  {% if r.sample != None %}
+                    {{ r.sample.date() }}
+                  {% else %}
+                    {{ r.sample }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_data == True %}
+                    Yes
+                  {% else %}
+                    None
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_start != None %}
+                    {{ r.retrospective_start.date() }}
+                  {% else %}
+                    {{ r.retrospective_start }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_end != None %}
+                    {{ r.retrospective_end.date() }}
+                  {% else %}
+                    {{ r.retrospective_end }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td>
+                  <a class="btn btn-link"
+                     href="{{ url_for('portal_blueprint.answer_info', study_id=r.id) }}"
+                     role="button">View more</a>
+                </td>
+                <td>{{ r.submitter_name }}</td>
+                <td>{{ r.submitter_email }}</td>
+                <td>
+                  {% if r.scanner == 'type1' %}
+                    3T
+                  {% else %}
+                    7T
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.study_type == True %}
+                    Yes
+                  {% else %}
+                    No
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.principal == 'Other' %}
+                    {{ r.principal_other }}
+                  {% else %}
+                    {{ r.principal }}
+                  {% endif %}
+                </td>
+                <td>{{ r.project_name }}</td>
+                <td>{{ r.dataset_name }}</td>
+                <td>
+                  {% if r.sample != None %}
+                    {{ r.sample.date() }}
+                  {% else %}
+                    {{ r.sample }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_data == True %}
+                    Yes
+                  {% else %}
+                    None
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_start != None %}
+                    {{ r.retrospective_start.date() }}
+                  {% else %}
+                    {{ r.retrospective_start }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.retrospective_end != None %}
+                    {{ r.retrospective_end.date() }}
+                  {% else %}
+                    {{ r.retrospective_end }}
+                  {% endif %}
+                </td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+      </div>
     </div>
-</div>
-{% endblock %}
+  </div>
+{% endblock app_content %}
