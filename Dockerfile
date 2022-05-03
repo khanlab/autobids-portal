@@ -102,6 +102,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
 #    && echo "Host ria" >> /etc/ssh/ssh_config \
 #    && echo "    Port 2222" >> /etc/ssh/ssh_config \
     && echo "[ria]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrYOPbWqP1my/WUP3KEX57u2PpUMgyLjUek5jKCXcAvDufE2oj/mO4rqSDlIGSgaxkStN+vaWDasTA1jHJsYOlUTqoiTx7oO3HetDClcIhqSjZtqEs2BVPBd3IoelAVC+JYLOOcea3Tvb+6rhnZMHgpyGmAqzZxuEiflAvcwAbBBXugok1hTbNJ8mUk6n23AFUHW3srfPuOV1Pi2CCyuHJHrAJIcUr5ZV3HWfF54s3MZXFq8mjiOULulQIyZHYMJ5MhcSY8qJKX61mikMYcoETa3/OuD3505HRxy3tcawV0epRyw3useOBr13gvKkregJakMeKWIb8rONWiubkYcsbFrMj108XRuNmwYQWN1YT7D4yOFuAw/4v0qx8bVZ2yp9cbIKSa8JD4c7EkUUdtop+wjM6NEpyvhFwD1V54/5gEaEtFCEvg4e6IUTZ0zHfac1Cx6uvms47iJ38+c5R+l9/F8z2/ieBV6C0QO6pOAHTqeeRm9dKNnIYt7087FVGb3E=" >> /etc/ssh/ssh_known_hosts \
+    && echo "[ria]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+xIp6UpeOg1k446jCi5A/qgj6tx/vczhapukCejDf1N9YgCEWBca+nRdGRL4+gjCoDxPqgURu8ua3HXIMYqt74Tc/5ZK0bP4/7746X5ZBRFpv92gYKOunQBMkcnt2XUUDJ7TCE1VDnRJJyEcnGrGvgZBua8yvuCX3vhxCP2ODWoj32JD+f40fFzEtObcrecDCdre4IGn/QSvFzyrtUj0nrO8iSOdq7kp0mJZTPLSC447IlCA/KDTAJ5MBCG/ViHAenb0e3hjWRsiAuh9XnhqzwLd/f/XqD1ABK5iPYCvYUi1bfEJKFVuVWqF+/4IdGrB98ukA6KyuNrNe3AGYcTo5nABPiQ2AAC9p+UroQQY2DzZJ1nRwLFKU9BJSgoscZsiNxDb/8RjR+z8jiLEdp8HqhUsDIDbVA6V2f8vUxiKM4oZ/J/1HMczuQ81gQLKGvbbEnw4EOrHJKPYWm0U6c8F1sFr35a3gHFzW+cbkiihS9oDnLffPui6/3ULpTyVmNV0=" >> /etc/ssh/ssh_known_hosts \
     && git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com"
 
