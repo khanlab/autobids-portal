@@ -300,7 +300,10 @@ def answer_info(study_id):
         submitter_answer=study,
         cfmm2tar_tasks=cfmm2tar_tasks,
         button_id=study_id,
-        form_data=zip(form.tar_files, cfmm2tar_file_names, cfmm2tar_files),
+        form_data=sorted(
+            zip(form.tar_files, cfmm2tar_file_names, cfmm2tar_files),
+            key=lambda item: item[1],
+        ),
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
         json_filetree=json_filetree,
