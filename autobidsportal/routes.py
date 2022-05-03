@@ -50,6 +50,7 @@ from autobidsportal.datalad import (
     delete_tar_file,
     RiaDataset,
     delete_all_content,
+    rename_tar_file,
 )
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
@@ -431,6 +432,38 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
         delete_tar_file(study_id, cfmm2tar_output.tar_file)
         db.session.delete(cfmm2tar_output)
         db.session.commit()
+    return answer_info(study_id)
+
+
+@portal_blueprint.route(
+    "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>/rename",
+    methods=["POST"],
+)
+@login_required
+def rename_cfmm2tar(study_id, cfmm2tar_id):
+    """Rename a single tar file."""
+    study = Study.query.get_or_404(study_id)
+    check_current_authorized(study)
+    current_app.logger.info(
+        "Attempting to rename cfmm2tar output %s", cfmm2tar_id
+    )
+    cfmm2tar_output = Cfmm2tarOutput.query.get_or_404(cfmm2tar_id)
+    current_app.logger.info(
+        "Checking that cfmm2tar output %s belongs to study %s",
+        cfmm2tar_id,
+        study_id,
+    )
+    if cfmm2tar_output.study_id != study_id:
+        abort(404)
+    new_name = request.form["new_name"]
+    current_app.logger.info(
+        "Renaming cfmm2tar output %s to %s.",
+        cfmm2tar_output.tar_file,
+        new_name,
+    )
+    rename_tar_file(study_id, cfmm2tar_output.tar_file, new_name)
+    cfmm2tar_output.tar_file = new_name
+    db.session.commit()
     return answer_info(study_id)
 
 

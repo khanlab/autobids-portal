@@ -121,6 +121,27 @@ def delete_tar_file(study_id, tar_file):
         push_dataset(str(path_dataset))
 
 
+def rename_tar_file(study_id, tar_file, new_name):
+    """Rename a single tar file and push the results."""
+    dataset = DataladDataset.query.filter_by(
+        study_id=study_id, dataset_type=DatasetType.SOURCE_DATA
+    ).first_or_404()
+    with tempfile.TemporaryDirectory(
+        dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+    ) as download_dir, RiaDataset(
+        download_dir, dataset.ria_alias
+    ) as path_dataset:
+        to_rename = path_dataset / tar_file
+        new_name = path_dataset / Path(new_name).name
+        current_app.logger.info(
+            "Renaming %s to %s", str(to_rename), str(new_name)
+        )
+        to_rename.rename(new_name)
+        finalize_dataset_changes(
+            str(path_dataset), f"Rename {to_rename} to {new_name}"
+        )
+
+
 def delete_all_content(path_dataset):
     """Delete everything in a dataset and save."""
     for entry in os.scandir(path_dataset):

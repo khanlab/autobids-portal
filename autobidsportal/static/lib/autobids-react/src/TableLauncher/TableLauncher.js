@@ -48,14 +48,27 @@ function TableLauncher(props) {
                 date={child.date}
                 isActive={activeIds.includes(child.id)}
                 deleteUrl={child.deleteUrl}
+                renameUrl={child.renameUrl}
                 updateActive={changeActiveId}
               />
             ))}
           </tbody>
         </table>
       </div>
-      <button type="button" className="btn btn-secondary btn-sm me-1 mb-1" onClick={selectAll}>Select all</button>
-      <button type="button" className="btn btn-secondary btn-sm mb-1" onClick={deselectAll}>Deselect all</button>
+      <button
+        type="button"
+        className="btn btn-secondary btn-sm me-1 mb-1"
+        onClick={selectAll}
+      >
+        Select all
+      </button>
+      <button
+        type="button"
+        className="btn btn-secondary btn-sm mb-1"
+        onClick={deselectAll}
+      >
+        Deselect all
+      </button>
       <br />
       <input
         type="submit"
