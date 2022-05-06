@@ -332,7 +332,9 @@ def study_config(study_id):
 
     form = StudyConfigForm()
     if request.method == "POST":
-        study, to_add, to_delete, users_authorized = form.update_study(study)
+        study, to_add, to_delete, users_authorized = form.update_study(
+            study, user_is_admin=current_user.admin
+        )
         study.users_authorized = [
             User.query.get(user_id) for user_id in users_authorized
         ]
@@ -368,7 +370,12 @@ def study_config(study_id):
         study, principal_names, available_heuristics, User.query.all()
     )
 
-    return render_template("study_config.html", form=form, study=study)
+    return render_template(
+        "study_config.html",
+        form=form,
+        study=study,
+        admin_disable=not current_user.admin,
+    )
 
 
 @portal_blueprint.route("/results/<int:study_id>/cfmm2tar", methods=["POST"])
@@ -486,7 +493,9 @@ def delete_tar2bids(study_id):
     ).first_or_404()
     with tempfile.TemporaryDirectory(
         dir=current_app.config["TAR2BIDS_DOWNLOAD_DIR"]
-    ) as bids_dir, RiaDataset(bids_dir, dataset.ria_alias) as path_dataset:
+    ) as bids_dir, RiaDataset(
+        bids_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+    ) as path_dataset:
         delete_all_content(path_dataset)
         study.dataset_content = None
         db.session.commit()

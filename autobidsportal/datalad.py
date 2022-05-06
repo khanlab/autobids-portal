@@ -13,20 +13,28 @@ from autobidsportal.models import (
     db,
     DatasetType,
     DataladDataset,
+    Study,
 )
 
 
 class RiaDataset:
     """Context manager to clone/create a local RIA dataset."""
 
-    def __init__(self, parent, alias):
+    def __init__(self, parent, alias, ria_url=None):
         self.parent = parent
         self.alias = alias
         self.path_dataset = None
+        self.ria_url = (
+            ria_url
+            if ria_url is not None
+            else current_app.config["DATALAD_RIA_URL"]
+        )
 
     def __enter__(self):
         self.path_dataset = Path(self.parent) / self.alias
-        clone_ria_dataset(str(self.path_dataset), self.alias)
+        clone_ria_dataset(
+            str(self.path_dataset), self.alias, ria_url=self.ria_url
+        )
         return self.path_dataset
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -59,25 +67,35 @@ def ensure_dataset_exists(study_id, dataset_type):
     dataset = DataladDataset.query.filter_by(
         study_id=study_id, dataset_type=dataset_type
     ).one_or_none()
+    study = Study.query.get(study_id)
     if dataset is None:
         alias = get_alias(study_id, dataset_type)
         with tempfile.TemporaryDirectory(
             dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
         ) as dir_temp:
-            create_ria_dataset(str(Path(dir_temp) / alias), alias)
+            create_ria_dataset(
+                str(Path(dir_temp) / alias),
+                alias,
+                ria_url=study.custom_ria_url,
+            )
         dataset = DataladDataset(
-            study_id=study_id, dataset_type=dataset_type, ria_alias=alias
+            study_id=study_id,
+            dataset_type=dataset_type,
+            ria_alias=alias,
+            custom_ria_url=study.custom_ria_url,
         )
         db.session.add(dataset)
         db.session.commit()
     return dataset
 
 
-def create_ria_dataset(path, alias):
+def create_ria_dataset(path, alias, ria_url=None):
     """Create a dataset in the configured RIA store."""
     datalad_api.create(path, cfg_proc="text2git")
     datalad_api.create_sibling_ria(
-        current_app.config["DATALAD_RIA_URL"],
+        ria_url
+        if ria_url is not None
+        else current_app.config["DATALAD_RIA_URL"],
         "origin",
         dataset=path,
         alias=alias,
@@ -86,13 +104,15 @@ def create_ria_dataset(path, alias):
     push_dataset(str(path))
 
 
-def clone_ria_dataset(path, alias):
+def clone_ria_dataset(path, alias, ria_url=None):
     """Clone the configures tar files dataset to a given location."""
     current_app.logger.info("Cloning tar files dataset to %s", path)
     datalad_api.clone(
         "".join(
             [
-                current_app.config["DATALAD_RIA_URL"],
+                ria_url
+                if ria_url is not None
+                else current_app.config["DATALAD_RIA_URL"],
                 "#~",
                 alias,
             ]
@@ -109,7 +129,7 @@ def delete_tar_file(study_id, tar_file):
     with tempfile.TemporaryDirectory(
         dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
     ) as download_dir, RiaDataset(
-        download_dir, dataset.ria_alias
+        download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
     ) as path_dataset:
         to_delete = str(path_dataset / tar_file)
         current_app.logger.info("Removing %s", to_delete)
@@ -129,7 +149,7 @@ def rename_tar_file(study_id, tar_file, new_name):
     with tempfile.TemporaryDirectory(
         dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
     ) as download_dir, RiaDataset(
-        download_dir, dataset.ria_alias
+        download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
     ) as path_dataset:
         to_rename = path_dataset / tar_file
         new_name = path_dataset / Path(new_name).name
