@@ -193,7 +193,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
             with tempfile.TemporaryDirectory(
                 dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
             ) as download_dir, RiaDataset(
-                download_dir, dataset.ria_alias
+                download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
             ) as path_dataset:
                 try:
                     result = run_cfmm2tar_with_retries(
@@ -281,9 +281,11 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                 with RiaDataset(
                     download_dir,
                     dataset_tar.ria_alias,
+                    ria_url=dataset_tar.custom_ria_url,
                 ) as path_dataset_tar, RiaDataset(
                     bids_dir,
                     dataset_bids.ria_alias,
+                    ria_url=dataset_bids.custom_ria_url,
                 ) as path_dataset_study:
                     tar_path = get_tar_file_from_dataset(
                         tar_file, path_dataset_tar

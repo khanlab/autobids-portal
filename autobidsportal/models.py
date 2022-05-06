@@ -217,6 +217,8 @@ class Study(db.Model):
     dataset_content = db.Column(db.JSON(), nullable=True)
     datalad_datasets = db.relationship("DataladDataset", backref="study")
 
+    custom_ria_url = db.Column(db.Text, nullable=True)
+
     def __repr__(self):
         answer_cols = (
             self.status,
@@ -247,6 +249,16 @@ class Study(db.Model):
     def get_tasks_in_progress(self):
         """Return all active tasks associated with this study."""
         return Task.query.filter_by(study=self, complete=False).all()
+
+    def update_custom_ria_url(self, new_url):
+        """Update the custom ria URL for this study and its associated
+        datasets.
+        """
+        self.custom_ria_url = new_url
+        for (
+            dataset
+        ) in self.datalad_datasets:  # pylint: disable=not-an-iterable
+            dataset.custom_ria_url = new_url
 
 
 class Notification(db.Model):
@@ -351,6 +363,7 @@ class DataladDataset(db.Model):
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
     dataset_type = db.Column(db.Enum(DatasetType), nullable=False)
     ria_alias = db.Column(db.String, nullable=False, unique=True)
+    custom_ria_url = db.Column(db.Text, nullable=True)
     db.UniqueConstraint(study_id, dataset_type)
 
 

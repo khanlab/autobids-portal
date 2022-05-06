@@ -56,6 +56,10 @@
                 {{ form.patient_re(class="form-control")}}
               </li>
               <li class="list-group-item">
+                {{ form.custom_ria_url.label(class="form-label") }}
+                {{ form.custom_ria_url(class="form-control", disabled=admin_disable)}}
+              </li>
+              <li class="list-group-item">
                 {{ form.users_authorized.label(class="form-label")}}
                 {% for choice in form.users_authorized %}
                   <div class="form-check">

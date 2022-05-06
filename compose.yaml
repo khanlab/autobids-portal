@@ -87,6 +87,7 @@ services:
     ports: ["2222:2222"]
     volumes:
       - "./compose/ria-store-ssh:/ria-store"
+      - "./compose/ria-store-custom:/ria-store-custom"
       - "./compose/ssh:/ssh"
 secrets:
   orthanc.json:

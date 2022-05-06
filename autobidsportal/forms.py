@@ -281,6 +281,7 @@ class StudyConfigForm(FlaskForm):
     )
     newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
+    custom_ria_url = StringField("Custom RIA URL (Editable by admin)")
 
     def defaults_from_study(self, study, principals, heuristics, users):
         """Set up form defaults given options from the DB."""
@@ -349,10 +350,13 @@ class StudyConfigForm(FlaskForm):
         self.users_authorized.default = [
             user.id for user in study.users_authorized
         ]
+        self.custom_ria_url.default = (
+            study.custom_ria_url if study.custom_ria_url is not None else ""
+        )
 
         self.process()
 
-    def update_study(self, study):
+    def update_study(self, study, user_is_admin=False):
         """Process updates to a study from this form.
 
         Parameters
@@ -420,6 +424,11 @@ class StudyConfigForm(FlaskForm):
                 )
             )
         ids_authorized = self.users_authorized.data
+        if user_is_admin:
+            if self.custom_ria_url.data == "":
+                study.update_custom_ria_url(None)
+            else:
+                study.update_custom_ria_url(self.custom_ria_url.data)
 
         return study, to_add, to_delete, ids_authorized
 
