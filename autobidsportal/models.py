@@ -291,6 +291,7 @@ class Task(db.Model):
     error = db.Column(db.String(128), nullable=True)
     start_time = db.Column(db.DateTime, nullable=False)
     end_time = db.Column(db.DateTime, nullable=True)
+    log = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         task_cols = (

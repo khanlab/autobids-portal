@@ -67,6 +67,12 @@ def _set_task_error(job_id, msg):
     db.session.commit()
 
 
+def _append_task_log(job_id, log):
+    task = Task.query.get(job_id)
+    task.log = "".join([task.log if task.log is not None else "", log])
+    db.session.commit()
+
+
 def run_cfmm2tar_with_retries(out_dir, target, study_description):
     """Run cfmm2tar, retrying multiple times if it times out.
 
@@ -291,7 +297,7 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                         tar_file, path_dataset_tar
                     )
                     get_all_dataset_content(path_dataset_study)
-                    gen_utils().run_tar2bids(
+                    log = gen_utils().run_tar2bids(
                         Tar2bidsArgs(
                             output_dir=path_dataset_study,
                             tar_files=[tar_path],
@@ -308,6 +314,7 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                         path_dataset_study, {".git", ".datalad"}
                     )
                     db.session.commit()
+                    _append_task_log(job.id, log)
             db.session.add(
                 Tar2bidsOutput(
                     study_id=study_id,
