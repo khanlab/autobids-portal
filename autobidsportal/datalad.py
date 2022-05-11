@@ -165,7 +165,12 @@ def rename_tar_file(study_id, tar_file, new_name):
 def delete_all_content(path_dataset):
     """Delete everything in a dataset and save."""
     for entry in os.scandir(path_dataset):
-        if entry.name not in {".git", ".datalad", ".dataladattributes"}:
+        if entry.name not in {
+            ".git",
+            ".gitattributes",
+            ".datalad",
+            ".dataladattributes",
+        }:
             if entry.is_file():
                 Path(entry.path).unlink()
             elif entry.is_dir():
