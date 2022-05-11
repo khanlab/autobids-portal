@@ -447,6 +447,7 @@ class Dcm4cheUtils:
                 stderr=subprocess.STDOUT,
                 stdout=subprocess.PIPE,
                 check=True,
+                text=True,
             ).stdout
         except subprocess.CalledProcessError as err:
             current_app.logger.warning("tar2bids failed: %s", err.stderr)
