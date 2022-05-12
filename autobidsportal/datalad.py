@@ -190,6 +190,14 @@ def get_all_dataset_content(path_dataset):
     datalad_api.get(dataset=path_dataset)
 
 
+def archive_dataset(path_dataset, path_out):
+    """Archive a dataset to a given path."""
+    get_all_dataset_content(str(path_dataset))
+    datalad_api.export_archive(
+        filename=str(path_out), dataset=str(path_dataset), archivetype="zip"
+    )
+
+
 def finalize_dataset_changes(path, message):
     """Save a dataset's changes and push them back to the origin sibling."""
     datalad_api.save(dataset=str(path), message=message)
