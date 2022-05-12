@@ -442,12 +442,18 @@ class Dcm4cheUtils:
         )
         try:
             current_app.logger.info("Running tar2bids.")
-            subprocess.run(arg_list, check=True)
+            out = subprocess.run(
+                arg_list,
+                stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE,
+                check=True,
+                text=True,
+            ).stdout
         except subprocess.CalledProcessError as err:
             current_app.logger.warning("tar2bids failed: %s", err.stderr)
             raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
 
-        return args.output_dir
+        return out
 
 
 def gen_utils():
