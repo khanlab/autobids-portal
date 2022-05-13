@@ -5,8 +5,6 @@ import os
 from pathlib import Path
 import shutil
 
-from flask import current_app
-
 
 def _check_existing(path_incoming, path_existing, dir_incoming, contents):
     ignore = []
@@ -29,13 +27,10 @@ def merge_datasets(path_incoming, path_existing):
         )
 
     names_existing = {entry.name for entry in os.scandir(path_existing)}
-    current_app.logger.info(f"Existing names: {names_existing}")
     for entry in os.scandir(path_incoming):
-        current_app.logger.info(f"Processing {entry.name}")
         if entry.name == "code":
             continue
         if entry.is_dir():
-            current_app.logger.info(f"Copying directory {entry.name}")
             shutil.copytree(
                 entry.path,
                 path_existing / entry.name,
@@ -44,11 +39,8 @@ def merge_datasets(path_incoming, path_existing):
             )
             shutil.rmtree(entry.path)
         elif entry.is_file() and (entry.name not in names_existing):
-            current_app.logger.info(f"Copying file {entry.name}")
             shutil.copy2(entry.path, path_existing)
             Path(entry.path).unlink()
-        else:
-            current_app.logger.info(f"Ignoring existing file {entry.name}")
     if (path_incoming / "participants.tsv").exists():
         merge_participants_tsv(
             path_incoming / "participants.tsv",
