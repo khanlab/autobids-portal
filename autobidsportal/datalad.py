@@ -171,7 +171,7 @@ def delete_all_content(path_dataset):
             ".datalad",
             ".dataladattributes",
         }:
-            if entry.is_file():
+            if entry.is_file() or entry.is_symlink():
                 Path(entry.path).unlink()
             elif entry.is_dir():
                 shutil.rmtree(entry.path)

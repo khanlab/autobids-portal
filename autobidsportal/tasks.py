@@ -23,8 +23,8 @@ from autobidsportal.datalad import (
     ensure_dataset_exists,
     finalize_dataset_changes,
     get_tar_file_from_dataset,
-    get_all_dataset_content,
 )
+from autobidsportal.bids import merge_datasets
 from autobidsportal.dcm4cheutils import (
     gen_utils,
     Tar2bidsArgs,
@@ -288,23 +288,29 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                     download_dir,
                     dataset_tar.ria_alias,
                     ria_url=dataset_tar.custom_ria_url,
-                ) as path_dataset_tar, RiaDataset(
-                    bids_dir,
-                    dataset_bids.ria_alias,
-                    ria_url=dataset_bids.custom_ria_url,
-                ) as path_dataset_study:
+                ) as path_dataset_tar:
                     tar_path = get_tar_file_from_dataset(
                         tar_file, path_dataset_tar
                     )
-                    get_all_dataset_content(path_dataset_study)
-                    log = gen_utils().run_tar2bids(
-                        Tar2bidsArgs(
-                            output_dir=path_dataset_study,
-                            tar_files=[tar_path],
-                            heuristic=study.heuristic,
-                            patient_str=study.subj_expr,
-                            temp_dir=temp_dir,
-                        )
+                    _append_task_log(
+                        job.id,
+                        gen_utils().run_tar2bids(
+                            Tar2bidsArgs(
+                                output_dir=pathlib.Path(bids_dir) / "incoming",
+                                tar_files=[tar_path],
+                                heuristic=study.heuristic,
+                                patient_str=study.subj_expr,
+                                temp_dir=temp_dir,
+                            )
+                        ),
+                    )
+                with RiaDataset(
+                    pathlib.Path(bids_dir) / "existing",
+                    dataset_bids.ria_alias,
+                    ria_url=dataset_bids.custom_ria_url,
+                ) as path_dataset_study:
+                    merge_datasets(
+                        pathlib.Path(bids_dir) / "incoming", path_dataset_study
                     )
                     finalize_dataset_changes(
                         path_dataset_study,
@@ -314,7 +320,6 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                         path_dataset_study, {".git", ".datalad"}
                     )
                     db.session.commit()
-                    _append_task_log(job.id, log)
             db.session.add(
                 Tar2bidsOutput(
                     study_id=study_id,
