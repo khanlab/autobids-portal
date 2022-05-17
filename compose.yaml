@@ -18,7 +18,9 @@ services:
       AUTOBIDS_TAR2BIDS_PREFIX: ""
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
       AUTOBIDS_DATALAD_RIA_URL: "ria+ssh://user@ria:2222/ria-store"
-      AUTOBIDS_DATALAD_RIA_TAR_ALIAS: "tar-files"
+      AUTOBIDS_ARCHIVE_BASE_URL: "user@archive:/archive"
+      AUTOBIDS_ARCHIVE_SSH_PORT: "2222"
+      AUTOBIDS_ARCHIVE_SSH_KEY: "/ssh/id_rsa"
       AUTOBIDS_MAIL_ENABLED: "false"
       AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
       AUTOBIDS_DICOM_SERVER_USERNAME: "user"
@@ -88,6 +90,18 @@ services:
     volumes:
       - "./compose/ria-store-ssh:/ria-store"
       - "./compose/ria-store-custom:/ria-store-custom"
+      - "./compose/ssh:/ssh"
+  archive:
+    image: lscr.io/linuxserver/openssh-server
+    hostname: archive
+    environment:
+      PUBLIC_KEY_FILE: "/ssh/id_rsa.pub"
+      SUDO_ACCESS: "true"
+      USER_NAME: user
+      PUID: 1001
+      PGID: 1001
+    volumes:
+      - "./compose/archive:/archive"
       - "./compose/ssh:/ssh"
 secrets:
   orthanc.json:

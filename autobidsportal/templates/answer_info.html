@@ -235,6 +235,7 @@
         </h2>
         <div id="filetree-mount">
         </div>
+        <a class="btn btn-primary my-2" href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) }}" role="button">Archive BIDS dataset</a>
         <a class="btn btn-danger my-2"
            href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}"
            role="button">Delete BIDS dataset</a>

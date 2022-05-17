@@ -478,6 +478,40 @@ def rename_cfmm2tar(study_id, cfmm2tar_id):
 
 
 @portal_blueprint.route(
+    "/results/<int:study_id>/tar2bids/archive",
+    methods=["GET"],
+)
+@login_required
+def archive_tar2bids(study_id):
+    """Archive a study's BIDS directory."""
+    study = Study.query.get_or_404(study_id)
+    check_current_authorized(study)
+    if (
+        len(
+            Task.query.filter_by(
+                study_id=study_id,
+                complete=False,
+            ).all()
+        )
+        > 0
+    ):
+        flash("An task is currently in progress for this study.")
+    else:
+        current_user.launch_task(
+            "archive_raw_data",
+            f"dataset archive for study {study_id}",
+            study_id,
+        )
+        current_app.logger.info(
+            "Launched archive task for study %i",
+            study_id,
+        )
+        db.session.commit()
+
+    return answer_info(study_id)
+
+
+@portal_blueprint.route(
     "/results/<int:study_id>/tar2bids/delete",
     methods=["GET"],
 )

@@ -135,6 +135,22 @@ class User(UserMixin, db.Model):
                 user=self,
                 start_time=datetime.utcnow(),
             )
+        elif name == "archive_raw_data":
+            rq_job = current_app.task_queue.enqueue(
+                "autobidsportal.tasks." + name,
+                *args,
+                **kwargs,
+                job_timeout=1000,
+            )
+            task = Task(
+                id=rq_job.get_id(),
+                name=name,
+                description=description,
+                user_id=self.id,
+                user=self,
+                start_time=datetime.utcnow(),
+                study_id=args[0],
+            )
         db.session.add(task)
         db.session.commit()
         return task
@@ -365,6 +381,7 @@ class DataladDataset(db.Model):
     dataset_type = db.Column(db.Enum(DatasetType), nullable=False)
     ria_alias = db.Column(db.String, nullable=False, unique=True)
     custom_ria_url = db.Column(db.Text, nullable=True)
+    archived_hexsha = db.Column(db.Text, nullable=True)
     db.UniqueConstraint(study_id, dataset_type)
 
 
