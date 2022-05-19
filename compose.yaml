@@ -57,6 +57,7 @@ services:
     restart: on-failure
   redis:
     image: redis:5.0.14
+    ports: ["6379:6379"]
   postgres:
     image: postgres:11
     restart: unless-stopped

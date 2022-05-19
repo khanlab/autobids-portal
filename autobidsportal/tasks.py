@@ -353,6 +353,9 @@ def archive_raw_data(study_id):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
+    if (study.custom_ria_url is not None) or (study.dataset_content is None):
+        _set_task_progress(job.id, 100)
+        return
     dataset_raw = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
     try:
         with tempfile.TemporaryDirectory(
@@ -368,6 +371,8 @@ def archive_raw_data(study_id):
             if (dataset_raw.archived_hexsha is not None) and (
                 dataset_raw.archived_hexsha == current_hexsha
             ):
+                app.logger.info("Archive for study %s up to date", study_id)
+                _set_task_progress(job.id, 100)
                 return
             get_all_dataset_content(path_dataset_raw)
             path_archive = (
