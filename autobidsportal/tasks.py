@@ -6,6 +6,7 @@ import pathlib
 import re
 import subprocess
 
+from datalad.support.gitrepo import GitRepo
 from rq import get_current_job
 from rq.job import Job
 
@@ -23,6 +24,8 @@ from autobidsportal.datalad import (
     ensure_dataset_exists,
     finalize_dataset_changes,
     get_tar_file_from_dataset,
+    get_all_dataset_content,
+    archive_dataset,
 )
 from autobidsportal.bids import merge_datasets
 from autobidsportal.dcm4cheutils import (
@@ -340,6 +343,110 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
         if not Task.query.get(job.id).complete:
             app.logger.error(
                 "tar2bids for study %i failed with an uncaught exception.",
+                study.id,
+            )
+            _set_task_error(job.id, "Unknown uncaught exception.")
+
+
+def archive_raw_data(study_id):
+    """Clone a study dataset and archive it if necessary."""
+    job = get_current_job()
+    _set_task_progress(job.id, 0)
+    study = Study.query.get(study_id)
+    if (study.custom_ria_url is not None) or (study.dataset_content is None):
+        _set_task_progress(job.id, 100)
+        return
+    dataset_raw = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
+    try:
+        with tempfile.TemporaryDirectory(
+            dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
+        ) as dir_raw_data, RiaDataset(
+            dir_raw_data,
+            dataset_raw.ria_alias,
+            ria_url=dataset_raw.custom_ria_url,
+        ) as path_dataset_raw, tempfile.TemporaryDirectory(
+            dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
+        ) as dir_archive:
+            current_hexsha = GitRepo(str(path_dataset_raw)).get_hexsha()
+            if (dataset_raw.archived_hexsha is not None) and (
+                dataset_raw.archived_hexsha == current_hexsha
+            ):
+                app.logger.info("Archive for study %s up to date", study_id)
+                _set_task_progress(job.id, 100)
+                return
+            get_all_dataset_content(path_dataset_raw)
+            path_archive = (
+                pathlib.Path(dir_archive)
+                / f"{dataset_raw.ria_alias}_{current_hexsha}.zip"
+            )
+            archive_dataset(
+                path_dataset_raw,
+                path_archive,
+            )
+            ssh_port = app.config["ARCHIVE_SSH_PORT"]
+            ssh_key = app.config["ARCHIVE_SSH_KEY"]
+            subprocess.run(
+                [
+                    "ssh",
+                    "-p",
+                    f"{ssh_port}",
+                    "-i",
+                    f"{ssh_key}",
+                    app.config["ARCHIVE_BASE_URL"].split(":")[0],
+                    "mkdir",
+                    "-p",
+                    app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                    + f"/{dataset_raw.ria_alias}",
+                ],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "scp",
+                    "-P",
+                    f"{ssh_port}",
+                    "-i",
+                    f"{ssh_key}",
+                    str(path_archive),
+                    app.config["ARCHIVE_BASE_URL"]
+                    + f"/{dataset_raw.ria_alias}",
+                ],
+                check=True,
+            )
+            subprocess.run(
+                [
+                    "ssh",
+                    "-p",
+                    f"{ssh_port}",
+                    "-i",
+                    f"{ssh_key}",
+                    app.config["ARCHIVE_BASE_URL"].split(":")[0],
+                    "find",
+                    app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                    + f"/{dataset_raw.ria_alias}",
+                    "!",
+                    "-name",
+                    path_archive.name,
+                    "-type",
+                    "f",
+                    "-exec",
+                    "rm",
+                    "-f",
+                    "{}",
+                    "+",
+                ],
+                check=True,
+            )
+        dataset_raw.archived_hexsha = current_hexsha
+        db.session.commit()
+        _set_task_progress(job.id, 100)
+    finally:
+        if not Task.query.get(job.id).complete:
+            app.logger.error(
+                (
+                    "raw dataset archival for study %i failed with an "
+                    "uncaught exception."
+                ),
                 study.id,
             )
             _set_task_error(job.id, "Unknown uncaught exception.")

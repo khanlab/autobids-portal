@@ -95,3 +95,40 @@ def run_all_cfmm2tar():
         )
         db.session.add(task)
         db.session.commit()
+
+
+@app.cli.command()
+def run_all_archive():
+    """Archive all studies' raw datasets.
+
+    This won't archive studies that currently have tar2bids runs in
+    progress.
+    """
+    for study in Study.query.all():
+        print(f"study: {study.id}")
+        if (
+            len(
+                Task.query.filter_by(
+                    study_id=study.id,
+                    name="get_info_from_tar2bids",
+                    complete=False,
+                ).all()
+            )
+            > 0
+        ):
+            continue
+        rq_job = app.task_queue.enqueue(
+            "autobidsportal.tasks.archive_raw_data",
+            study.id,
+            job_timeout=100000,
+        )
+        print(f"queued up job")
+        task = Task(
+            id=rq_job.get_id(),
+            name="archive_raw_data",
+            description=f"Study {study.id} from CLI",
+            start_time=datetime.datetime.utcnow(),
+            study_id=study.id,
+        )
+        db.session.add(task)
+        db.session.commit()
