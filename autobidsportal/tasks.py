@@ -420,9 +420,9 @@ def archive_raw_data(study_id):
                     f"{ssh_port}",
                     "-i",
                     f"{ssh_key}",
-                    app.config["ARCHIVE_BASE_URL"].split(':')[0],
+                    app.config["ARCHIVE_BASE_URL"].split(":")[0],
                     "find",
-                    app.config["ARCHIVE_BASE_URL"].split(':')[1]
+                    app.config["ARCHIVE_BASE_URL"].split(":")[1]
                     + f"/{dataset_raw.ria_alias}",
                     "!",
                     "-name",
