@@ -413,6 +413,30 @@ def archive_raw_data(study_id):
                 ],
                 check=True,
             )
+            subprocess.run(
+                [
+                    "ssh",
+                    "-p",
+                    f"{ssh_port}",
+                    "-i",
+                    f"{ssh_key}",
+                    app.config["ARCHIVE_BASE_URL"].split(':')[0],
+                    "find",
+                    app.config["ARCHIVE_BASE_URL"].split(':')[1]
+                    + f"/{dataset_raw.ria_alias}",
+                    "!",
+                    "-name",
+                    path_archive.name,
+                    "-type",
+                    "f",
+                    "-exec",
+                    "rm",
+                    "-f",
+                    "{}",
+                    "+",
+                ],
+                check=True,
+            )
         dataset_raw.archived_hexsha = current_hexsha
         db.session.commit()
         _set_task_progress(job.id, 100)
