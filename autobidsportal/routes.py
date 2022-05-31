@@ -14,6 +14,7 @@ from flask import (
     url_for,
     request,
     abort,
+    jsonify,
 )
 from flask_login import login_user, logout_user, current_user, login_required
 import flask_excel as excel
@@ -849,3 +850,30 @@ def logout():
         db.session.commit()
     logout_user()
     return redirect(url_for("portal_blueprint.index"))
+
+
+@portal_blueprint.route("/api/globus_users", methods=["GET"])
+def list_globus_users():
+    """Returns a JSON list of users."""
+    return jsonify(
+        [
+            {
+                "id": study.id,
+                "path": current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                + "/"
+                + DataladDataset.query.filter_by(
+                    study_id=study.id, dataset_type=DatasetType.RAW_DATA
+                )
+                .one()
+                .ria_alias,
+                "users": [
+                    username.username for username in study.globus_usernames
+                ],
+            }
+            for study in Study.query.all()
+            if DataladDataset.query.filter_by(
+                study_id=study.id, dataset_type=DatasetType.RAW_DATA
+            ).one_or_none()
+            is not None
+        ]
+    )
