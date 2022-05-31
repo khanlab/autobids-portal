@@ -235,6 +235,8 @@ class Study(db.Model):
 
     custom_ria_url = db.Column(db.Text, nullable=True)
 
+    globus_usernames = db.relationship("GlobusUsername", backref="study")
+
     def __repr__(self):
         answer_cols = (
             self.status,
@@ -404,3 +406,11 @@ class ExplicitPatient(db.Model):
     patient_name = db.Column(db.String(194))
     dicom_study_id = db.Column(db.String(16))
     included = db.Column(db.Boolean())
+
+
+class GlobusUsername(db.Model):
+    """A globus username that should be given access to a study's archive."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
+    username = db.Column(db.Text, nullable=False)
