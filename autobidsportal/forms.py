@@ -24,7 +24,7 @@ from wtforms.validators import (
     EqualTo,
 )
 
-from autobidsportal.models import User, ExplicitPatient, Study
+from autobidsportal.models import User, ExplicitPatient, Study, GlobusUsername
 
 
 DEFAULT_HEURISTICS = [
@@ -282,6 +282,12 @@ class StudyConfigForm(FlaskForm):
     newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
     custom_ria_url = StringField("Custom RIA URL (Editable by admin)")
+    globus_usernames = MultiCheckboxField(
+        "Compute Canada users with Globus access"
+    )
+    new_globus_username = StringField(
+        "New Compute Canada user to grant Globus access"
+    )
 
     def defaults_from_study(self, study, principals, heuristics, users):
         """Set up form defaults given options from the DB."""
@@ -353,6 +359,14 @@ class StudyConfigForm(FlaskForm):
         self.custom_ria_url.default = (
             study.custom_ria_url if study.custom_ria_url is not None else ""
         )
+        self.globus_usernames.choices = [
+            (username.id, username.username)
+            for username in study.globus_usernames
+        ]
+        self.globus_usernames.default = [
+            username.id for username in study.globus_usernames
+        ]
+        self.new_globus_username.default = ""
 
         self.process()
 
@@ -375,6 +389,7 @@ class StudyConfigForm(FlaskForm):
         ids_authorized : list of int
             IDs of users to add to the authorized list.
         """
+        # pylint: disable=too-many-branches
         study.principal = self.pi_name.data
         study.project_name = self.project_name.data
         study.dataset_name = self.dataset_name.data
@@ -429,6 +444,18 @@ class StudyConfigForm(FlaskForm):
                 study.update_custom_ria_url(None)
             else:
                 study.update_custom_ria_url(self.custom_ria_url.data)
+        self.globus_usernames.default = [
+            username.id for username in study.globus_usernames
+        ]
+        if self.new_globus_username.data != "":
+            to_add.append(
+                GlobusUsername(
+                    study_id=study.id, username=self.new_globus_username.data
+                )
+            )
+        for username in study.globus_usernames:
+            if str(username.id) not in self.globus_usernames.data:
+                to_delete.append(username)
 
         return study, to_add, to_delete, ids_authorized
 
