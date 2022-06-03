@@ -237,7 +237,7 @@
            href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) if submitter_answer.active }}"
            role="button">Archive BIDS dataset</a>
         <a class="btn btn-danger my-2 {{ "disabled" if not submitter_answer.active }}"
-           href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }} if submitter_answer.active"
+           href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) if submitter_answer.active }}"
            role="button">Delete BIDS dataset</a>
       </div>
     </div>
