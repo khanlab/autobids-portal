@@ -259,6 +259,8 @@ class BidsForm(FlaskForm):
 class StudyConfigForm(FlaskForm):
     """Form for editing an existing study."""
 
+    active = BooleanField("Active")
+
     pi_name = SelectField("PI", choices=[])
     project_name = StringField("Project Name")
     dataset_name = StringField("Dataset Name")
@@ -291,6 +293,7 @@ class StudyConfigForm(FlaskForm):
 
     def defaults_from_study(self, study, principals, heuristics, users):
         """Set up form defaults given options from the DB."""
+        self.active.default = study.active
         self.pi_name.choices = principals
         self.pi_name.default = study.principal
         self.project_name.default = study.project_name
@@ -440,6 +443,7 @@ class StudyConfigForm(FlaskForm):
             )
         ids_authorized = self.users_authorized.data
         if user_is_admin:
+            study.active = self.active.data
             if self.custom_ria_url.data == "":
                 study.update_custom_ria_url(None)
             else:

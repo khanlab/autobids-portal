@@ -123,10 +123,7 @@
       <div class="col text-center">
         <form method="post"
               action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
-          <input type="submit"
-                 name="cfmm2tar"
-                 value="Run cfmm2tar"
-                 class="btn btn-primary"/>
+          <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary" {{ "disabled" if not submitter_answer.active }}/>
         </form>
       </div>
     </div>
@@ -178,7 +175,8 @@
         <h2 class="sub-header">
           Most Recent Cfmm2tar Results
         </h2>
-        <div id="tar-table-mount"></div>
+        <div id="tar-table-mount">
+        </div>
       </div>
     </div>
     <div class="row">
@@ -235,9 +233,11 @@
         </h2>
         <div id="filetree-mount">
         </div>
-        <a class="btn btn-primary my-2" href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) }}" role="button">Archive BIDS dataset</a>
-        <a class="btn btn-danger my-2"
-           href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }}"
+        <a class="btn btn-primary my-2 {{ "disabled" if not submitter_answer.active }}"
+           href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) if submitter_answer.active }}"
+           role="button">Archive BIDS dataset</a>
+        <a class="btn btn-danger my-2 {{ "disabled" if not submitter_answer.active }}"
+           href="{{ url_for('portal_blueprint.delete_tar2bids', study_id=submitter_answer.id) }} if submitter_answer.active"
            role="button">Delete BIDS dataset</a>
       </div>
     </div>
@@ -263,7 +263,8 @@
               renameUrl: "{{ url_for('portal_blueprint.rename_cfmm2tar', study_id=submitter_answer.id, cfmm2tar_id=out.id) }}"
             },
           {% endfor %}
-        ]
+        ],
+        mutable: {{ submitter_answer.active|lower }}
       }
     )
     ReactDOM.render(tarTable, document.querySelector("#tar-table-mount"))

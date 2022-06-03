@@ -397,6 +397,8 @@ def run_cfmm2tar(study_id):
     ):
         flash("An Cfmm2tar run is currently in progress")
         return answer_info(study_id)
+    if not study.active:
+        return answer_info(study_id)
 
     form = ExplicitCfmm2tarForm()
     if form.choices_to_run.data not in [None, []]:
@@ -436,6 +438,8 @@ def delete_cfmm2tar(study_id, cfmm2tar_id):
     """Delete a single tar file."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
+    if not study.active:
+        return answer_info(study_id)
     cfmm2tar_output = Cfmm2tarOutput.query.get(cfmm2tar_id)
     if (cfmm2tar_output is not None) and (
         cfmm2tar_output.study_id == study_id
@@ -455,6 +459,8 @@ def rename_cfmm2tar(study_id, cfmm2tar_id):
     """Rename a single tar file."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
+    if not study.active:
+        return answer_info(study_id)
     current_app.logger.info(
         "Attempting to rename cfmm2tar output %s", cfmm2tar_id
     )
@@ -487,6 +493,8 @@ def archive_tar2bids(study_id):
     """Archive a study's BIDS directory."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
+    if not study.active:
+        return answer_info(study_id)
     if (
         len(
             Task.query.filter_by(
@@ -522,6 +530,8 @@ def delete_tar2bids(study_id):
     """Delete a study's BIDS directory."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
+    if not study.active:
+        return answer_info(study_id)
 
     dataset = DataladDataset.query.filter_by(
         study_id=study_id, dataset_type=DatasetType.RAW_DATA
@@ -544,6 +554,8 @@ def run_tar2bids(study_id):
     """Launch tar2bids task and refresh answer_info.html"""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
+    if not study.active:
+        return answer_info(study_id)
     form = Tar2bidsRunForm()
     tar_files = [
         Cfmm2tarOutput.query.get_or_404(tar_file_id)

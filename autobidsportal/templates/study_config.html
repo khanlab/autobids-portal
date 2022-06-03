@@ -14,6 +14,12 @@
             </h3>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
+                <div class="form-check">
+                  {{ form.active(class="form-check-input", disabled=admin_disable) }}
+                  {{ form.active.label(class="form-check-label") }}
+                </div>
+              </li>
+              <li class="list-group-item">
                 {{ form.pi_name.label(class="form-label")}}
                 {{ form.pi_name(class="form-select")}}
               </li>

@@ -4,8 +4,16 @@ import PropTypes from "prop-types";
 import { TarRenameModal } from "../TarRenameModal";
 
 function TableLauncherRow(props) {
-  const { id, fileName, date, isActive, deleteUrl, renameUrl, updateActive } =
-    props;
+  const {
+    id,
+    fileName,
+    date,
+    isActive,
+    deleteUrl,
+    renameUrl,
+    updateActive,
+    mutable,
+  } = props;
 
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -44,6 +52,7 @@ function TableLauncherRow(props) {
             onClick={openModal}
             data-bs-toggle="modal"
             data-bs-target="#autobidsModal"
+            disabled={!mutable}
           >
             Rename
           </button>
@@ -70,6 +79,7 @@ TableLauncherRow.propTypes = {
   deleteUrl: PropTypes.string.isRequired,
   renameUrl: PropTypes.string.isRequired,
   updateActive: PropTypes.func.isRequired,
+  mutable: PropTypes.bool,
 };
 
 export default TableLauncherRow;
