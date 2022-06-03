@@ -207,6 +207,8 @@ class Study(db.Model):
         db.DateTime, index=True, default=datetime.utcnow, nullable=False
     )
 
+    active = db.Column(db.Boolean, nullable=False, default=False)
+
     # Study config
     heuristic = db.Column(
         db.String(200), nullable=False, default="cfmm_base.py"

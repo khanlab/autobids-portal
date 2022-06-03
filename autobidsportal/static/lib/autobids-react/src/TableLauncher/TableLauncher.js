@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import TableLauncherRow from "./TableLauncherRow";
 
 function TableLauncher(props) {
-  const { rowInfo, cfmm2tarUrl } = props;
+  const { rowInfo, cfmm2tarUrl, mutable } = props;
   const [activeIds, setActiveIds] = useState([]);
 
   function changeActiveId(id, isActive) {
@@ -50,6 +50,7 @@ function TableLauncher(props) {
                 deleteUrl={child.deleteUrl}
                 renameUrl={child.renameUrl}
                 updateActive={changeActiveId}
+                mutable={mutable}
               />
             ))}
           </tbody>
@@ -74,6 +75,7 @@ function TableLauncher(props) {
         type="submit"
         value="Run tar2bids with selected files"
         className="btn btn-primary"
+        disabled={!mutable}
       />
     </form>
   );
@@ -82,6 +84,7 @@ function TableLauncher(props) {
 TableLauncher.propTypes = {
   rowInfo: PropTypes.arrayOf(PropTypes.object),
   cfmm2tarUrl: PropTypes.string,
+  mutable: PropTypes.bool,
 };
 
 export default TableLauncher;

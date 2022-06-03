@@ -64,7 +64,7 @@ def run_update_heuristics():
 
 @app.cli.command()
 def run_all_cfmm2tar():
-    """Run cfmm2tar on all studies.
+    """Run cfmm2tar on all active studies.
 
     This won't run cfmm2tar on studies that currently have cfmm2tar runs in
     progress.
@@ -79,7 +79,7 @@ def run_all_cfmm2tar():
                 ).all()
             )
             > 0
-        ):
+        ) or (not study.active):
             continue
         rq_job = app.task_queue.enqueue(
             "autobidsportal.tasks.get_info_from_cfmm2tar",
@@ -99,7 +99,7 @@ def run_all_cfmm2tar():
 
 @app.cli.command()
 def run_all_archive():
-    """Archive all studies' raw datasets.
+    """Archive all active studies' raw datasets.
 
     This won't archive studies that currently have tar2bids runs in
     progress.
@@ -115,7 +115,7 @@ def run_all_archive():
                 ).all()
             )
             > 0
-        ):
+        ) or (not study.active):
             continue
         rq_job = app.task_queue.enqueue(
             "autobidsportal.tasks.archive_raw_data",
