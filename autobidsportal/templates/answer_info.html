@@ -62,7 +62,7 @@
         <div class="table-responsive">
           <table class="table table-light">
             <tr>
-              <th scope="col"></th>
+              <th scope="col">Query DICOM Server</th>
               <th scope="col">Which Scanner</th>
               <th scope="col">Number of Expected Scans</th>
               <th scope="col">Is this Study Longitudinal or Multi-Session</th>
@@ -73,17 +73,17 @@
             </tr>
             <tr>
               <td>
+                <a class="btn btn-primary my-1"
+                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}"
+                   role="button">All matching scans</a>
+
                 <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}"
                    href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}"
-                   role="button">Query DICOM server: Date and Description</a>
+                   role="button">Matching scans on example date</a>
                 <br />
                 <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}"
                    href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}"
-                   role="button">Query DICOM server: Date only</a>
-                <br />
-                <a class="btn btn-primary my-1"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}"
-                   role="button">Query DICOM server: Description only</a>
+                   role="button">All scans on example date</a>
               </td>
               <td>
                 {% if submitter_answer.scanner == 'type1' %}
