@@ -73,17 +73,17 @@
             </tr>
             <tr>
               <td>
-                <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}"
-                   role="button">Query DICOM server: Date and Description</a>
-                <br />
-                <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}"
-                   role="button">Query DICOM server: Date only</a>
-                <br />
-                <a class="btn btn-primary my-1"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}"
-                   role="button">Query DICOM server: Description only</a>
+                <div class="card">
+                  <h5 class="card-header">Query DICOM Server</h5>
+                  <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-primary list-group-item-action"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}">All matching scans</a>
+                    <a class="list-group-item list-group-item-primary list-group-item-action  {{ "disabled" if not submitter_answer.sample }}"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}">Matching scans on example date</a>
+                    <a class="list-group-item list-group-item-primary list-group-item-action {{ "disabled" if not submitter_answer.sample }}"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}">All scans on example date</a>
+                  </div>
+                </div>
               </td>
               <td>
                 {% if submitter_answer.scanner == 'type1' %}
@@ -129,12 +129,14 @@
     </div>
     <div class="row">
       <div class="col-6">
-        <h2 class="sub-header">Previous Cfmm2tar Runs</h2>
+        <h2 class="sub-header">Cfmm2tar Runs</h2>
         <div class="table-responsive" style="max-height: 400px;">
           <table class="table table-light overflow-auto">
             <tr>
               <th scope="col">Start Date and Time</th>
-              <th scope="col">End Date and Time</th>
+              <th scope="col">
+                End Date and Time
+              </th>
               <th scope="col">
                 Completion Status
               </th>
@@ -173,7 +175,7 @@
       </div>
       <div class="col-6">
         <h2 class="sub-header">
-          Most Recent Cfmm2tar Results
+          Tar Files
         </h2>
         <div id="tar-table-mount">
         </div>
@@ -182,7 +184,7 @@
     <div class="row">
       <div class="col-6">
         <h2 class="sub-header">
-          Previous Tar2bids Runs
+          Tar2bids Runs
         </h2>
         <table class="table table-light">
           <tr>
@@ -229,7 +231,7 @@
       </div>
       <div class="col-6">
         <h2 class="sub-header">
-          Bids Dataset
+          BIDS Dataset
         </h2>
         <div id="filetree-mount">
         </div>

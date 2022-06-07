@@ -18,6 +18,7 @@ from flask import (
 )
 from flask_login import login_user, logout_user, current_user, login_required
 import flask_excel as excel
+from sqlalchemy import desc
 
 from werkzeug.urls import url_parse
 from autobidsportal.models import (
@@ -270,16 +271,20 @@ def answer_info(study_id):
     """Obtains complete survey response based on the submission id"""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
-    cfmm2tar_tasks = Task.query.filter_by(
-        study_id=study_id, name="get_info_from_cfmm2tar"
-    ).all()
+    cfmm2tar_tasks = (
+        Task.query.filter_by(study_id=study_id, name="get_info_from_cfmm2tar")
+        .order_by(desc("start_time"))
+        .all()
+    )
     cfmm2tar_files = study.cfmm2tar_outputs
     cfmm2tar_file_names = [
         Path(cfmm2tar_file.tar_file).name for cfmm2tar_file in cfmm2tar_files
     ]
-    tar2bids_tasks = Task.query.filter_by(
-        study_id=study_id, name="get_info_from_tar2bids"
-    ).all()
+    tar2bids_tasks = (
+        Task.query.filter_by(study_id=study_id, name="get_info_from_tar2bids")
+        .order_by(desc("start_time"))
+        .all()
+    )
     tar2bids_files = study.tar2bids_outputs
 
     bids_dict = (

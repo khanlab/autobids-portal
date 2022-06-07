@@ -29,10 +29,12 @@
                             type="button"
                             aria-expanded="false"
                             aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
-                      {{ response["PatientName"] }}
+                      <code>{{ response["PatientName"] }}</code>
                     </button>
                   </td>
-                  <td>{{ response["PatientID"] }}</td>
+                  <td>
+                    <code>{{ response["PatientID"] }}</code>
+                  </td>
                   <td>{{ response["PatientSex"] }}</td>
                   <td>{{ response["StudyID"] }}</td>
                   <td>
@@ -80,7 +82,7 @@
                         {% for series in response["series"] %}
                           <tr>
                             <td>{{ series["SeriesNumber"] }}</td>
-                            <td>{{ series["SeriesDescription"] }}</td>
+                            <td><code>{{ series["SeriesDescription"] }}</code></td>
                           </tr>
                         {% endfor %}
                       </tbody>

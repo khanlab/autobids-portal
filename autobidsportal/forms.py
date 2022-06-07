@@ -261,7 +261,7 @@ class StudyConfigForm(FlaskForm):
 
     active = BooleanField("Active")
 
-    pi_name = SelectField("PI", choices=[])
+    pi_name = SelectField("PI Name", choices=[])
     project_name = StringField("Project Name")
     dataset_name = StringField("Dataset Name")
     example_date = DateField("Example Date")
@@ -283,13 +283,11 @@ class StudyConfigForm(FlaskForm):
     )
     newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
-    custom_ria_url = StringField("Custom RIA URL (Editable by admin)")
+    custom_ria_url = StringField("Custom RIA URL")
     globus_usernames = MultiCheckboxField(
-        "Compute Canada users with Globus access"
+        "Globus identities with access to dataset archives"
     )
-    new_globus_username = StringField(
-        "New Compute Canada user to grant Globus access"
-    )
+    new_globus_username = StringField("New Globus identity to grant access")
 
     def defaults_from_study(self, study, principals, heuristics, users):
         """Set up form defaults given options from the DB."""
