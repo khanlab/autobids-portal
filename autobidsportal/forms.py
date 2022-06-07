@@ -287,9 +287,7 @@ class StudyConfigForm(FlaskForm):
     globus_usernames = MultiCheckboxField(
         "Globus identities with access to dataset archives"
     )
-    new_globus_username = StringField(
-        "New Globus identity to grant access"
-    )
+    new_globus_username = StringField("New Globus identity to grant access")
 
     def defaults_from_study(self, study, principals, heuristics, users):
         """Set up form defaults given options from the DB."""
