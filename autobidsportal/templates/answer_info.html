@@ -62,7 +62,7 @@
         <div class="table-responsive">
           <table class="table table-light">
             <tr>
-              <th scope="col">Query DICOM Server</th>
+              <th scope="col"></th>
               <th scope="col">Which Scanner</th>
               <th scope="col">Number of Expected Scans</th>
               <th scope="col">Is this Study Longitudinal or Multi-Session</th>
@@ -73,17 +73,17 @@
             </tr>
             <tr>
               <td>
-                <a class="btn btn-primary my-1"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}"
-                   role="button">All matching scans</a>
-
-                <a class="btn btn-primary my-1  {{ "disabled" if not submitter_answer.sample }}"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}"
-                   role="button">Matching scans on example date</a>
-                <br />
-                <a class="btn btn-primary my-1 {{ "disabled" if not submitter_answer.sample }}"
-                   href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}"
-                   role="button">All scans on example date</a>
+                <div class="card">
+                  <h5 class="card-header">Query DICOM Server</h5>
+                  <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-primary list-group-item-action"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}">All matching scans</a>
+                    <a class="list-group-item list-group-item-primary list-group-item-action  {{ "disabled" if not submitter_answer.sample }}"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}">Matching scans on example date</a>
+                    <a class="list-group-item list-group-item-primary list-group-item-action {{ "disabled" if not submitter_answer.sample }}"
+                       href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}">All scans on example date</a>
+                  </div>
+                </div>
               </td>
               <td>
                 {% if submitter_answer.scanner == 'type1' %}
@@ -134,7 +134,9 @@
           <table class="table table-light overflow-auto">
             <tr>
               <th scope="col">Start Date and Time</th>
-              <th scope="col">End Date and Time</th>
+              <th scope="col">
+                End Date and Time
+              </th>
               <th scope="col">
                 Completion Status
               </th>
