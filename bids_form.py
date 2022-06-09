@@ -14,6 +14,8 @@ from autobidsportal.models import (
     Cfmm2tarOutput,
     Tar2bidsOutput,
     ExplicitPatient,
+    DataladDataset,
+    DatasetType,
 )
 from autobidsportal.tasks import update_heuristics
 
@@ -98,6 +100,50 @@ def run_all_cfmm2tar():
 
 
 @app.cli.command()
+def run_all_tar2bids():
+    """Run tar2bids on all active studies."""
+    for study in Study.query.all():
+        if (
+            len(
+                Task.query.filter_by(
+                    study_id=study.id,
+                    name="get_info_from_tar2bids",
+                    complete=False,
+                ).all()
+            )
+            > 0
+        ) or not study.active:
+            continue
+        dataset = DataladDataset.query.filter_by(
+            study_id=study.id, dataset_type=DatasetType.RAW_DATA
+        ).one_or_none()
+        if dataset is not None:
+            existing_tar_file_ids = {
+                out.id for out in dataset.cfmm2tar_outputs
+            }
+        else:
+            existing_tar_file_ids = set()
+        rq_job = app.task_queue.enqueue(
+            "autobidsportal.tasks.get_info_from_tar2bids",
+            study.id,
+            list(
+                {tar_file.id for tar_file in study.cfmm2tar_outputs}
+                - existing_tar_file_ids
+            ),
+            job_timeout=100000,
+        )
+        task = Task(
+            id=rq_job.get_id(),
+            name="get_info_from_tar2bids",
+            description=f"Study {study.id} from CLI",
+            start_time=datetime.datetime.utcnow(),
+            study_id=study.id,
+        )
+        db.session.add(task)
+        db.session.commit()
+
+
+@app.cli.command()
 def run_all_archive():
     """Archive all active studies' raw datasets.
 
@@ -122,7 +168,7 @@ def run_all_archive():
             study.id,
             job_timeout=100000,
         )
-        print(f"queued up job")
+        print("queued up job")
         task = Task(
             id=rq_job.get_id(),
             name="archive_raw_data",

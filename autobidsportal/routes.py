@@ -548,6 +548,7 @@ def delete_tar2bids(study_id):
     ) as path_dataset:
         delete_all_content(path_dataset)
         study.dataset_content = None
+        dataset.cfmm2tar_outputs = []
         db.session.commit()
 
     return answer_info(study_id)

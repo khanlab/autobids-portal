@@ -283,17 +283,14 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
         ) as download_dir:
             app.logger.info("Running tar2bids for study %i", study.id)
-            for tar_file in [
-                cfmm2tar_output.tar_file
-                for cfmm2tar_output in cfmm2tar_outputs
-            ]:
+            for tar_out in cfmm2tar_outputs:
                 with RiaDataset(
                     download_dir,
                     dataset_tar.ria_alias,
                     ria_url=dataset_tar.custom_ria_url,
                 ) as path_dataset_tar:
                     tar_path = get_tar_file_from_dataset(
-                        tar_file, path_dataset_tar
+                        tar_out.tar_file, path_dataset_tar
                     )
                     _append_task_log(
                         job.id,
@@ -322,6 +319,7 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                     study.dataset_content = gen_dir_dict(
                         path_dataset_study, {".git", ".datalad"}
                     )
+                    tar_out.datalad_dataset = dataset_bids
                     db.session.commit()
             db.session.add(
                 Tar2bidsOutput(
