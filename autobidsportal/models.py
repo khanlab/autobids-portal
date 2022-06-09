@@ -345,6 +345,9 @@ class Cfmm2tarOutput(db.Model):
     tar_file = db.Column(db.String(200), index=True, nullable=False)
     uid = db.Column(db.String(200), index=True, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
+    datalad_dataset_id = db.Column(
+        db.Integer, db.ForeignKey("datalad_dataset.id"), nullable=True
+    )
     tar2bids_outputs = db.relationship(
         "Tar2bidsOutput",
         secondary=tar2bids_runs,
@@ -386,6 +389,9 @@ class DataladDataset(db.Model):
     ria_alias = db.Column(db.String, nullable=False, unique=True)
     custom_ria_url = db.Column(db.Text, nullable=True)
     archived_hexsha = db.Column(db.Text, nullable=True)
+    cfmm2tar_outputs = db.relationship(
+        "Cfmm2tarOutput", backref="datalad_dataset"
+    )
     db.UniqueConstraint(study_id, dataset_type)
 
 

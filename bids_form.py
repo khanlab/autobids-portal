@@ -14,6 +14,8 @@ from autobidsportal.models import (
     Cfmm2tarOutput,
     Tar2bidsOutput,
     ExplicitPatient,
+    DataladDataset,
+    DatasetType,
 )
 from autobidsportal.tasks import update_heuristics
 
@@ -112,10 +114,22 @@ def run_all_tar2bids():
             > 0
         ) or not study.active:
             continue
+        dataset = DataladDataset.query.filter_by(
+            study_id=study.id, dataset_type=DatasetType.RAW_DATA
+        ).one_or_none()
+        if dataset is not None:
+            existing_tar_file_ids = {
+                out.id for out in dataset.cfmm2tar_outputs
+            }
+        else:
+            existing_tar_file_ids = set()
         rq_job = app.task_queue.enqueue(
             "autobidsportal.tasks.get_info_from_tar2bids",
             study.id,
-            [tar_file.id for tar_file in study.cfmm2tar_outputs],
+            list(
+                {tar_file.id for tar_file in study.cfmm2tar_outputs}
+                - existing_tar_file_ids
+            ),
             job_timeout=100000,
         )
         task = Task(
