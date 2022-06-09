@@ -13,7 +13,7 @@ def _check_existing(path_incoming, path_existing, dir_incoming, contents):
             path_incoming
         )
         new_file = path_existing / path_relative
-        if new_file.exists() and new_file.is_file():
+        if (new_file.exists() and new_file.is_file()) or new_file.is_symlink():
             ignore.append(file_incoming)
     return ignore
 
