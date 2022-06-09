@@ -93,7 +93,7 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
     while not success:
         try:
             attempts += 1
-            cfmm2tar_result = gen_utils().run_cfmm2tar(
+            cfmm2tar_result, log = gen_utils().run_cfmm2tar(
                 out_dir=out_dir,
                 patient_name=target,
                 project=study_description,
@@ -108,7 +108,7 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
                 )
                 continue
             raise err
-    return cfmm2tar_result
+    return cfmm2tar_result, log
 
 
 def record_cfmm2tar(tar_path, uid, study_id):
@@ -153,6 +153,24 @@ def process_uid_file(uid_path):
     return uid
 
 
+def find_studies_to_download(study, study_description, explicit_scans=None):
+    """Find the studies to download, or override them with explicit scans."""
+    existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study.id).all()
+    if explicit_scans is not None:
+        return [
+            scan
+            for scan in explicit_scans
+            if scan["StudyInstanceUID"]
+            not in {output.uid.strip() for output in existing_outputs}
+        ]
+    return [
+        record
+        for record in get_study_records(study, description=study_description)
+        if record["StudyInstanceUID"]
+        not in {output.uid.strip() for output in existing_outputs}
+    ]
+
+
 def get_info_from_cfmm2tar(study_id, explicit_scans=None):
     """Run cfmm2tar for a given study
 
@@ -172,25 +190,10 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
     study = Study.query.get(study_id)
     study_description = f"{study.principal}^{study.project_name}"
 
-    existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study_id).all()
-
     try:
-        if explicit_scans is not None:
-            studies_to_download = [
-                scan
-                for scan in explicit_scans
-                if scan["StudyInstanceUID"]
-                not in {output.uid.strip() for output in existing_outputs}
-            ]
-        else:
-            studies_to_download = [
-                record
-                for record in get_study_records(
-                    study, description=study_description
-                )
-                if record["StudyInstanceUID"]
-                not in {output.uid.strip() for output in existing_outputs}
-            ]
+        studies_to_download = find_studies_to_download(
+            study, study_description, explicit_scans=explicit_scans
+        )
         app.logger.info(
             "Running cfmm2tar for patients %s in study %i",
             [record["PatientName"] for record in studies_to_download],
@@ -205,7 +208,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                 download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
             ) as path_dataset:
                 try:
-                    result = run_cfmm2tar_with_retries(
+                    result, log = run_cfmm2tar_with_retries(
                         str(path_dataset),
                         target["PatientName"],
                         study_description,
@@ -214,6 +217,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                     app.logger.error("cfmm2tar failed: %s", err)
                     error_msgs.append(err.message)
                     continue
+                _append_task_log(job.id, log)
                 app.logger.info(
                     "Successfully ran cfmm2tar for target %s.",
                     target["PatientName"],

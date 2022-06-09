@@ -417,7 +417,7 @@ class Dcm4cheUtils:
                     current_app.logger.warning("cfmm2tar timed out.")
                     raise Cfmm2tarTimeoutError()
 
-            return tar_files
+            return tar_files, all_out
 
     def run_tar2bids(
         self,
