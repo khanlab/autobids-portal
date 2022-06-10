@@ -36,7 +36,9 @@ AUTOBIDS_MAIL_SERVER="smtp.gmail.com"
 AUTOBIDS_MAIL_PORT=465
 AUTOBIDS_MAIL_USE_TLS=False
 AUTOBIDS_MAIL_USE_SSL=True
+# Comma separated list of recipients
 AUTOBIDS_MAIL_RECIPIENTS=email_recipients
 AUTOBIDS_MAIL_USERNAME=email
 AUTOBIDS_MAIL_PASSWORD=password
+AUTOBIDS_MAIL_SENDER=me@autobids.example
 

@@ -17,8 +17,8 @@ def send_email(subject, body):
             Message(
                 subject=subject,
                 body=body,
-                sender=current_app.config["MAIL_USERNAME"],
-                recipients=current_app.config["MAIL_RECIPIENTS"],
+                sender=current_app.config["MAIL_SENDER"],
+                recipients=current_app.config["MAIL_RECIPIENTS"].split(","),
             )
         )
     except SMTPAuthenticationError as err:
