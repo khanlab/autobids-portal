@@ -261,10 +261,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                         )
                     ]
                     + [
-                        (
-                            f"PatientName: {target['PatientName']}, "
-                            f"StudyID: {target['StudyID']}"
-                        )
+                        f"PatientName: {target['PatientName']}"
                         for target in studies_to_download
                     ]
                     + ["\nErrors:\n"]
