@@ -420,13 +420,6 @@ def run_cfmm2tar(study_id):
     )
     current_app.logger.info("Launched cfmm2tar for study %i", study_id)
     db.session.commit()
-    send_email(
-        "New cfmm2tar run launched",
-        (
-            f"A Cfmm2tar run for {study.principal}^{study.project_name} "
-            f"has been submitted by {current_user.email}."
-        ),
-    )
 
     return answer_info(study_id)
 
@@ -595,13 +588,6 @@ def run_tar2bids(study_id):
             [tar_file.tar_file for tar_file in tar_files],
         )
         db.session.commit()
-        send_email(
-            "New tar2bids run launched",
-            (
-                f"A Tar2bids run for {study.principal}^{study.project_name} "
-                f"has been submitted by {current_user.email}."
-            ),
-        )
 
     return answer_info(study_id)
 

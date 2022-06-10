@@ -36,6 +36,7 @@ from autobidsportal.dcm4cheutils import (
     Tar2bidsError,
 )
 from autobidsportal.dicom import get_study_records
+from autobidsportal.email import send_email
 from autobidsportal.filesystem import gen_dir_dict
 
 
@@ -249,6 +250,28 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                         individual_result[1],
                         study_id,
                     )
+        if len(studies_to_download) > 0:
+            send_email(
+                "New cfmm2tar run",
+                "\n".join(
+                    [
+                        (
+                            "Attempted to download the following tar files "
+                            f"for study {study.id}:"
+                        )
+                    ]
+                    + [
+                        (
+                            f"PatientName: {target['PatientName']}, "
+                            f"StudyID: {target['StudyID']}"
+                        )
+                        for target in studies_to_download
+                    ]
+                    + ["\nErrors:\n"]
+                    + error_msgs
+                ),
+            )
+
         if len(error_msgs) > 0:
             _set_task_error(job.id, "\n".join(error_msgs))
         else:
@@ -335,11 +358,32 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
             )
             db.session.commit()
         _set_task_progress(job.id, 100)
+        if len(tar_file_ids) > 0:
+            send_email(
+                "Successful tar2bids run.",
+                "\n".join(
+                    ["Tar2bids successfully run for tar files:"]
+                    + [output.tar_file for output in cfmm2tar_outputs]
+                ),
+            )
     except Tar2bidsError as err:
         app.logger.error("tar2bids failed: %s", err)
         _set_task_error(
             job.id,
             err.__cause__.stderr if err.__cause__ is not None else str(err),
+        )
+        send_email(
+            "Failed tar2bids run",
+            "\n".join(
+                ["Tar2bids failed for tar files:"]
+                + [output.tar_file for output in cfmm2tar_outputs]
+                + [
+                    (
+                        "Note: Some of the tar2bids runs may have completed. "
+                        "This email is sent if any of them fail."
+                    )
+                ]
+            ),
         )
     finally:
         if not Task.query.get(job.id).complete:
