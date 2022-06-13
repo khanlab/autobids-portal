@@ -14,6 +14,7 @@ from sqlalchemy import MetaData
 from werkzeug.security import generate_password_hash, check_password_hash
 import redis
 import rq
+from rq.job import Job
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -89,11 +90,12 @@ class User(UserMixin, db.Model):
     def launch_task(self, name, description, *args, **kwargs):
         """Enqueue a task with rq and record it in the DB."""
         if name == "get_info_from_cfmm2tar":
-            rq_job = current_app.task_queue.enqueue(
+            rq_job = Job.create(
                 "autobidsportal.tasks." + name,
-                *args,
-                **kwargs,
-                job_timeout=100000,
+                args=args,
+                kwargs=kwargs,
+                timeout=100000,
+                connection=current_app.redis,
             )
             task = Task(
                 id=rq_job.get_id(),
@@ -105,11 +107,12 @@ class User(UserMixin, db.Model):
                 study_id=args[0],
             )
         elif name == "get_info_from_tar2bids":
-            rq_job = current_app.task_queue.enqueue(
+            rq_job = Job.create(
                 "autobidsportal.tasks." + name,
-                *args,
-                **kwargs,
-                job_timeout=100000,
+                args=args,
+                kwargs=kwargs,
+                timeout=100000,
+                connection=current_app.redis,
             )
             task = Task(
                 id=rq_job.get_id(),
@@ -121,11 +124,12 @@ class User(UserMixin, db.Model):
                 study_id=args[0],
             )
         elif name == "update_heuristics":
-            rq_job = current_app.task_queue.enqueue(
+            rq_job = Job.create(
                 "autobidsportal.tasks." + name,
-                *args,
-                **kwargs,
-                job_timeout=1000,
+                args=args,
+                kwargs=kwargs,
+                timeout=1000,
+                connection=current_app.redis,
             )
             task = Task(
                 id=rq_job.get_id(),
@@ -136,11 +140,12 @@ class User(UserMixin, db.Model):
                 start_time=datetime.utcnow(),
             )
         elif name == "archive_raw_data":
-            rq_job = current_app.task_queue.enqueue(
+            rq_job = Job.create(
                 "autobidsportal.tasks." + name,
-                *args,
-                **kwargs,
-                job_timeout=1000,
+                args=args,
+                kwargs=kwargs,
+                timeout=1000,
+                connection=current_app.redis,
             )
             task = Task(
                 id=rq_job.get_id(),
@@ -151,8 +156,11 @@ class User(UserMixin, db.Model):
                 start_time=datetime.utcnow(),
                 study_id=args[0],
             )
+        else:
+            raise ValueError("Invalid task name")
         db.session.add(task)
         db.session.commit()
+        current_app.task_queue.enqueue_job(rq_job)
         return task
 
     def get_completed_tasks(self):
@@ -326,7 +334,7 @@ class Task(db.Model):
     def get_rq_job(self):
         """Get the rq job associated with this task."""
         try:
-            rq_job = rq.job.Job.fetch(self.id, connection=current_app.redis)
+            rq_job = Job.fetch(self.id, connection=current_app.redis)
         except (redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
             return None
         return rq_job
