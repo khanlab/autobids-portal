@@ -216,7 +216,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                     )
                 except Cfmm2tarError as err:
                     app.logger.error("cfmm2tar failed: %s", err)
-                    error_msgs.append(err.message)
+                    error_msgs.append(str(err))
                     continue
                 _append_task_log(job.id, log)
                 app.logger.info(
