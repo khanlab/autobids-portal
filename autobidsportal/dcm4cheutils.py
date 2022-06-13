@@ -450,7 +450,7 @@ class Dcm4cheUtils:
                 text=True,
             ).stdout
         except subprocess.CalledProcessError as err:
-            current_app.logger.warning("tar2bids failed: %s", err.stderr)
+            current_app.logger.warning("tar2bids failed: %s", err.stdout)
             raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
 
         return out
@@ -475,23 +475,9 @@ def gen_utils():
 class Dcm4cheError(Exception):
     """Exception raised when something goes wrong with a dcm4che process."""
 
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-    def __str__(self):
-        return self.message
-
 
 class Cfmm2tarError(Exception):
     """Exception raised when cfmm2tar fails."""
-
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-    def __str__(self):
-        return self.message
 
 
 class Cfmm2tarTimeoutError(Exception):
@@ -500,10 +486,3 @@ class Cfmm2tarTimeoutError(Exception):
 
 class Tar2bidsError(Exception):
     """Exception raised when tar2bids fails."""
-
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-    def __str__(self):
-        return self.message
