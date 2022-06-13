@@ -378,7 +378,9 @@ def get_info_from_tar2bids(study_id, tar_file_ids):
                     (
                         "Note: Some of the tar2bids runs may have completed. "
                         "This email is sent if any of them fail."
-                    )
+                    ),
+                    "Error:",
+                    str(err),
                 ]
             ),
         )
