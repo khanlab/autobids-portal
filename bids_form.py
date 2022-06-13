@@ -2,6 +2,8 @@
 
 import datetime
 
+from rq.job import Job
+
 from autobidsportal import create_app
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
@@ -83,10 +85,11 @@ def run_all_cfmm2tar():
             > 0
         ) or (not study.active):
             continue
-        rq_job = app.task_queue.enqueue(
+        rq_job = Job.create(
             "autobidsportal.tasks.get_info_from_cfmm2tar",
             study.id,
-            job_timeout=100000,
+            timeout=100000,
+            connection=app.redis,
         )
         task = Task(
             id=rq_job.get_id(),
@@ -97,6 +100,7 @@ def run_all_cfmm2tar():
         )
         db.session.add(task)
         db.session.commit()
+        app.task_queue.enqueue_job(rq_job)
 
 
 @app.cli.command()
@@ -123,14 +127,15 @@ def run_all_tar2bids():
             }
         else:
             existing_tar_file_ids = set()
-        rq_job = app.task_queue.enqueue(
+        rq_job = Job.create(
             "autobidsportal.tasks.get_info_from_tar2bids",
             study.id,
             list(
                 {tar_file.id for tar_file in study.cfmm2tar_outputs}
                 - existing_tar_file_ids
             ),
-            job_timeout=100000,
+            timeout=100000,
+            connection=app.redis,
         )
         task = Task(
             id=rq_job.get_id(),
@@ -141,6 +146,7 @@ def run_all_tar2bids():
         )
         db.session.add(task)
         db.session.commit()
+        app.task_queue.enqueue_job(rq_job)
 
 
 @app.cli.command()
@@ -163,12 +169,12 @@ def run_all_archive():
             > 0
         ) or (not study.active):
             continue
-        rq_job = app.task_queue.enqueue(
+        rq_job = Job.create(
             "autobidsportal.tasks.archive_raw_data",
             study.id,
-            job_timeout=100000,
+            timeout=100000,
+            connection=app.redis,
         )
-        print("queued up job")
         task = Task(
             id=rq_job.get_id(),
             name="archive_raw_data",
@@ -178,3 +184,4 @@ def run_all_archive():
         )
         db.session.add(task)
         db.session.commit()
+        app.task_queue.enqueue_job(rq_job)
