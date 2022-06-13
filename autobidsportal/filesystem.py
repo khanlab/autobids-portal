@@ -38,7 +38,8 @@ def gen_dir_dict(path, ignore=frozenset()):
         "files": [
             entry.name
             for entry in os.scandir(path)
-            if entry.is_file() and entry.name not in ignore
+            if (entry.is_file() or entry.is_symlink())
+            and entry.name not in ignore
         ],
         "dirs": {
             entry.name: gen_dir_dict(entry.path, ignore)
