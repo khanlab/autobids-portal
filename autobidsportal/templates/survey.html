@@ -10,7 +10,8 @@
         <div class="card-body">
           <h1 class="card-title" id="title">New study request: autobids-cfmm</h1>
           <h4 class="card-subtitle" id="description">
-            Please use this form to submit information for initiating a new autobids project
+            Please use this form to submit information for initiating a new
+            autobids project.
           </h4>
         </div>
       </div>
@@ -30,7 +31,8 @@
         <div class="card-body">
           <h4 class="card-title">General Information</h4>
           <p class="card-text">
-            The following questions are used to better understand resource requirements and needs of users.
+            The following questions are used to better understand resource
+            requirements and needs of users.
           </p>
         </div>
       </div>
@@ -118,79 +120,91 @@
         <div class="card-body">
           <h4 class="card-title">CFMM DICOM Server Project Information</h4>
           <p class="card-text">
-          The following questions require study information from the CFMM dicom server. Please open the <a href="https://dicom.cfmm.robarts.ca/dm/index">CFMM DICOM Management website</a> in a separate window to gather this information. Note: your study must be on the CFMM DICOM server to be compatible with autobids.
-        </p>
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        {{ form.principal.label }}
-        {{ form.principal(class="form-control w-25 mb-3", placeholder="Please enter the Principal/PI") }}
-        {{ form.principal_other.label }}
-        {{ form.principal_other(class="form-control w-25", placeholder="Please enter the Principal/PI") }}
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        {{ form.project_name.label }}
-        {{ form.project_name(class="form-control w-25", placeholder="Please enter the Project Name") }}
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        {{ form.dataset_name.label }}
-        {{ form.dataset_name(class="form-control w-25", placeholder="Please enter the Dataset Name") }}
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        <h4 class="card-title">Test BIDS Conversion</h4>
-        <p class="card-text">
-          We require an example session to optimize and test BIDS conversion.
-        </p>
-        {{ form.sample.label }}
-        {{ form.sample(class="form-control w-25") }}
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        <h4 class="card-title">Retrospective BIDS Conversion</h4>
-        <p class="card-text">
-          Once conversion is tested and verified, it is possible for us to trigger conversion of previously acquired data. Note: data must exist on the DICOM server.
-        </p>
-        {{ form.retrospective_data.label }}
-        <div class="form-check">
-          {{ form.retrospective_data(class="form-check-input") }}
-          <label class="form-check-label" for="retrospective_data">Yes</label>
-        </div>
-        {{ form.retrospective_start.label }}
-        {{ form.retrospective_start(class="form-control w-25") }}
-        {{ form.retrospective_end.label }}
-        {{ form.retrospective_end(class="form-control w-25") }}
-      </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        <h4 class="card-title">Consent & Feedback</h4>
-        <p class="card-text">
-          This service provided by the CFMM and the Khan lab is optional, and we do not make any guarantees regarding quality of service. By using autobids you agree to appropriately acknowledge it's use, and to be contacted by e-mail for notifications and updates.
-        </p>
-        {{ form.consent.label }}
-        <div class="form-check">
-          {{ form.consent(class="form-check-input") }}
-          <label class="form-check-label">Yes</label>
+            The following questions require study information from the CFMM
+            dicom server. Please open the
+            <a href="https://dicom.cfmm.robarts.ca/dm/index">
+              CFMM DICOM Management website
+            </a>
+            in a separate window to gather this information. Note: your study
+            must be on the CFMM DICOM server to be compatible with autobids.
+          </p>
         </div>
       </div>
-    </div>
-    <div class="card my-3">
-      <div class="card-body">
-        <p class="card-text">
-          Optional: Please feel free to leave any feedback regarding this form or autobids in general.
-        </p>
-        {{ form.comment(cols=77, rows=5) }}
+      <div class="card my-3">
+        <div class="card-body">
+          {{ form.principal.label }}
+          {{ form.principal(class="form-control w-25 mb-3", placeholder="Please enter the Principal/PI") }}
+          {{ form.principal_other.label }}
+          {{ form.principal_other(class="form-control w-25", placeholder="Please enter the Principal/PI") }}
+        </div>
       </div>
-    </div>
-    <div class="text-center">{{ form.submit(class="btn btn-light") }}</div>
-  </form>
-</div>
+      <div class="card my-3">
+        <div class="card-body">
+          {{ form.project_name.label }}
+          {{ form.project_name(class="form-control w-25", placeholder="Please enter the Project Name") }}
+        </div>
+      </div>
+      <div class="card my-3">
+        <div class="card-body">
+          {{ form.dataset_name.label }}
+          {{ form.dataset_name(class="form-control w-25", placeholder="Please enter the Dataset Name") }}
+        </div>
+      </div>
+      <div class="card my-3">
+        <div class="card-body">
+          <h4 class="card-title">Test BIDS Conversion</h4>
+          <p class="card-text">
+            We require an example session to optimize and test BIDS conversion.
+          </p>
+          {{ form.sample.label }}
+          {{ form.sample(class="form-control w-25") }}
+        </div>
+      </div>
+      <div class="card my-3">
+        <div class="card-body">
+          <h4 class="card-title">Retrospective BIDS Conversion</h4>
+          <p class="card-text">
+            Once conversion is tested and verified, it is possible for us to
+            trigger conversion of previously acquired data. Note: data must
+            exist on the DICOM server.
+          </p>
+          {{ form.retrospective_data.label }}
+          <div class="form-check">
+            {{ form.retrospective_data(class="form-check-input") }}
+            <label class="form-check-label" for="retrospective_data">Yes</label>
+          </div>
+          {{ form.retrospective_start.label }}
+          {{ form.retrospective_start(class="form-control w-25") }}
+          {{ form.retrospective_end.label }}
+          {{ form.retrospective_end(class="form-control w-25") }}
+        </div>
+      </div>
+      <div class="card my-3">
+        <div class="card-body">
+          <h4 class="card-title">Consent & Feedback</h4>
+          <p class="card-text">
+            This service provided by the CFMM and the Khan lab is optional,
+            and we do not make any guarantees regarding quality of service. By
+            using autobids you agree to appropriately acknowledge its use,
+            and to be contacted by e-mail for notifications and updates.
+          </p>
+          {{ form.consent.label }}
+          <div class="form-check">
+            {{ form.consent(class="form-check-input") }}
+            <label class="form-check-label">Yes</label>
+          </div>
+        </div>
+      </div>
+      <div class="card my-3">
+        <div class="card-body">
+          <p class="card-text">
+            Optional: Please feel free to leave any feedback regarding this
+            form or autobids in general.
+          </p>
+          {{ form.comment(cols=77, rows=5) }}
+        </div>
+      </div>
+      <div class="text-center">{{ form.submit(class="btn btn-light") }}</div>
+    </form>
+  </div>
 {% endblock app_content %}
