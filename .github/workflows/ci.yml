@@ -50,6 +50,13 @@ jobs:
       - name: Run pylint
         run: |
           pylint autobidsportal
+      - name: Install djLint
+        run: |
+          pip install djlint
+      - name: run djLint
+        run: |
+          djlint --lint autobidsportal/templates
+          djlint --check autobidsportal/templates
   test:
     name: Set up environment and run tests
     if: github.event.pull_request.draft == false
