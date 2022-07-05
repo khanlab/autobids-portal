@@ -52,7 +52,7 @@ jobs:
           pylint autobidsportal
       - name: Install djLint
         run: |
-          pip install djlint
+          pip install djlint==1.3.0
       - name: run djLint
         run: |
           djlint --lint autobidsportal/templates
