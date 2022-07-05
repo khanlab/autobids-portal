@@ -99,5 +99,5 @@ jobs:
       - name: Run pytest
         shell: bash
         run: |
-          pytest --cov
+          pytest --cov=autobidsportal
 
