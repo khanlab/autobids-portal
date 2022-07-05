@@ -11,3 +11,4 @@ dist/
 compose/*
 !compose/*.pem
 !compose/ssh
+.coverage
