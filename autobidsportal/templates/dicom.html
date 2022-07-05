@@ -82,7 +82,9 @@
                         {% for series in response["series"] %}
                           <tr>
                             <td>{{ series["SeriesNumber"] }}</td>
-                            <td><code>{{ series["SeriesDescription"] }}</code></td>
+                            <td>
+                              <code>{{ series["SeriesDescription"] }}</code>
+                            </td>
                           </tr>
                         {% endfor %}
                       </tbody>

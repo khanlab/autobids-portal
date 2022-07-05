@@ -8,4 +8,5 @@ line-length = 79
 [tool.djlint]
 indent = 2
 profile = "jinja"
-max_line_length = 88
+max_line_length = 79
+ignore = "H021"

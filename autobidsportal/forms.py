@@ -189,7 +189,7 @@ class BidsForm(FlaskForm):
 
     retrospective_end = DateField(
         (
-            "Please enter end date of retrospective conversion (or leave"
+            "Please enter end date of retrospective conversion (or leave "
             "blank if ongoing).:"
         ),
         format="%Y-%m-%d",
@@ -198,7 +198,7 @@ class BidsForm(FlaskForm):
 
     consent = BooleanField(
         (
-            "By checking the box below, you are agreeing with these general"
+            "By checking the box below, you are agreeing with these general "
             "terms."
         ),
         validators=[DataRequired()],

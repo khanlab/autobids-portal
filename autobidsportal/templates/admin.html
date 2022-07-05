@@ -31,7 +31,9 @@
               <td>{{ u.email }}</td>
               <td>{{ u.email }}</td>
               <td>
-                {% for a in u.access_to %}<div>{{ a.desc.replace(" ", "^") }}</div>{% endfor %}
+                {% for a in u.access_to %}
+                  <div>{{ a.desc.replace(" ", "^") }}</div>
+                {% endfor %}
               </td>
             </tr>
           {% endfor %}

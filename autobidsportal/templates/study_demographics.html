@@ -13,21 +13,15 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item">
               <h5 class="card-title">Name</h5>
-              <p class="card-test">
-                {{ study.submitter_name }}
-              </p>
+              <p class="card-test">{{ study.submitter_name }}</p>
             </li>
             <li class="list-group-item">
               <h5 class="card-title">Email</h5>
-              <p class="card-text">
-                {{ study.submitter_email }}
-              </p>
+              <p class="card-text">{{ study.submitter_email }}</p>
             </li>
             <li class="list-group-item">
               <h5 class="card-title">Status</h5>
-              <p class="card-text">
-                {{ study.status.capitalize() }}
-              </p>
+              <p class="card-text">{{ study.status.capitalize() }}</p>
             </li>
             <li class="list-group-item">
               <h5 class="card-title">Familiarity</h5>
@@ -36,25 +30,15 @@
                   <td>BIDS:</td>
                   <td>
                     {% if study.familiarity_bids == '1' %}
-                      <p>
-                        Not familiar at all
-                      </p>
+                      <p>Not familiar at all</p>
                     {% elif study.familiarity_bids == '2' %}
-                      <p>
-                        Have heard of it
-                      </p>
+                      <p>Have heard of it</p>
                     {% elif study.familiarity_bids == '3' %}
-                      <p>
-                        Have used of it
-                      </p>
+                      <p>Have used of it</p>
                     {% elif study.familiarity_bids == '4' %}
-                      <p>
-                        Used it regularly
-                      </p>
+                      <p>Used it regularly</p>
                     {% elif study.familiarity_bids == '5' %}
-                      <p>
-                        I consider myself an expert
-                      </p>
+                      <p>I consider myself an expert</p>
                     {% endif %}
                   </td>
                 </tr>
@@ -62,25 +46,15 @@
                   <td>BIDS Apps:</td>
                   <td>
                     {% if study.familiarity_bidsapp == '1' %}
-                      <p>
-                        Not familiar at all
-                      </p>
+                      <p>Not familiar at all</p>
                     {% elif study.familiarity_bidsapp == '2' %}
-                      <p>
-                        Have heard of it
-                      </p>
+                      <p>Have heard of it</p>
                     {% elif study.familiarity_bidsapp == '3' %}
-                      <p>
-                        Have used of it
-                      </p>
+                      <p>Have used of it</p>
                     {% elif study.familiarity_bidsapp == '4' %}
-                      <p>
-                        Used it regularly
-                      </p>
+                      <p>Used it regularly</p>
                     {% elif study.familiarity_bidsapp == '5' %}
-                      <p>
-                        I consider myself an expert
-                      </p>
+                      <p>I consider myself an expert</p>
                     {% endif %}
                   </td>
                 </tr>
@@ -88,30 +62,22 @@
                   <td>Python:</td>
                   <td>
                     {% if study.familiarity_python == '1' %}
-                      <p>
-                        Not familiar at all
-                      </p>
+                      <p>Not familiar at all</p>
                     {% elif study.familiarity_python == '2' %}
-                      <p>
-                        Have heard of it
-                      </p>
+                      <p>Have heard of it</p>
                     {% elif study.familiarity_python == '3' %}
-                      <p>
-                        Have used of it
-                      </p>
+                      <p>Have used of it</p>
                     {% elif study.familiarity_python == '4' %}
-                      <p>
-                        Used it regularly
-                      </p>
+                      <p>Used it regularly</p>
                     {% elif study.familiarity_python == '5' %}
-                      <p>
-                        I consider myself an expert
-                      </p>
+                      <p>I consider myself an expert</p>
                     {% endif %}
                   </td>
                 </tr>
                 <tr>
-                  <td>Linux:</td>
+                  <td>
+                    Linux:
+                  </td>
                   <td>
                     {% if study.familiarity_linux == '1' %}
                       <p>
@@ -137,7 +103,9 @@
                   </td>
                 </tr>
                 <tr>
-                  <td>Bash:</td>
+                  <td>
+                    Bash:
+                  </td>
                   <td>
                     {% if study.familiarity_bash == '1' %}
                       <p>
@@ -163,7 +131,9 @@
                   </td>
                 </tr>
                 <tr>
-                  <td>HPC:</td>
+                  <td>
+                    HPC:
+                  </td>
                   <td>
                     {% if study.familiarity_hpc == '1' %}
                       <p>
@@ -189,7 +159,9 @@
                   </td>
                 </tr>
                 <tr>
-                  <td>OpenNeuro:</td>
+                  <td>
+                    OpenNeuro:
+                  </td>
                   <td>
                     {% if study.familiarity_openneuro == '1' %}
                       <p>
@@ -215,7 +187,9 @@
                   </td>
                 </tr>
                 <tr>
-                  <td>CBRAIN:</td>
+                  <td>
+                    CBRAIN:
+                  </td>
                   <td>
                     {% if study.familiarity_cbrain == '1' %}
                       <p>
