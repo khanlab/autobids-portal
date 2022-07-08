@@ -76,9 +76,15 @@ def check_current_authorized(study):
         abort(404)
 
 
-@portal_blueprint.route("/", methods=["GET", "POST"])
-@portal_blueprint.route("/index", methods=["GET", "POST"])
+@portal_blueprint.route("/", methods=["GET"])
+@portal_blueprint.route("/index", methods=["GET"])
 def index():
+    """A splash page to describe autobids."""
+    return render_template("index.html")
+
+
+@portal_blueprint.route("/new", methods=["GET", "POST"])
+def new_study():
     """Provides a survey form for users to fill out.
 
     If the Principal table is not empty, the principal names are added to
@@ -110,7 +116,8 @@ def index():
             ),
         )
 
-        return redirect(url_for("portal_blueprint.index"))
+        return redirect(url_for("portal_blueprint.new_study"))
+
     return render_template("survey.html", form=form)
 
 

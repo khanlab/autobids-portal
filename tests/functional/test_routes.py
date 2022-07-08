@@ -1,6 +1,10 @@
 """Test route responses with the test client."""
 
 
+def _assert_splash(data):
+    assert b"Welcome to Autobids!" in data
+
+
 def test_login_page(test_client):
     """Test that the login page loads."""
     response = test_client.get("/login")
@@ -23,15 +27,15 @@ def test_valid_login_logout(test_client, init_database):
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
+    _assert_splash(response.data)
+    assert b"Studies" in response.data
     assert b"Invalid email or password" not in response.data
 
     response = test_client.get("/logout", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" not in response.data
     assert b"Login" in response.data
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_invalid_login(test_client, init_database):
@@ -50,7 +54,6 @@ def test_invalid_login(test_client, init_database):
     assert b"Login" in response.data
     assert b"Click to Register!" in response.data
     assert b"Name" not in response.data
-    assert b"Results" not in response.data
     assert b"Invalid email or password" in response.data
 
 
@@ -71,8 +74,8 @@ def test_login_already_logged_in(
     assert b"Logout" in response.data
     assert b"Login" not in response.data
     assert b"Click to Register!" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
+    _assert_splash(response.data)
+    assert b"Studies" in response.data
 
 
 def test_valid_registration(test_client, init_database):
@@ -92,8 +95,7 @@ def test_valid_registration(test_client, init_database):
     assert b"Login" in response.data
     assert b"Click to Register!" in response.data
     assert b"Congratulations, you are now a registered user!" in response.data
-    assert b"Name" not in response.data
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_invalid_registration(test_client, init_database):
@@ -116,7 +118,7 @@ def test_invalid_registration(test_client, init_database):
     assert (
         b"Congratulations, you are now a registered user!" not in response.data
     )
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_duplicate_registration(test_client, init_database):
@@ -151,7 +153,7 @@ def test_duplicate_registration(test_client, init_database):
     assert b"Logout" not in response.data
     assert b"Login" in response.data
     assert b"Register" in response.data
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_valid_login_complete_survey_logout(test_client, init_database):
@@ -168,11 +170,11 @@ def test_valid_login_complete_survey_logout(test_client, init_database):
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
+    _assert_splash(response.data)
+    assert b"Studies" in response.data
 
     response = test_client.post(
-        "/index",
+        "/new",
         data=dict(
             name="John",
             email="johnsmith@gmail.com",
@@ -207,20 +209,20 @@ def test_valid_login_complete_survey_logout(test_client, init_database):
     assert b"johnsmith@gmail.com" not in response.data
     assert b"Logout" in response.data
     assert b"Login" not in response.data
-    assert b"Results" in response.data
+    assert b"Studies" in response.data
 
     response = test_client.get("/logout", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" not in response.data
     assert b"Login" in response.data
-    assert b"Name" in response.data
-    assert b"Results" not in response.data
+    _assert_splash(response.data)
+    assert b"Studies" not in response.data
 
 
 def test_valid_survey(test_client, init_database):
     """Test that a valid survey successfully submits."""
     response = test_client.post(
-        "/index",
+        "/new",
         data=dict(
             name="John",
             email="johnsmith@gmail.com",
@@ -255,13 +257,13 @@ def test_valid_survey(test_client, init_database):
     assert b"Name" in response.data
     assert b"johnsmith@gmail.com" not in response.data
     assert b"Thanks, the survey has been submitted!" in response.data
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_invalid_survey(test_client, init_database):
     """Test that an invalid survey fails."""
     response = test_client.post(
-        "/index",
+        "/new",
         data=dict(
             name="",
             email="johnsmith@gmail.com",
@@ -296,7 +298,7 @@ def test_invalid_survey(test_client, init_database):
     assert b"Name" in response.data
     assert b"johnsmith@gmail.com" in response.data
     assert b"Thanks, the survey has been submitted!" not in response.data
-    assert b"Results" not in response.data
+    assert b"Studies" not in response.data
 
 
 def test_results_page(test_client, login_normal_user):
@@ -305,8 +307,7 @@ def test_results_page(test_client, login_normal_user):
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
+    assert b"Studies" in response.data
 
 
 def test_results_download(test_client, init_database, login_normal_user):
@@ -318,7 +319,7 @@ def test_results_download(test_client, init_database, login_normal_user):
 def test_complete_survey_access_study_info(test_client, login_admin):
     """Test that a survey's results are viewable."""
     response = test_client.post(
-        "/index",
+        "/new",
         data=dict(
             name="John",
             email="johnsmith@gmail.com",
@@ -353,14 +354,13 @@ def test_complete_survey_access_study_info(test_client, login_admin):
     assert b"Name" in response.data
     assert b"johnsmith@gmail.com" not in response.data
     assert b"Thanks, the survey has been submitted!" in response.data
-    assert b"Results" in response.data
+    assert b"Studies" in response.data
 
     response = test_client.get("/results/1", follow_redirects=True)
     assert response.status_code == 200
     assert b"Logout" in response.data
     assert b"Login" not in response.data
-    assert b"Name" in response.data
-    assert b"Results" in response.data
+    assert b"Studies" in response.data
 
     response = test_client.get(
         "/results/1/demographics", follow_redirects=True
