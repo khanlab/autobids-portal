@@ -82,6 +82,7 @@ def index():
     """A splash page to describe autobids."""
     return render_template("index.html")
 
+
 @portal_blueprint.route("/new", methods=["GET", "POST"])
 def new_study():
     """Provides a survey form for users to fill out.
