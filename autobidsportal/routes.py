@@ -115,6 +115,8 @@ def new_study():
             ),
         )
 
+        return redirect(url_for("portal_blueprint.new_study"))
+
     return render_template("survey.html", form=form)
 
 
