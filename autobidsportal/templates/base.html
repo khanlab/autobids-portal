@@ -28,6 +28,9 @@
         <a class="navbar-brand" href="{{ url_for('portal_blueprint.index') }}">Home</a>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="navbar-nav navbar-right">
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('portal_blueprint.new_study') }}">New Study</a>
+            </li>
             {% if current_user.is_anonymous %}
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('portal_blueprint.login') }}">Login</a>
@@ -39,7 +42,7 @@
                 </li>
               {% endif %}
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Results</a>
+                <a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Studies</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="{{ url_for('portal_blueprint.logout') }}">Logout</a>
