@@ -167,7 +167,15 @@ def user_list():
     if not current_user.admin:
         abort(404)
     users = User.query.all()
-    return render_template("admin.html", title="Administration", users=users)
+    ria_url = current_app.config["DATALAD_RIA_URL"]
+    archive_url = current_app.config["ARCHIVE_BASE_URL"]
+    return render_template(
+        "admin.html",
+        title="Administration",
+        users=users,
+        ria_url=ria_url,
+        archive_url=archive_url,
+    )
 
 
 @portal_blueprint.route("/admin/update_heuristics", methods=["POST"])
