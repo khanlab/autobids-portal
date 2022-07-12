@@ -34,6 +34,9 @@ class TestConfig:
     DICOM_SERVER_TLS = False
     DICOM_PI_BLACKLIST = []
 
+    DATALAD_RIA_URL = "ria+file:///tmp"
+    ARCHIVE_BASE_URL = "ria+file:///tmp"
+
     DCM4CHE_PREFIX = "singularity exec -B /tmp:/tmp /home/tk/Code/western_ossd/singularity_containers/khanlab_cfmm2tar_v0.0.3.sif"
     TAR2BIDS_PREFIX = ""
 
