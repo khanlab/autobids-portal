@@ -185,8 +185,11 @@ def update_heuristics():
     if not current_user.admin:
         abort(404)
 
-    current_user.launch_task(
-        "update_heuristics", "Manually triggered heuristic update"
+    Task.launch_task(
+        "update_heuristics",
+        "Manually triggered heuristic update",
+        user=current_user,
+        timeout=1000,
     )
     current_app.logger.info("Update heuristic task launched.")
     flash("Currently updating heuristics... Give it a minute or two.")
@@ -427,10 +430,12 @@ def run_cfmm2tar(study_id):
         ]
     else:
         explicit_scans = None
-    current_user.launch_task(
+    Task.launch_task(
         "get_info_from_cfmm2tar",
         f"cfmm2tar for study {study_id}",
         study_id,
+        user=current_user,
+        study_id=study_id,
         explicit_scans=explicit_scans,
     )
     current_app.logger.info("Launched cfmm2tar for study %i", study_id)
@@ -519,10 +524,13 @@ def archive_tar2bids(study_id):
     ):
         flash("An task is currently in progress for this study.")
     else:
-        current_user.launch_task(
+        Task.launch_task(
             "archive_raw_data",
             f"dataset archive for study {study_id}",
             study_id,
+            user=current_user,
+            timeout=1000,
+            study_id=study_id,
         )
         current_app.logger.info(
             "Launched archive task for study %i",
@@ -591,11 +599,13 @@ def run_tar2bids(study_id):
     ):
         flash("An tar2bids run is currently in progress")
     else:
-        current_user.launch_task(
+        Task.launch_task(
             "get_info_from_tar2bids",
             f"tar2bids for study {study_id}",
             study_id,
             [tar_file.id for tar_file in tar_files],
+            user=current_user,
+            study_id=study_id,
         )
         current_app.logger.info(
             "Launched tar2bids for study %i with files %s",

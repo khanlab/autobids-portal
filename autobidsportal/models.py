@@ -87,82 +87,6 @@ class User(UserMixin, db.Model):
         db.session.add(notification)
         return notification
 
-    def launch_task(self, name, description, *args, **kwargs):
-        """Enqueue a task with rq and record it in the DB."""
-        if name == "get_info_from_cfmm2tar":
-            rq_job = Job.create(
-                "autobidsportal.tasks." + name,
-                args=args,
-                kwargs=kwargs,
-                timeout=100000,
-                connection=current_app.redis,
-            )
-            task = Task(
-                id=rq_job.get_id(),
-                name=name,
-                description=description,
-                user_id=self.id,
-                user=self,
-                start_time=datetime.utcnow(),
-                study_id=args[0],
-            )
-        elif name == "get_info_from_tar2bids":
-            rq_job = Job.create(
-                "autobidsportal.tasks." + name,
-                args=args,
-                kwargs=kwargs,
-                timeout=100000,
-                connection=current_app.redis,
-            )
-            task = Task(
-                id=rq_job.get_id(),
-                name=name,
-                description=description,
-                user_id=self.id,
-                user=self,
-                start_time=datetime.utcnow(),
-                study_id=args[0],
-            )
-        elif name == "update_heuristics":
-            rq_job = Job.create(
-                "autobidsportal.tasks." + name,
-                args=args,
-                kwargs=kwargs,
-                timeout=1000,
-                connection=current_app.redis,
-            )
-            task = Task(
-                id=rq_job.get_id(),
-                name=name,
-                description=description,
-                user_id=self.id,
-                user=self,
-                start_time=datetime.utcnow(),
-            )
-        elif name == "archive_raw_data":
-            rq_job = Job.create(
-                "autobidsportal.tasks." + name,
-                args=args,
-                kwargs=kwargs,
-                timeout=1000,
-                connection=current_app.redis,
-            )
-            task = Task(
-                id=rq_job.get_id(),
-                name=name,
-                description=description,
-                user_id=self.id,
-                user=self,
-                start_time=datetime.utcnow(),
-                study_id=args[0],
-            )
-        else:
-            raise ValueError("Invalid task name")
-        db.session.add(task)
-        db.session.commit()
-        current_app.task_queue.enqueue_job(rq_job)
-        return task
-
     def get_completed_tasks(self):
         """Get all completed tasks associated with this user."""
         return Task.query.filter_by(user=self, complete=True).all()
@@ -173,7 +97,6 @@ class User(UserMixin, db.Model):
             name=name,
             user=self,
             complete=False,
-            task_button_id=self.last_pressed_button_id,
         ).first()
 
 
@@ -309,6 +232,13 @@ class Notification(db.Model):
 class Task(db.Model):
     """A task deferred to the task queue."""
 
+    TASKS = (
+        "get_info_from_cfmm2tar",
+        "get_info_from_tar2bids",
+        "update_heuristics",
+        "archive_raw_data",
+    )
+
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True, nullable=False)
     description = db.Column(db.String(128), nullable=False)
@@ -330,6 +260,40 @@ class Task(db.Model):
             self.error,
         )
         return f"<Task {task_cols}>"
+
+    @classmethod
+    def launch_task(
+        cls,
+        name,
+        description,
+        *args,
+        user=None,
+        timeout=100000,
+        study_id=None,
+        **kwargs,
+    ):
+        """Enqueue a task with rq and record it in the DB."""
+        if name not in cls.TASKS:
+            raise ValueError("Invalid task name")
+        rq_job = Job.create(
+            f"autobidsportal.tasks.{name}",
+            args=args,
+            kwargs=kwargs,
+            timeout=timeout,
+            connection=current_app.redis,
+        )
+        task = cls(
+            id=rq_job.get_id(),
+            name=name,
+            description=description,
+            user=user,
+            start_time=datetime.utcnow(),
+            study_id=study_id,
+        )
+        db.session.add(task)
+        db.session.commit()
+        current_app.task_queue.enqueue_job(rq_job)
+        return task
 
     def get_rq_job(self):
         """Get the rq job associated with this task."""

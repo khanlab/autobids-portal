@@ -1,9 +1,5 @@
 """Flask entry point with extra CLI commands."""
 
-import datetime
-
-from rq.job import Job
-
 from autobidsportal import create_app
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
@@ -85,22 +81,12 @@ def run_all_cfmm2tar():
             > 0
         ) or (not study.active):
             continue
-        rq_job = Job.create(
-            "autobidsportal.tasks.get_info_from_cfmm2tar",
+        Task.launch_task(
+            "get_info_from_cfmm2tar",
+            "automatic cfmm2tar run",
             study.id,
-            timeout=100000,
-            connection=app.redis,
-        )
-        task = Task(
-            id=rq_job.get_id(),
-            name="get_info_from_cfmm2tar",
-            description=f"Study {study.id} from CLI",
-            start_time=datetime.datetime.utcnow(),
             study_id=study.id,
         )
-        db.session.add(task)
-        db.session.commit()
-        app.task_queue.enqueue_job(rq_job)
 
 
 @app.cli.command()
@@ -127,26 +113,16 @@ def run_all_tar2bids():
             }
         else:
             existing_tar_file_ids = set()
-        rq_job = Job.create(
-            "autobidsportal.tasks.get_info_from_tar2bids",
+        Task.launch_task(
+            "get_info_from_tar2bids",
+            "automatic tar2bids run",
             study.id,
             list(
                 {tar_file.id for tar_file in study.cfmm2tar_outputs}
                 - existing_tar_file_ids
             ),
-            timeout=100000,
-            connection=app.redis,
-        )
-        task = Task(
-            id=rq_job.get_id(),
-            name="get_info_from_tar2bids",
-            description=f"Study {study.id} from CLI",
-            start_time=datetime.datetime.utcnow(),
             study_id=study.id,
         )
-        db.session.add(task)
-        db.session.commit()
-        app.task_queue.enqueue_job(rq_job)
 
 
 @app.cli.command()
@@ -169,19 +145,9 @@ def run_all_archive():
             > 0
         ) or (not study.active):
             continue
-        rq_job = Job.create(
-            "autobidsportal.tasks.archive_raw_data",
+        Task.launch_task(
+            "archive_raw_data",
+            "automatic archive task",
             study.id,
-            timeout=100000,
-            connection=app.redis,
-        )
-        task = Task(
-            id=rq_job.get_id(),
-            name="archive_raw_data",
-            description=f"Study {study.id} from CLI",
-            start_time=datetime.datetime.utcnow(),
             study_id=study.id,
         )
-        db.session.add(task)
-        db.session.commit()
-        app.task_queue.enqueue_job(rq_job)
