@@ -9,6 +9,7 @@ services:
       FLASK_APP: bids_form.py
       AUTOBIDS_SECRET_KEY: secret
       AUTOBIDS_LOG_LEVEL: INFO
+      AUTOBIDS_ROOT_URL: autobidsportal
       AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /cfmm2tar-download
       AUTOBIDS_CFMM2TAR_STORAGE_DIR: /tar-files
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
