@@ -49,7 +49,7 @@ def create_app(config_object=None, override_dict=None):
 
     db.init_app(app)
     excel.init_excel(app)
-    app.redis = Redis.from_url(app.config["REDIS_URL"])
+    app.redis = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
     app.task_queue = rq.Queue(connection=app.redis)
     Migrate(app, db, render_as_batch=True, compare_type=True)
     login.init_app(app)

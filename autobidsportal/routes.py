@@ -4,6 +4,7 @@ from datetime import datetime
 from json import loads, dumps
 from pathlib import Path
 import tempfile
+import uuid
 
 from flask import (
     current_app,
@@ -39,6 +40,8 @@ from autobidsportal.forms import (
     LoginForm,
     BidsForm,
     RegistrationForm,
+    GenResetForm,
+    ResetPasswordForm,
     AccessForm,
     RemoveAccessForm,
     StudyConfigForm,
@@ -158,6 +161,86 @@ def register():
         flash("Congratulations, you are now a registered user!")
         return redirect(url_for("portal_blueprint.login"))
     return render_template("register.html", title="Register", form=form)
+
+
+@portal_blueprint.route("/reset", methods=["GET", "POST"])
+def gen_reset():
+    """Generate a workflow to reset a user's password."""
+    form = GenResetForm()
+    if form.validate_on_submit():
+        email = form.email.data
+        user = User.query.filter_by(email=email).one_or_none()
+        exists = False
+        if user is not None:
+            for key in current_app.redis.scan_iter(match="reset_*"):
+                if current_app.redis.get(key) == email:
+                    exists = True
+                    current_app.logger.info(
+                        "Found existing key for user %s. Key: %s.", email, key
+                    )
+                    break
+            if not exists:
+                uuid_reset = str(uuid.uuid4())
+                key_reset = f"reset_{uuid_reset}"
+                current_app.redis.set(key_reset, email, ex=(10 * 60))
+                current_app.logger.info(
+                    "Generated reset url for user %s. UUID: %s",
+                    user.email,
+                    uuid_reset,
+                )
+                root_url = current_app.config["ROOT_URL"]
+                sub_url = url_for(
+                    "portal_blueprint.reset_password", uuid_reset=uuid_reset
+                )
+                send_email(
+                    "Autobids password reset",
+                    (
+                        "Please visit the following link to reset your password. "
+                        "The link will expire in ten minutes.\n\n"
+                        f"{root_url}{sub_url}\n\n"
+                        "Please ignore this email if it has been sent in error."
+                    ),
+                    recipients=[email],
+                )
+        else:
+            current_app.logger.info(
+                "Attempted reset for nonassociated email %s ignored.", email
+            )
+        flash(
+            "An email with further instructions has been sent if the "
+            "provided email is associated with a user account."
+        )
+    return render_template("gen_reset.html", form=form)
+
+
+@portal_blueprint.route("/reset/<uuid_reset>", methods=["GET", "POST"])
+def reset_password(uuid_reset):
+    """Reset a user's password, given a workflow has started."""
+    key_reset = f"reset_{uuid_reset}"
+    if current_app.redis.exists(key_reset) < 1:
+        flash(
+            "The reset password link is incorrect or has expired. Please "
+            "resubmit your password reset request."
+        )
+        return redirect(url_for("portal_blueprint.gen_reset"))
+    form = ResetPasswordForm()
+    email = current_app.redis.get(key_reset)
+    user = User.query.filter_by(email=email).one_or_none()
+    if user is None:
+        flash(
+            "This password reset link encountered an unexpected error. "
+            "Please resubmit your password reset request."
+        )
+        current_app.redis.delete(key_reset)
+        return redirect(url_for("portal_blueprint.gen_reset"))
+    if form.validate_on_submit():
+        new_password = form.password.data
+        user.set_password(new_password)
+        db.session.commit()
+        current_app.redis.delete(key_reset)
+        flash("Your password has been reset.")
+        return redirect(url_for("portal_blueprint.login"))
+    return render_template("reset_password.html", email=email, form=form)
 
 
 @portal_blueprint.route("/admin", methods=["GET", "POST"])

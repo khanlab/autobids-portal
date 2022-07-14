@@ -98,6 +98,26 @@ class RegistrationForm(FlaskForm):
     submit = SubmitField("Register")
 
 
+class GenResetForm(FlaskForm):
+    """A form for generating a reset password workflow."""
+
+    email = EmailField(
+        "Your email address",
+        validators=[DataRequired()],
+    )
+    submit = SubmitField("Reset password")
+
+
+class ResetPasswordForm(FlaskForm):
+    """A form for resetting a user's password."""
+
+    password = PasswordField("Password", validators=[DataRequired()])
+    password2 = PasswordField(
+        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+    )
+    submit = SubmitField("Reset password")
+
+
 class BidsForm(FlaskForm):
     """Form representing the new study survey."""
 
