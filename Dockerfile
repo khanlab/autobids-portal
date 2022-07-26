@@ -87,7 +87,11 @@ ENV LC_ALL "en_US.UTF-8"
 ENV LANG "en_US.UTF-8"
 
 WORKDIR /src
-COPY . .
+COPY ./requirements.txt .
+COPY ./setup.cfg .
+COPY ./pyproject.toml .
+COPY ./compose ./compose
+RUN mkdir autobidsportal
 
 RUN pip install --no-cache-dir -r requirements.txt \
     && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 -storepass secret -v \
@@ -108,6 +112,9 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && echo "[archive]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHkOjP+rdG2n1VikNnwhPVNQbuU8psJnaZWC2lVpsW9C" >> /etc/ssh/ssh_known_hosts \
     && git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com"
+
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
