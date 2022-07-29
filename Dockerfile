@@ -94,6 +94,7 @@ COPY ./compose ./compose
 RUN mkdir autobidsportal
 
 RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir pyuwsgi==2.0.20 \
     && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 -storepass secret -v \
     && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks -storepass secret -v \
     && keytool -noprompt -importcert -trustcacerts -alias mycert -file ./compose/dcm4che-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 -storepass secret -v \
@@ -114,9 +115,10 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && git config --system user.email "autobids@dummy.com"
 
 COPY . .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && mv autobidsportal.ini.example autobidsportal.ini
 
 ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
 
-CMD ["flask", "run", "--host=0.0.0.0"]
+CMD ["uwsgi", "--ini=autobidsportal.ini"]

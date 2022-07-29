@@ -105,6 +105,14 @@ services:
     volumes:
       - "./compose/archive:/archive"
       - "./compose/ssh:/ssh"
+  nginx:
+    image: nginx:latest
+    hostname: nginx
+    volumes:
+      - "./compose/nginx.conf:/etc/nginx/nginx.conf"
+    ports: ["5001:80"]
+    depends_on:
+      - autobidsportal
 secrets:
   orthanc.json:
     file: compose/orthanc.json
