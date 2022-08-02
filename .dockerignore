@@ -11,3 +11,5 @@ autobidsportal/static/lib/autobids-react/*
 !autobidsportal/static/lib/autobids-react/dist
 compose/*
 !compose/*.pem
+!compose/cfmm2tar-custom
+!compose/known_hosts
