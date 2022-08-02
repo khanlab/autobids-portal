@@ -74,18 +74,16 @@ def run_all_cfmm2tar():
             len(
                 Task.query.filter_by(
                     study_id=study.id,
-                    name="get_info_from_cfmm2tar",
+                    name="run_cfmm2tar",
                     complete=False,
                 ).all()
             )
             > 0
         ) or (not study.active):
+            print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        Task.launch_task(
-            "get_info_from_cfmm2tar",
-            "automatic cfmm2tar run",
-            study.id,
-            study_id=study.id,
+        app.task_queue.enqueue(
+            "autobidsportal.tasks.check_tar_files", study.id
         )
 
 
