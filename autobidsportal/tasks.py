@@ -16,6 +16,7 @@ from autobidsportal.models import (
     Study,
     Task,
     Cfmm2tarOutput,
+    DataladDataset,
     Tar2bidsOutput,
     DatasetType,
     User,
@@ -298,7 +299,32 @@ def run_cfmm2tar(study_id, studies_to_download):
             _set_task_error(job.id, "Unknown uncaught exception")
 
 
-def get_info_from_tar2bids(study_id, tar_file_ids):
+def find_unprocessed_tar_files(study_id):
+    """Check for tar files that aren't in the dataset and add them."""
+    study = Study.query.get(study_id)
+    dataset = DataladDataset.query.filter_by(
+        study_id=study.id, dataset_type=DatasetType.RAW_DATA
+    ).one_or_none()
+    existing_tar_file_ids = (
+        set()
+        if dataset is None
+        else {out.id for out in dataset.cfmm2tar_outputs}
+    )
+    new_tar_file_ids = {
+        tar_file.id for tar_file in study.cfmm2tar_outputs
+    } - existing_tar_file_ids
+    if len(new_tar_file_ids) == 0:
+        return
+    Task.launch_task(
+        "run_tar2bids",
+        "tar2bids run for all new tar files",
+        study_id,
+        list(new_tar_file_ids),
+        study_id=study_id,
+    )
+
+
+def run_tar2bids(study_id, tar_file_ids):
     """Run tar2bids for a specific study.
 
     Parameters

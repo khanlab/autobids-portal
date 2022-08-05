@@ -382,7 +382,7 @@ def answer_info(study_id):
         Path(cfmm2tar_file.tar_file).name for cfmm2tar_file in cfmm2tar_files
     ]
     tar2bids_tasks = (
-        Task.query.filter_by(study_id=study_id, name="get_info_from_tar2bids")
+        Task.query.filter_by(study_id=study_id, name="run_tar2bids")
         .order_by(desc("start_time"))
         .all()
     )
@@ -672,7 +672,7 @@ def run_tar2bids(study_id):
         len(
             Task.query.filter_by(
                 study_id=study_id,
-                name="get_info_from_tar2bids",
+                name="run_tar2bids",
                 complete=False,
             ).all()
         )
@@ -681,7 +681,7 @@ def run_tar2bids(study_id):
         flash("An tar2bids run is currently in progress")
     else:
         Task.launch_task(
-            "get_info_from_tar2bids",
+            "run_tar2bids",
             f"tar2bids for study {study_id}",
             study_id,
             [tar_file.id for tar_file in tar_files],

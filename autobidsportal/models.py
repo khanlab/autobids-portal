@@ -234,7 +234,7 @@ class Task(db.Model):
 
     TASKS = (
         "run_cfmm2tar",
-        "get_info_from_tar2bids",
+        "run_tar2bids",
         "update_heuristics",
         "archive_raw_data",
     )
