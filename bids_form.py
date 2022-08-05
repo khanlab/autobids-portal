@@ -105,6 +105,7 @@ def run_all_tar2bids():
             "autobidsportal.tasks.find_unprocessed_tar_files", study.id
         )
 
+
 @app.cli.command()
 def run_all_archive():
     """Archive all active studies' raw datasets.
