@@ -12,8 +12,6 @@ from autobidsportal.models import (
     Cfmm2tarOutput,
     Tar2bidsOutput,
     ExplicitPatient,
-    DataladDataset,
-    DatasetType,
 )
 from autobidsportal.tasks import update_heuristics
 
@@ -74,18 +72,16 @@ def run_all_cfmm2tar():
             len(
                 Task.query.filter_by(
                     study_id=study.id,
-                    name="get_info_from_cfmm2tar",
+                    name="run_cfmm2tar",
                     complete=False,
                 ).all()
             )
             > 0
         ) or (not study.active):
+            print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        Task.launch_task(
-            "get_info_from_cfmm2tar",
-            "automatic cfmm2tar run",
-            study.id,
-            study_id=study.id,
+        app.task_queue.enqueue(
+            "autobidsportal.tasks.check_tar_files", study.id
         )
 
 
@@ -97,31 +93,16 @@ def run_all_tar2bids():
             len(
                 Task.query.filter_by(
                     study_id=study.id,
-                    name="get_info_from_tar2bids",
+                    name="run_tar2bids",
                     complete=False,
                 ).all()
             )
             > 0
         ) or not study.active:
+            print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        dataset = DataladDataset.query.filter_by(
-            study_id=study.id, dataset_type=DatasetType.RAW_DATA
-        ).one_or_none()
-        if dataset is not None:
-            existing_tar_file_ids = {
-                out.id for out in dataset.cfmm2tar_outputs
-            }
-        else:
-            existing_tar_file_ids = set()
-        Task.launch_task(
-            "get_info_from_tar2bids",
-            "automatic tar2bids run",
-            study.id,
-            list(
-                {tar_file.id for tar_file in study.cfmm2tar_outputs}
-                - existing_tar_file_ids
-            ),
-            study_id=study.id,
+        app.task_queue.enqueue(
+            "autobidsportal.tasks.find_unprocessed_tar_files", study.id
         )
 
 

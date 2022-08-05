@@ -16,8 +16,10 @@ from autobidsportal.models import (
     Study,
     Task,
     Cfmm2tarOutput,
+    DataladDataset,
     Tar2bidsOutput,
     DatasetType,
+    User,
 )
 from autobidsportal.datalad import (
     RiaDataset,
@@ -172,7 +174,29 @@ def find_studies_to_download(study, study_description, explicit_scans=None):
     ]
 
 
-def get_info_from_cfmm2tar(study_id, explicit_scans=None):
+def check_tar_files(study_id, explicit_scans=None, user_id=None):
+    """Launch cfmm2tar if there are any new tar files."""
+    study = Study.query.get(study_id)
+    user = User.query.get(user_id) if user_id is not None else None
+    studies_to_download = find_studies_to_download(
+        study, f"{study.principal}^{study.project_name}", explicit_scans
+    )
+    if len(studies_to_download) == 0:
+        return
+    new_studies = ", ".join(
+        [new_study["PatientName"] for new_study in studies_to_download]
+    )
+    Task.launch_task(
+        "run_cfmm2tar",
+        f"Get tar files {new_studies} in study {study_id}",
+        study_id,
+        studies_to_download,
+        user=user,
+        study_id=study_id,
+    )
+
+
+def run_cfmm2tar(study_id, studies_to_download):
     """Run cfmm2tar for a given study
 
     This will check which patients have already been downloaded, download any
@@ -189,18 +213,14 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
     job = get_current_job()
     _set_task_progress(job.id, 0)
     study = Study.query.get(study_id)
-    study_description = f"{study.principal}^{study.project_name}"
+    app.logger.info(
+        "Running cfmm2tar for patients %s in study %i",
+        [record["PatientName"] for record in studies_to_download],
+        study.id,
+    )
 
     try:
-        studies_to_download = find_studies_to_download(
-            study, study_description, explicit_scans=explicit_scans
-        )
-        app.logger.info(
-            "Running cfmm2tar for patients %s in study %i",
-            [record["PatientName"] for record in studies_to_download],
-            study_id,
-        )
-        dataset = ensure_dataset_exists(study_id, DatasetType.SOURCE_DATA)
+        dataset = ensure_dataset_exists(study.id, DatasetType.SOURCE_DATA)
         error_msgs = []
         for target in studies_to_download:
             with tempfile.TemporaryDirectory(
@@ -212,7 +232,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                     result, log = run_cfmm2tar_with_retries(
                         str(path_dataset),
                         target["PatientName"],
-                        study_description,
+                        f"{study.principal}^{study.project_name}",
                     )
                 except Cfmm2tarError as err:
                     app.logger.error("cfmm2tar failed: %s", err)
@@ -248,7 +268,7 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
                     record_cfmm2tar(
                         individual_result[0],
                         individual_result[1],
-                        study_id,
+                        study.id,
                     )
         if len(studies_to_download) > 0:
             send_email(
@@ -279,7 +299,32 @@ def get_info_from_cfmm2tar(study_id, explicit_scans=None):
             _set_task_error(job.id, "Unknown uncaught exception")
 
 
-def get_info_from_tar2bids(study_id, tar_file_ids):
+def find_unprocessed_tar_files(study_id):
+    """Check for tar files that aren't in the dataset and add them."""
+    study = Study.query.get(study_id)
+    dataset = DataladDataset.query.filter_by(
+        study_id=study.id, dataset_type=DatasetType.RAW_DATA
+    ).one_or_none()
+    existing_tar_file_ids = (
+        set()
+        if dataset is None
+        else {out.id for out in dataset.cfmm2tar_outputs}
+    )
+    new_tar_file_ids = {
+        tar_file.id for tar_file in study.cfmm2tar_outputs
+    } - existing_tar_file_ids
+    if len(new_tar_file_ids) == 0:
+        return
+    Task.launch_task(
+        "run_tar2bids",
+        "tar2bids run for all new tar files",
+        study_id,
+        list(new_tar_file_ids),
+        study_id=study_id,
+    )
+
+
+def run_tar2bids(study_id, tar_file_ids):
     """Run tar2bids for a specific study.
 
     Parameters

@@ -233,8 +233,8 @@ class Task(db.Model):
     """A task deferred to the task queue."""
 
     TASKS = (
-        "get_info_from_cfmm2tar",
-        "get_info_from_tar2bids",
+        "run_cfmm2tar",
+        "run_tar2bids",
         "update_heuristics",
         "archive_raw_data",
     )

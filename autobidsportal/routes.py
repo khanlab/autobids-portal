@@ -373,7 +373,7 @@ def answer_info(study_id):
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     cfmm2tar_tasks = (
-        Task.query.filter_by(study_id=study_id, name="get_info_from_cfmm2tar")
+        Task.query.filter_by(study_id=study_id, name="run_cfmm2tar")
         .order_by(desc("start_time"))
         .all()
     )
@@ -382,7 +382,7 @@ def answer_info(study_id):
         Path(cfmm2tar_file.tar_file).name for cfmm2tar_file in cfmm2tar_files
     ]
     tar2bids_tasks = (
-        Task.query.filter_by(study_id=study_id, name="get_info_from_tar2bids")
+        Task.query.filter_by(study_id=study_id, name="run_tar2bids")
         .order_by(desc("start_time"))
         .all()
     )
@@ -495,7 +495,7 @@ def run_cfmm2tar(study_id):
         len(
             Task.query.filter_by(
                 study_id=study_id,
-                name="get_info_from_cfmm2tar",
+                name="run_cfmm2tar",
                 complete=False,
             ).all()
         )
@@ -513,13 +513,11 @@ def run_cfmm2tar(study_id):
         ]
     else:
         explicit_scans = None
-    Task.launch_task(
-        "get_info_from_cfmm2tar",
-        f"cfmm2tar for study {study_id}",
+    current_app.task_queue.enqueue(
+        "autobidsportal.tasks.check_tar_files",
         study_id,
-        user=current_user,
-        study_id=study_id,
         explicit_scans=explicit_scans,
+        user_id=current_user.id,
     )
     current_app.logger.info("Launched cfmm2tar for study %i", study_id)
     db.session.commit()
@@ -674,7 +672,7 @@ def run_tar2bids(study_id):
         len(
             Task.query.filter_by(
                 study_id=study_id,
-                name="get_info_from_tar2bids",
+                name="run_tar2bids",
                 complete=False,
             ).all()
         )
@@ -683,7 +681,7 @@ def run_tar2bids(study_id):
         flash("An tar2bids run is currently in progress")
     else:
         Task.launch_task(
-            "get_info_from_tar2bids",
+            "run_tar2bids",
             f"tar2bids for study {study_id}",
             study_id,
             [tar_file.id for tar_file in tar_files],
