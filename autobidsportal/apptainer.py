@@ -29,7 +29,13 @@ def apptainer_exec(cmd_list, container_path, binds, **kwargs):
     if "check" in kwargs:
         del kwargs["check"]
     return subprocess.run(
-        ["apptainer", "exec",] + bind_list + [str(container_path)] + cmd_list,
+        [
+            "apptainer",
+            "exec",
+        ]
+        + bind_list
+        + [str(container_path)]
+        + cmd_list,
         check=True,
         **kwargs
     )
@@ -46,5 +52,6 @@ class ImageSpec:
     binds : list of str
         List of bind strings of the form src[:dest[:opts]]
     """
+
     image_path: Union[str, Path]
     binds: Sequence[str]

@@ -284,7 +284,7 @@ class Dcm4cheUtils:
             cmd.extend(
                 [
                     "-m",
-                    f'StudyDescription={attributes.study_description}',
+                    f"StudyDescription={attributes.study_description}",
                 ]
             )
         if attributes.study_date is not None:
@@ -307,20 +307,20 @@ class Dcm4cheUtils:
                 if attributes.date_range_end is not None
                 else ""
             )
-            cmd.extend(["-m", f'StudyDate={start}-{end}'])
+            cmd.extend(["-m", f"StudyDate={start}-{end}"])
         if attributes.patient_name is not None:
-            cmd.extend(["-m", f'PatientName={attributes.patient_name}'])
+            cmd.extend(["-m", f"PatientName={attributes.patient_name}"])
         if attributes.study_instance_uids not in [None, []]:
             cmd.extend(
                 [
                     "-m",
-                    'StudyInstanceUID={}'.format(
+                    "StudyInstanceUID={}".format(
                         "\\\\".join(attributes.study_instance_uids)
                     ),
                 ]
             )
         elif current_app.config["DICOM_SERVER_STUDYINSTANCEUID_WILDCARD"]:
-            cmd.extend(["-m", 'StudyInstanceUID=*'])
+            cmd.extend(["-m", "StudyInstanceUID=*"])
 
         cmd.extend(
             list(chain(*[["-r", f"{field}"] for field in output_fields]))
