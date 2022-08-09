@@ -15,26 +15,13 @@ import pathlib
 from dataclasses import dataclass
 from datetime import date
 from typing import Sequence
-
-# for quote python strings for safe use in posix shells
 import pipes
-from defusedxml.ElementTree import parse
+from itertools import chain
 
+from defusedxml.ElementTree import parse
 from flask import current_app
 
-
-def _get_stdout_stderr_returncode(cmd):
-    """
-    Execute the external command and get its stdout, stderr and return code
-    """
-    proc = subprocess.run(
-        cmd,
-        capture_output=True,
-        check=True,
-        shell=True,  # This is kind of unsafe in a webapp, should rethink
-    )
-
-    return proc.stdout, proc.stderr, proc.returncode
+from autobidsportal.apptainer import apptainer_exec, ImageSpec
 
 
 @dataclass
@@ -193,44 +180,61 @@ class Dcm4cheUtils:
         self,
         connection_details,
         credentials,
-        dcm4che_path="",
-        tar2bids_path="",
+        cfmm2tar_spec,
+        tar2bids_spec,
     ):
         self.logger = logging.getLogger(__name__)
         self.connect = connection_details.connect
         self.username = credentials.username
         self.password = credentials.password
-        self.dcm4che_path = dcm4che_path
+        self.cfmm2tar_spec = cfmm2tar_spec
+        self.tar2bids_spec = tar2bids_spec
 
-        self._findscu_str = (
-            f"{self.dcm4che_path} findscu"
-            + " --bind  DEFAULT"
-            + f" --connect {self.connect}"
-            + " --accept-timeout 10000 "
-            + f" --user {pipes.quote(self.username)} "
-            + f" --user-pass {pipes.quote(self.password)} "
-        )
+        self._findscu_list = [
+            "findscu",
+            "--bind",
+            "DEFAULT",
+            "--connect",
+            f"{self.connect}",
+            "--accept-timeout",
+            "10000",
+            "--user",
+            f"{pipes.quote(self.username)}",
+            "--user-pass",
+            f"{pipes.quote(self.password)}",
+        ]
+
         if connection_details.use_tls:
-            self._findscu_str += " --tls-aes "
-        self._tar2bids_list = f"{tar2bids_path}tar2bids".split()
+            self._findscu_list.append("--tls-aes")
+
+    def exec_cfmm2tar(self, cmd_list):
+        """Execute the cfmm2tar container with the configured setup."""
+        return apptainer_exec(
+            cmd_list,
+            self.cfmm2tar_spec.image_path,
+            self.cfmm2tar_spec.binds,
+            capture_output=True,
+            text=True,
+        )
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
         Specifically, find all StudyDescriptions, take the portion before
         the caret, and return each unique value."""
-        cmd = self._findscu_str + " -r StudyDescription "
+        cmd = self._findscu_list + ["-r", "StudyDescription"]
 
         try:
-            out, err, _ = _get_stdout_stderr_returncode(cmd)
+            completed_proc = self.exec_cfmm2tar(cmd)
         except subprocess.CalledProcessError as error:
             current_app.logger.error(
                 "findscu failed while getting PI names: %s", error
             )
             raise Dcm4cheError("Non-zero exit status from findscu.") from error
+        err = completed_proc.stderr
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
 
-        dcm4che_out = str(out, encoding="utf-8").splitlines()
+        dcm4che_out = completed_proc.stdout.splitlines()
         study_descriptions = [
             line for line in dcm4che_out if "StudyDescription" in line
         ]
@@ -274,17 +278,21 @@ class Dcm4cheUtils:
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
         """
-        cmd = self._findscu_str
+        cmd = self._findscu_list.copy()
 
         if attributes.study_description is not None:
-            cmd = (
-                f"{cmd} -m "
-                f'StudyDescription="{attributes.study_description}"'
+            cmd.extend(
+                [
+                    "-m",
+                    f'StudyDescription={attributes.study_description}',
+                ]
             )
         if attributes.study_date is not None:
-            cmd = (
-                f"{cmd} "
-                f'-m StudyDate="{attributes.study_date.strftime("%Y%m%d")}"'
+            cmd.extend(
+                [
+                    "-m",
+                    f'StudyDate={attributes.study_date.strftime("%Y%m%d")}',
+                ]
             )
         elif (attributes.date_range_start is not None) or (
             attributes.date_range_end is not None
@@ -299,24 +307,33 @@ class Dcm4cheUtils:
                 if attributes.date_range_end is not None
                 else ""
             )
-            cmd = f'{cmd} -m StudyDate="{start}-{end}"'
+            cmd.extend(["-m", f'StudyDate={start}-{end}'])
         if attributes.patient_name is not None:
-            cmd = f'{cmd} -m PatientName="{attributes.patient_name}"'
+            cmd.extend(["-m", f'PatientName={attributes.patient_name}'])
         if attributes.study_instance_uids not in [None, []]:
-            cmd = '{} -m StudyInstanceUID="{}"'.format(
-                cmd, "\\\\".join(attributes.study_instance_uids)
+            cmd.extend(
+                [
+                    "-m",
+                    'StudyInstanceUID={}'.format(
+                        "\\\\".join(attributes.study_instance_uids)
+                    ),
+                ]
             )
         elif current_app.config["DICOM_SERVER_STUDYINSTANCEUID_WILDCARD"]:
-            cmd = f'{cmd} -m StudyInstanceUID="*"'
+            cmd.extend(["-m", 'StudyInstanceUID=*'])
 
-        cmd = " ".join([cmd] + [f"-r {field}" for field in output_fields])
-        cmd = f"{cmd} -L {retrieve_level}"
+        cmd.extend(
+            list(chain(*[["-r", f"{field}"] for field in output_fields]))
+        )
+        cmd.extend(["-L", f"{retrieve_level}"])
 
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                cmd = f"{cmd} --out-dir {tmpdir} --out-file 000.xml -X"
+                cmd.extend(
+                    ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"]
+                )
                 current_app.logger.info("Querying study with findscu.")
-                _, err, _ = _get_stdout_stderr_returncode(cmd)
+                completed_proc = self.exec_cfmm2tar(cmd)
 
                 trees_xml = [
                     parse(child) for child in pathlib.Path(tmpdir).iterdir()
@@ -325,6 +342,7 @@ class Dcm4cheUtils:
             current_app.logger.error("Findscu failed while querying study.")
             raise Dcm4cheError("Non-zero exit status from findscu.") from error
 
+        err = completed_proc.stderr
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
 
@@ -365,8 +383,7 @@ class Dcm4cheUtils:
             cred_file.write(self.username + "\n")
             cred_file.write(self.password + "\n")
             arg_list = (
-                self.dcm4che_path.split()
-                + ["cfmm2tar"]
+                ["cfmm2tar"]
                 + ["-c", cred_file.name]
                 + date_query
                 + name_query
@@ -379,12 +396,7 @@ class Dcm4cheUtils:
                 current_app.logger.info(
                     "Running cfmm2tar: %s", " ".join(arg_list)
                 )
-                out = subprocess.run(
-                    arg_list,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                )
+                out = self.exec_cfmm2tar(arg_list)
             except subprocess.CalledProcessError as err:
                 if "Timeout.java" in err.stderr:
                     current_app.logger.warning("cfmm2tar timed out.")
@@ -429,7 +441,7 @@ class Dcm4cheUtils:
         The given output_dir, if successful.
         """
         arg_list = (
-            self._tar2bids_list
+            ["/opt/tar2bids/tar2bids"]
             + (
                 ["-P", args.patient_str]
                 if args.patient_str is not None
@@ -442,16 +454,17 @@ class Dcm4cheUtils:
         )
         try:
             current_app.logger.info("Running tar2bids.")
-            out = subprocess.run(
+            out = apptainer_exec(
                 arg_list,
+                self.tar2bids_spec.image_path,
+                self.tar2bids_spec.binds,
                 stderr=subprocess.STDOUT,
                 stdout=subprocess.PIPE,
-                check=True,
                 text=True,
             ).stdout
         except subprocess.CalledProcessError as err:
             current_app.logger.warning("tar2bids failed: %s", err.stdout)
-            raise Tar2bidsError(f"Tar2bids failed:\n{err.stderr}") from err
+            raise Tar2bidsError(f"Tar2bids failed:\n{err.stdout}") from err
 
         return out
 
@@ -467,8 +480,14 @@ def gen_utils():
             current_app.config["DICOM_SERVER_USERNAME"],
             current_app.config["DICOM_SERVER_PASSWORD"],
         ),
-        current_app.config["DCM4CHE_PREFIX"],
-        current_app.config["TAR2BIDS_PREFIX"],
+        ImageSpec(
+            current_app.config["CFMM2TAR_PATH"],
+            current_app.config["CFMM2TAR_BINDS"].split(","),
+        ),
+        ImageSpec(
+            current_app.config["TAR2BIDS_PATH"],
+            current_app.config["TAR2BIDS_BINDS"].split(","),
+        ),
     )
 
 

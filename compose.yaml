@@ -15,8 +15,10 @@ services:
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
       AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
       AUTOBIDS_HEURISTIC_REPO_PATH: /home
-      AUTOBIDS_DCM4CHE_PREFIX: "apptainer exec -B /cfmm2tar-download:/cfmm2tar-download /opt/apptainer-images/cfmm2tar_v1.0.0.sif "
-      AUTOBIDS_TAR2BIDS_PREFIX: "apptainer exec -B /cfmm2tar-download:/cfmm2tar-download -B /datasets:/datasets -B /tmp:/tmp -B /home:/home /opt/apptainer-images/tar2bids_v0.1.3.sif /opt/tar2bids/"
+      AUTOBIDS_CFMM2TAR_PATH: "/opt/apptainer-images/cfmm2tar_v1.0.0.sif"
+      AUTOBIDS_CFMM2TAR_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp"
+      AUTOBIDS_TAR2BIDS_PATH: "/opt/apptainer-images/tar2bids_v0.1.3.sif"
+      AUTOBIDS_TAR2BIDS_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/datasets:/datasets,/tmp:/tmp,/home:/home"
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
       AUTOBIDS_DATALAD_RIA_URL: "ria+ssh://user@ria:2222/ria-store"
       AUTOBIDS_ARCHIVE_BASE_URL: "user@archive:/archive"
