@@ -1,124 +1,72 @@
-FROM debian:bullseye
-
-ENV DCM4CHE_VERSION=5.24.1
-ENV DCM2NIIXTAG v1.0.20210317
-ENV HEUDICONVTAG v0.5.4
-ENV BIDSTAG 1.2.5
-ENV PYDEFACETAG v1.1.0
-ENV TAR2BIDSTAG v0.1.0
-
-RUN apt-get update \
+FROM debian:bullseye as requirements
+RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list \
+    && apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
+        build-essential=12.9 \
+        ca-certificates=20210119 \
+        cryptsetup=2:2.3.7-1+deb11u1 \
+        curl=7.74.0-1.3+deb11u2 \
         default-jre=2:1.11-72 \
         git=1:2.30.2-1 \
         git-annex=8.20210223-2 \
+        libseccomp-dev=2.5.1-1+deb11u1 \
+        pkg-config=0.29.2-1 \
         python3=3.9.2-3 \
         python3-pip=20.3.4-4+deb11u1 \
         python3-setuptools=52.0.0-4 \
         python-is-python3=3.9.2-1 \
-        ssh=1:8.4p1-5 \
+        squashfs-tools=1:4.4-2+deb11u2 \
+        ssh=1:8.4p1-5+deb11u1 \
         unzip=6.0-26 \
         wget=1.21-1+deb11u1 \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && pip install --upgrade --no-cache-dir pip==22.0.4 \
-    && sed -i 's/TLSv1.1, //g' /etc/java-11-openjdk/security/java.security \
-    && mkdir /apps
+    && apt-get install -y -q --no-install-recommends -t bullseye-backports golang=2:1.18~3~bpo11+1 \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-WORKDIR /apps/DicomRaw
-RUN git clone https://gitlab.com/cfmm/DicomRaw . \
-    && git checkout 00256d486fc790da4fa852c00cb27f42e77b1a99 \
-    && pip install --no-cache-dir pydicom==1.4.2 zipstream==1.1.4
+FROM requirements as apptainer
+ENV APPTAINER_VERSION "1.0.0"
+RUN mkdir /opt/download \
+    && wget --progress=dot:giga -O /opt/download/apptainer.tar.gz https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer-${APPTAINER_VERSION}.tar.gz \
+    && mkdir /opt/apptainer-src \
+    && tar -xzf /opt/download/apptainer.tar.gz -C /opt/apptainer-src
+WORKDIR /opt/apptainer-src/apptainer-${APPTAINER_VERSION}
+RUN ls \
+    && mkdir /opt/apptainer \
+    && ./mconfig --prefix=/opt/apptainer \
+    && make -C ./builddir \
+    && make -C ./builddir install
+ENV PATH /opt/apptainer/bin:$PATH
 
-WORKDIR /apps/cfmm2tar
-RUN git clone https://github.com/khanlab/cfmm2tar.git . \
-    && git checkout v1.0.0 \
-    && chmod a+x ./*.py \
-    && bash install_dcm4che_ubuntu.sh /apps/dcm4che \
-    && echo '1.3.12.2.1107.5.9.1:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> /apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties \
-    && echo 'EnhancedMRImageStorage:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> /apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties \
-    && sed -i -e 's/shell=True)/shell=True, universal_newlines=True)/g' /apps/cfmm2tar/Dcm4cheUtils.py \
-    && sed -i -e 's/return tar_full_filenames + attached_tar_full_filenames/return list(tar_full_filenames) + attached_tar_full_filenames/g' /apps/cfmm2tar/DicomSorter.py \
-    && sed -i -e 's/dataset\.PatientName/str(dataset\.PatientName)/g' /apps/cfmm2tar/sort_rules.py
+FROM apptainer AS apptainer-builds
+COPY ./compose/cfmm2tar-custom /opt/cfmm2tar-custom
+RUN mkdir /opt/apptainer-images \
+    && apptainer build /opt/apptainer-images/cfmm2tar_v1.0.0.sif docker://tristankk/cfmm2tar-autobids:v1.0.0 \
+    && apptainer build /opt/apptainer-images/tar2bids_v0.1.3.sif docker://khanlab/tar2bids:v0.1.3
+
+FROM requirements as autobidsportal
+
+COPY --from=apptainer /opt/apptainer /opt/apptainer/
+COPY --from=apptainer-builds /opt/apptainer-images /opt/apptainer-images/
+
 ENV OTHER_OPTIONS='--tls-aes'
-
-RUN apt-get update -qq \
-    && apt-get install -y -q --no-install-recommends \
-        ca-certificates=20210119 \
-        git=1:2.30.2-1 \
-        libopenblas-dev=0.3.13+ds-3 \
-        libxml2-dev=2.9.10+dfsg-6.7+deb11u1 \
-        locales=2.31-13+deb11u3 \
-        nodejs=12.22.5~dfsg-2~11u1 \
-        npm=7.5.2+ds-2 \
-        parallel=20161222-1.1 \
-        pigz=2.6-1 \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
-    && mkdir /apps/dcm2niix \
-    && wget -q -O /apps/dcm2niix/dcm2niix.zip https://github.com/rordenlab/dcm2niix/releases/download/${DCM2NIIXTAG}/dcm2niix_lnx.zip \
-    && unzip /apps/dcm2niix/dcm2niix.zip -d /apps/dcm2niix \
-    && rm /apps/dcm2niix/dcm2niix.zip \
-    && pip install --no-cache-dir \
-        heudiconv==${HEUDICONVTAG} \
-        networkx==2.0 \
-        pytest==3.6.0 \
-    && npm install -g bids-validator@${BIDSTAG} \
-    && echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
-    && echo "LANG=en_US.UTF-8" > /etc/locale.conf \
-    && echo "LC_ALL=en_US.UTF-8" >> /etc/locale.conf \
-    && locale-gen en_US.UTF-8 \
-    && git clone https://github.com/poldracklab/pydeface /apps/pydeface \
-    && git -C /apps/pydeface checkout ${PYDEFACETAG} \
-    && git clone https://github.com/khanlab/tar2bids.git /apps/tar2bids \
-    && git -C /apps/tar2bids checkout ${TAR2BIDSTAG}
-
-ENV FSLDIR /apps/fsl
-ENV FSLOUTPUTTYPE NIFTI_GZ
-RUN mkdir -p $FSLDIR/bin \
-    && wget -q -O $FSLDIR/bin/flirt https://www.dropbox.com/s/3wf2i7eiosoi8or/flirt \
-    && wget -q -O $FSLDIR/bin/fslorient https://www.dropbox.com/s/t4grjp9aixwm8q9/fslorient \
-    && chmod a+x $FSLDIR/bin/*
-
-WORKDIR /apps/pydeface
-RUN python3 setup.py install
-
-ENV PYTHONPATH $PYTHONPATH:/apps/tar2bids/heuristics
-ENV LANGUAGE "en_US.UTF-8"
-ENV LC_ALL "en_US.UTF-8"
-ENV LANG "en_US.UTF-8"
-
 WORKDIR /src
 COPY ./requirements.txt .
 COPY ./setup.cfg .
 COPY ./pyproject.toml .
-COPY ./compose ./compose
 RUN mkdir autobidsportal
 
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN pip install --no-cache-dir pip==22.2.2 \
+    && pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir pyuwsgi==2.0.20 \
-    && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 -storepass secret -v \
-    && keytool -noprompt -importcert -trustcacerts -alias orthanc -file ./compose/orthanc-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks -storepass secret -v \
-    && keytool -noprompt -importcert -trustcacerts -alias mycert -file ./compose/dcm4che-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 -storepass secret -v \
-    && keytool -noprompt -importcert -trustcacerts -alias mycert -file ./compose/dcm4che-crt.pem -keystore /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks -storepass secret -v \
-    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.p12 \
-    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newcacerts.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/cacerts.jks \
-    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.p12 /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.p12 \
-    && mv /apps/dcm4che/dcm4che-5.24.1/etc/certs/newkey.jks /apps/dcm4che/dcm4che-5.24.1/etc/certs/key.jks \
-    && cat ./compose/orthanc-crt.pem >> /apps/dcm4che/dcm4che-5.24.1/etc/cacerts.pem \
-#    && echo "Host ria" >> /etc/ssh/ssh_config \
-#    && echo "    Port 2222" >> /etc/ssh/ssh_config \
-    && echo "[ria]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDrYOPbWqP1my/WUP3KEX57u2PpUMgyLjUek5jKCXcAvDufE2oj/mO4rqSDlIGSgaxkStN+vaWDasTA1jHJsYOlUTqoiTx7oO3HetDClcIhqSjZtqEs2BVPBd3IoelAVC+JYLOOcea3Tvb+6rhnZMHgpyGmAqzZxuEiflAvcwAbBBXugok1hTbNJ8mUk6n23AFUHW3srfPuOV1Pi2CCyuHJHrAJIcUr5ZV3HWfF54s3MZXFq8mjiOULulQIyZHYMJ5MhcSY8qJKX61mikMYcoETa3/OuD3505HRxy3tcawV0epRyw3useOBr13gvKkregJakMeKWIb8rONWiubkYcsbFrMj108XRuNmwYQWN1YT7D4yOFuAw/4v0qx8bVZ2yp9cbIKSa8JD4c7EkUUdtop+wjM6NEpyvhFwD1V54/5gEaEtFCEvg4e6IUTZ0zHfac1Cx6uvms47iJ38+c5R+l9/F8z2/ieBV6C0QO6pOAHTqeeRm9dKNnIYt7087FVGb3E=" >> /etc/ssh/ssh_known_hosts \
-    && echo "[ria]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+xIp6UpeOg1k446jCi5A/qgj6tx/vczhapukCejDf1N9YgCEWBca+nRdGRL4+gjCoDxPqgURu8ua3HXIMYqt74Tc/5ZK0bP4/7746X5ZBRFpv92gYKOunQBMkcnt2XUUDJ7TCE1VDnRJJyEcnGrGvgZBua8yvuCX3vhxCP2ODWoj32JD+f40fFzEtObcrecDCdre4IGn/QSvFzyrtUj0nrO8iSOdq7kp0mJZTPLSC447IlCA/KDTAJ5MBCG/ViHAenb0e3hjWRsiAuh9XnhqzwLd/f/XqD1ABK5iPYCvYUi1bfEJKFVuVWqF+/4IdGrB98ukA6KyuNrNe3AGYcTo5nABPiQ2AAC9p+UroQQY2DzZJ1nRwLFKU9BJSgoscZsiNxDb/8RjR+z8jiLEdp8HqhUsDIDbVA6V2f8vUxiKM4oZ/J/1HMczuQ81gQLKGvbbEnw4EOrHJKPYWm0U6c8F1sFr35a3gHFzW+cbkiihS9oDnLffPui6/3ULpTyVmNV0=" >> /etc/ssh/ssh_known_hosts \
-    && echo "[archive]:2222 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDY5Gal7/Z9LfGvPhLy4PMZDsmq7KqFeFajUtbkMf/1ISa/qhxZdidjB6cZeRIjuWxrmeMVGki5GSHjc3oKmJsf7cA6Rw2P7r09F+hXCuMja+svzhRPn3Tqn0ekV7XknZvcOP2iAOExWJm0WZ+KhcVN/ONERvzdHosFiOHvtva+tLw3LVrKlzVRIVv1fafTlJtjOiX0Z3JOsJvMtmqtxTBEIgfp4OogZWNWwCaeT+bSyhICcc/rwHrIQ3ieuTuX9KLIi/sT5H0a3NssqzSCQECTvnAk1/RN/oke/K+BcI3GALyc/d/669+k2YGR4fq+Sm2tWPiaO8QfqUlw2FE5JGXCzj0GydpVpN+eOaN7n9QiwvwNkzoYEKK8FTqGRvJjjCIxwIQn8Z3j2oIt6/waojGhfQjxGDgQ6uEQw03FAMf1LrJ0E5M1VhXasgBa9sUtFO0eQTP798HmOoU8V7juDHIJq5iLr4mdcN3r7csclJBulxgopt4nWTveguSSDVVq4o8=:" >> /etc/ssh/ssh_known_hosts \
-    && echo "[archive]:2222 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBF+1JZEYWiq86LUdVvmdiw6NoQN2yeon+ioxkVutYp8wVv2SExRKDoB61eiKMTRR3A59ncCawYK1ziMFeLr6aXA=" >> /etc/ssh/ssh_known_hosts \
-    && echo "[archive]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHkOjP+rdG2n1VikNnwhPVNQbuU8psJnaZWC2lVpsW9C" >> /etc/ssh/ssh_known_hosts \
     && git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com"
 
 COPY . .
 RUN pip install --no-cache-dir -r requirements.txt \
-    && mv autobidsportal.ini.example autobidsportal.ini
+    && mv autobidsportal.ini.example autobidsportal.ini \
+    && cat ./compose/known_hosts >> /etc/ssh/ssh_known_hosts
 
-ENV PATH=/apps/tar2bids:$FSLDIR/bin:/apps/dcm2niix:/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:$PATH
+ENV DCM4CHE_VERSION=5.24.1
+ENV PATH=/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:/opt/apptainer/bin:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
 
 CMD ["uwsgi", "--ini=autobidsportal.ini"]
