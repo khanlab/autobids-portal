@@ -10,7 +10,7 @@ from datalad.support.gitrepo import GitRepo
 from rq import get_current_job
 from rq.job import Job
 
-from autobidsportal import create_app
+from autobidsportal.app import create_app
 from autobidsportal.models import (
     db,
     Study,
