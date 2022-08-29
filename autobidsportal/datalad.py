@@ -118,6 +118,7 @@ def clone_ria_dataset(path, alias, ria_url=None):
             ]
         ),
         path=str(path),
+        reckless="ephemeral",
     )
 
 
