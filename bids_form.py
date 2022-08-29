@@ -1,6 +1,6 @@
 """Flask entry point with extra CLI commands."""
 
-from autobidsportal import create_app
+from autobidsportal.app import create_app
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
 from autobidsportal.models import (
     db,

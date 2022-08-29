@@ -9,7 +9,7 @@ import pytest
 
 # import pydicom
 
-from autobidsportal import create_app
+from autobidsportal.app import create_app
 from autobidsportal.models import db, User, Principal, Study
 
 # import testdicomserver
