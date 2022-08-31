@@ -17,17 +17,6 @@
             </div>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
-                <label class="form-label" for="active">Study activation</label>
-                <div class="form-check">
-                  {{ form.active(class="form-check-input", disabled=admin_disable) }}
-                  {{ form.active.label(class="form-check-label") }}
-                </div>
-                <div class="form-text">
-                  Cfmm2tar and tar2bids cannot be run on inactive studies.
-                  Only admins can activate or deactivate a study.
-                </div>
-              </li>
-              <li class="list-group-item">
                 {{ form.users_authorized.label(class="form-label")}}
                 {% for choice in form.users_authorized %}
                   <div class="form-check">
@@ -38,6 +27,17 @@
                 <div class="form-text">
                   Authorized users can access the study, edit the study
                   config, and launch cfmm2tar and tar2bids tasks.
+                </div>
+              </li>
+              <li class="list-group-item">
+                <label class="form-label" for="active">Study activation</label>
+                <div class="form-check">
+                  {{ form.active(class="form-check-input", disabled=admin_disable) }}
+                  {{ form.active.label(class="form-check-label") }}
+                </div>
+                <div class="form-text">
+                  Cfmm2tar and tar2bids cannot be run on inactive studies.
+                  Only admins can activate or deactivate a study.
                 </div>
               </li>
               <li class="list-group-item">
@@ -53,19 +53,6 @@
               <h4 class="card-title">DICOM/Cfmm2tar Settings</h4>
             </div>
             <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                {{ form.pi_name.label(class="form-label")}}
-                {{ form.pi_name(class="form-select")}}
-                <div class="form-text">
-                  The study PI's identifier (generally their last name) on
-                  the DICOM Server.
-                </div>
-              </li>
-              <li class="list-group-item">
-                {{ form.project_name.label(class="form-label")}}
-                {{ form.project_name(class="form-control")}}
-                <div class="form-text">The project's name on the DICOM server.</div>
-              </li>
               <li class="list-group-item">
                 {{ form.example_date.label(class="form-label") }}
                 {{ form.example_date(class="form-control") }}
@@ -88,8 +75,21 @@
                 </div>
               </li>
               <li class="list-group-item">
+                {{ form.pi_name.label(class="form-label")}}
+                {{ form.pi_name(class="form-select", disabled=admin_disable)}}
+                <div class="form-text">
+                  The study PI's identifier (generally their last name) on
+                  the DICOM Server.
+                </div>
+              </li>
+              <li class="list-group-item">
+                {{ form.project_name.label(class="form-label")}}
+                {{ form.project_name(class="form-control", disabled=admin_disable)}}
+                <div class="form-text">The project's name on the DICOM server.</div>
+              </li>
+              <li class="list-group-item">
                 {{ form.patient_str.label(class="form-label")}}
-                {{ form.patient_str(class="form-control")}}
+                {{ form.patient_str(class="form-control", disabled=admin_disable)}}
                 <div class="form-text">
                   A DICOM query string to match with scans' PatientName field.
                   Relatively limited, but
@@ -99,7 +99,7 @@
               </li>
               <li class="list-group-item">
                 {{ form.patient_re.label(class="form-label")}}
-                {{ form.patient_re(class="form-control")}}
+                {{ form.patient_re(class="form-control", disabled=admin_disable)}}
                 <div class="form-text">
                   A
                   <a href="https://docs.python.org/3/library/re.html#regular-expression-syntax"
@@ -115,13 +115,13 @@
                 {{ form.excluded_patients.label(class="form-label") }}
                 {% for choice in form.excluded_patients %}
                   <div class="form-check">
-                    {{ choice(class="form-check-input") }}
+                    {{ choice(class="form-check-input", disabled=admin_disable) }}
                     {{ choice.label(class="form-check-label") }}
                   </div>
                 {% endfor %}
                 <br />
                 {{ form.newly_excluded.label(class="form-label") }}
-                {{ form.newly_excluded(class="form-control") }}
+                {{ form.newly_excluded(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   <code>StudyInstanceUID</code>
                   s of scans that will not be
@@ -131,16 +131,16 @@
                 </div>
               </li>
               <li class="list-group-item">
-                {{ form.included_patients.label(class="form-label") }}
+                {{ form.included_patients.label(class="form-label", disabled=admin_disable) }}
                 {% for choice in form.included_patients %}
                   <div class="form-check">
-                    {{ choice(class="form-check-input") }}
+                    {{ choice(class="form-check-input", disabled=admin_disable) }}
                     {{ choice.label(class="form-check-label") }}
                   </div>
                 {% endfor %}
                 <br />
                 {{ form.newly_included.label(class="form-label") }}
-                {{ form.newly_included(class="form-control") }}
+                {{ form.newly_included(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   <code>StudyInstanceUID</code>
                   s of scans that will always be
@@ -155,7 +155,7 @@
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
                 {{ form.dataset_name.label(class="form-label")}}
-                {{ form.dataset_name(class="form-control")}}
+                {{ form.dataset_name(class="form-control", disabled=admin_disable)}}
                 <div class="form-text">
                   A name for this dataset. By default, the name is
                   {PI}^{Project Name}.
@@ -163,12 +163,12 @@
               </li>
               <li class="list-group-item">
                 {{ form.heuristic.label(class="form-label")}}
-                {{ form.heuristic(class="form-select")}}
+                {{ form.heuristic(class="form-select", disabled=admin_disable)}}
                 <div class="form-text">The heudiconv heuristic to use for this study.</div>
               </li>
               <li class="list-group-item">
                 {{ form.subj_expr.label(class="form-label")}}
-                {{ form.subj_expr(class="form-control")}}
+                {{ form.subj_expr(class="form-control", disabled=admin_disable)}}
                 <div class="form-text">
                   A search string to extract the patient name from the tar file name.
                 </div>
@@ -182,7 +182,7 @@
                 {{ form.globus_usernames.label(class="form-label") }}
                 {% for choice in form.globus_usernames %}
                   <div class="form-check">
-                    {{ choice(class="form-check-input") }}
+                    {{ choice(class="form-check-input", disabled=admin_disable) }}
                     {{ choice.label(class="form-check-label") }}
                   </div>
                 {% endfor %}
