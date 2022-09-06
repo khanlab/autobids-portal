@@ -394,6 +394,12 @@ def answer_info(study_id):
         else {"files": [], "dirs": []}
     )
     json_filetree = dumps(bids_dict)
+    archive_dataset = DataladDataset.query.filter_by(
+        study_id=study_id, dataset_type=DatasetType.RAW_DATA
+    ).one_or_none()
+    archive_exists = (archive_dataset is not None) and (
+        archive_dataset.archived_hexsha is not None
+    )
 
     form = Tar2bidsRunForm()
     form.tar_files.choices = [
@@ -414,6 +420,7 @@ def answer_info(study_id):
         tar2bids_tasks=tar2bids_tasks,
         tar2bids_files=tar2bids_files,
         json_filetree=json_filetree,
+        archive_exists=archive_exists,
     )
 
 

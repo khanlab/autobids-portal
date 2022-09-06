@@ -127,13 +127,61 @@
         </form>
       </div>
     </div>
+    <div class="row mb-2">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">Accessing this study data</h4>
+            <p class="card-text">
+              {% if archive_exists is true %}
+                A .zip archive of your study is shared with <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured users</a> on Globus, under a guest collection with the name "autobids_study-{{ submitter_answer.id }}".
+              </p>
+              <p class="card-text">
+                This guest collection can be accessed with any Globus front end. Instructions to access the zip archive with the Globus web app follow:
+              </p>
+              <ol>
+                <li>
+                  Log in to <a href="https://app.globus.org">Globus</a> using one of the authorized identities <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured for this study</a>.
+                </li>
+                <li>
+                  Navigate to "File Manager" on the sidebar.
+                </li>
+                <li>
+                  Click on the "Collection" input.
+                </li>
+                <li>
+                  Navigate to the "Shared with You" tab.
+                </li>
+                <li>
+                  Click the "autobids_study-{{ submitter_answer.id }}" collection.
+                </li>
+                <li>
+                  Select the only zip file in the collection (it will have a long name).
+                </li>
+                <li>
+                  Click "Download" on the right sidebar.
+                </li>
+              </ol>
+            {% else %}
+              <p class="card-text">
+                This study has not yet been archived. Please check that the study is active, that tar2bids has successfully been run, and that at least one Globus identity is configured. If all this has been true for at least one hour and the study has still not been archived, please contact support.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="row">
       <div class="col-6">
-        <h2 class="sub-header">Cfmm2tar Runs</h2>
+        <h2 class="sub-header">
+          Cfmm2tar Runs
+        </h2>
         <div class="table-responsive" style="max-height: 400px;">
           <table class="table table-light overflow-auto">
             <tr>
-              <th scope="col">Start Date and Time</th>
+              <th scope="col">
+                Start Date and Time
+              </th>
               <th scope="col">
                 End Date and Time
               </th>
