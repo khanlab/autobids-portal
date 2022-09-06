@@ -192,11 +192,18 @@
             {% for t in cfmm2tar_tasks %}
               <tr>
                 <td>
-                  {% if t.start_time != None %}
-                    {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
-                  {% else %}
-                    {{ t.start_time }}
-                  {% endif %}
+                  <button class="btn btn-outline-dark"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#collapsecfmm2tar{{ t.id }}"
+                          type="button"
+                          aria-expanded="false"
+                          aria-controls="collapsecfmm2tar{{ t.id }}">
+                    {% if t.start_time != None %}
+                      {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
+                    {% else %}
+                      {{ t.start_time }}
+                    {% endif %}
+                  </button>
                 </td>
                 <td>
                   {% if t.end_time != None %}
@@ -217,6 +224,13 @@
                   {% endif %}
                 </td>
               </tr>
+              <tr class="collapse" id="collapsecfmm2tar{{ t.id }}">
+                <td colspan="3">
+                  <pre>
+{{ t.log if t.log != None else "No log" }}
+                  </pre>
+                </td>
+              </tr>
             {% endfor %}
           </table>
         </div>
@@ -234,48 +248,64 @@
         <h2 class="sub-header">
           Tar2bids Runs
         </h2>
-        <table class="table table-light">
-          <tr>
-            <th scope="col">
-              Start Date and Time
-            </th>
-            <th scope="col">
-              End Date and Time
-            </th>
-            <th scope="col">
-              Completion Status
-            </th>
-          </tr>
-          {% for t in tar2bids_tasks %}
+        <div class="table-responsive">
+          <table class="table table-light">
             <tr>
-              <td>
-                {% if t.start_time != None %}
-                  {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
-                {% else %}
-                  {{ t.start_time }}
-                {% endif %}
-              </td>
-              <td>
-                {% if t.end_time != None %}
-                  {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
-                {% else %}
-                  {{ t.end_time }}
-                {% endif %}
-              </td>
-              <td>
-                {% if t.complete == True %}
-                  {% if t.success == True %}
-                    Completed Successfully
-                  {% else %}
-                    Failed
-                  {% endif %}
-                {% else %}
-                  In Progress
-                {% endif %}
-              </td>
+              <th scope="col">
+                Start Date and Time
+              </th>
+              <th scope="col">
+                End Date and Time
+              </th>
+              <th scope="col">
+                Completion Status
+              </th>
             </tr>
-          {% endfor %}
-        </table>
+            {% for t in tar2bids_tasks %}
+              <tr>
+                <td>
+                  <button class="btn btn-outline-dark"
+                          data-bs-toggle="collapse"
+                          data-bs-target="#collapsetar2bids{{ t.id }}"
+                          type="button"
+                          aria-expanded="false"
+                          aria-controls="collapsetar2bids{{ t.id }}">
+                    {% if t.start_time != None %}
+                      {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
+                    {% else %}
+                      {{ t.start_time }}
+                    {% endif %}
+                  </button>
+                </td>
+                <td>
+                  {% if t.end_time != None %}
+                    {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
+                  {% else %}
+                    {{ t.end_time }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if t.complete == True %}
+                    {% if t.success == True %}
+                      Completed Successfully
+                    {% else %}
+                      Failed
+                    {% endif %}
+                  {% else %}
+                    In Progress
+                  {% endif %}
+                </td>
+              </tr>
+              <tr class="collapse" id="collapsetar2bids{{ t.id }}">
+                <td colspan="3">
+                  <pre>
+{{ t.log if t.log != None else "No log" }}
+                  </pre>
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
       </div>
       <div class="col-6">
         <h2 class="sub-header">
