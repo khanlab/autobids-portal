@@ -176,63 +176,7 @@
         <h2 class="sub-header">
           Cfmm2tar Runs
         </h2>
-        <div class="table-responsive" style="max-height: 400px;">
-          <table class="table table-light overflow-auto">
-            <tr>
-              <th scope="col">
-                Start Date and Time
-              </th>
-              <th scope="col">
-                End Date and Time
-              </th>
-              <th scope="col">
-                Completion Status
-              </th>
-            </tr>
-            {% for t in cfmm2tar_tasks %}
-              <tr>
-                <td>
-                  <button class="btn btn-outline-dark"
-                          data-bs-toggle="collapse"
-                          data-bs-target="#collapsecfmm2tar{{ t.id }}"
-                          type="button"
-                          aria-expanded="false"
-                          aria-controls="collapsecfmm2tar{{ t.id }}">
-                    {% if t.start_time != None %}
-                      {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
-                    {% else %}
-                      {{ t.start_time }}
-                    {% endif %}
-                  </button>
-                </td>
-                <td>
-                  {% if t.end_time != None %}
-                    {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
-                  {% else %}
-                    {{ t.end_time }}
-                  {% endif %}
-                </td>
-                <td>
-                  {% if t.complete == True %}
-                    {% if t.success == True %}
-                      Completed Successfully
-                    {% else %}
-                      Failed
-                    {% endif %}
-                  {% else %}
-                    In Progress
-                  {% endif %}
-                </td>
-              </tr>
-              <tr class="collapse" id="collapsecfmm2tar{{ t.id }}">
-                <td colspan="3">
-                  <pre>
-{{ t.log if t.log != None else "No log" }}
-                  </pre>
-                </td>
-              </tr>
-            {% endfor %}
-          </table>
+        <div id="cfmm2tar-table-mount">
         </div>
       </div>
       <div class="col-6">
@@ -248,63 +192,7 @@
         <h2 class="sub-header">
           Tar2bids Runs
         </h2>
-        <div class="table-responsive">
-          <table class="table table-light">
-            <tr>
-              <th scope="col">
-                Start Date and Time
-              </th>
-              <th scope="col">
-                End Date and Time
-              </th>
-              <th scope="col">
-                Completion Status
-              </th>
-            </tr>
-            {% for t in tar2bids_tasks %}
-              <tr>
-                <td>
-                  <button class="btn btn-outline-dark"
-                          data-bs-toggle="collapse"
-                          data-bs-target="#collapsetar2bids{{ t.id }}"
-                          type="button"
-                          aria-expanded="false"
-                          aria-controls="collapsetar2bids{{ t.id }}">
-                    {% if t.start_time != None %}
-                      {{ t.start_time.strftime("%Y-%m-%d %H:%M") }}
-                    {% else %}
-                      {{ t.start_time }}
-                    {% endif %}
-                  </button>
-                </td>
-                <td>
-                  {% if t.end_time != None %}
-                    {{ t.end_time.strftime("%Y-%m-%d %H:%M") }}
-                  {% else %}
-                    {{ t.end_time }}
-                  {% endif %}
-                </td>
-                <td>
-                  {% if t.complete == True %}
-                    {% if t.success == True %}
-                      Completed Successfully
-                    {% else %}
-                      Failed
-                    {% endif %}
-                  {% else %}
-                    In Progress
-                  {% endif %}
-                </td>
-              </tr>
-              <tr class="collapse" id="collapsetar2bids{{ t.id }}">
-                <td colspan="3">
-                  <pre>
-{{ t.log if t.log != None else "No log" }}
-                  </pre>
-                </td>
-              </tr>
-            {% endfor %}
-          </table>
+        <div id="tar2bids-table-mount">
         </div>
       </div>
       <div class="col-6">
@@ -348,5 +236,44 @@
       }
     )
     ReactDOM.render(tarTable, document.querySelector("#tar-table-mount"))
+    const e = React.createElement;
+    const cfmm2tarTable = e(
+      TaskList,
+      null,
+      [
+        {% for task in cfmm2tar_tasks %}
+        e(
+          TaskListItem, 
+          {
+            start: "{{ task.start_time.strftime("%Y-%m-%d %H:%M") if task.start_time != None else task.start_time }}",
+            end: "{{ task.end_time.strftime("%Y-%m-%d %H:%M") if task.end_time != None else task.end_time }}",
+            complete: "{% if task.complete == True %}{% if task.success == True %}Completed Successfully{% else %}Failed{% endif %}{% else %}In Progress{% endif %}",
+            log: `{{ task.log|safe if task.log != None else "" }}`
+          },
+          null
+        ),
+        {% endfor %}
+      ]
+    )
+    ReactDOM.render(cfmm2tarTable, document.querySelector("#cfmm2tar-table-mount"))
+    const tar2bidsTable = e(
+      TaskList,
+      null,
+      [
+        {% for task in tar2bids_tasks %}
+        e(
+          TaskListItem, 
+          {
+            start: "{{ task.start_time.strftime("%Y-%m-%d %H:%M") if task.start_time != None else task.start_time }}",
+            end: "{{ task.end_time.strftime("%Y-%m-%d %H:%M") if task.end_time != None else task.end_time }}",
+            complete: "{% if task.complete == True %}{% if task.success == True %}Completed Successfully{% else %}Failed{% endif %}{% else %}In Progress{% endif %}",
+            log: `{{ task.log|safe if task.log != None else "" }}`
+          },
+          null
+        ),
+        {% endfor %}
+      ]
+    )
+    ReactDOM.render(tar2bidsTable, document.querySelector("#tar2bids-table-mount"))
   </script>
 {% endblock scripts %}
