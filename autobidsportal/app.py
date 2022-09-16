@@ -23,6 +23,7 @@ from autobidsportal.models import (
 )
 from autobidsportal.errors import bad_request, not_found_error, internal_error
 from autobidsportal.email import mail
+
 # This will register the CLI commands
 import autobidsportal.cli  # pylint: disable=unused-import
 
@@ -83,6 +84,5 @@ def create_app(config_object=None, override_dict=None):
             "Tar2bidsOutput": Tar2bidsOutput,
             "ExplicitPatient": ExplicitPatient,
         }
-
 
     return app

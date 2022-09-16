@@ -29,9 +29,7 @@ def run_update_heuristics():
     The point of this wrapper function is to expose the task to the CLI.
     """
 
-    Task.launch_task(
-        "update_heuristics", "Update heuristics from CLI"
-    )
+    Task.launch_task("update_heuristics", "Update heuristics from CLI")
 
 
 @portal_blueprint.cli.command()
