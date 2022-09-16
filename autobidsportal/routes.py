@@ -61,7 +61,7 @@ from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
 
 portal_blueprint = Blueprint(
-    "portal_blueprint", __name__, template_folder="templates"
+    "portal_blueprint", __name__, template_folder="templates",
 )
 
 

@@ -1,5 +1,5 @@
 [uwsgi]
-module = bids_form:app
+module = autobidsportal:create_app()
 
 master = true
 processes = 5
