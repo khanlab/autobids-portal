@@ -414,6 +414,7 @@ def run_tar2bids(study_id, tar_file_ids):
             job.id,
             err.__cause__.stderr if err.__cause__ is not None else str(err),
         )
+        _append_task_log(job.id, str(err))
         send_email(
             "Failed tar2bids run",
             "\n".join(
