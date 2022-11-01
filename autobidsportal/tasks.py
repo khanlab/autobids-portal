@@ -390,7 +390,9 @@ def run_tar2bids(study_id, tar_file_ids):
                             "\n".join(
                                 render_dir_dict(
                                     gen_dir_dict(
-                                        str(pathlib.Path(bids_dir) / "incoming"),
+                                        str(
+                                            pathlib.Path(bids_dir) / "incoming"
+                                        ),
                                         {".git", ".datalad"},
                                     )
                                 )
