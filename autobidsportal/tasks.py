@@ -39,7 +39,7 @@ from autobidsportal.dcm4cheutils import (
 )
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
-from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.filesystem import gen_dir_dict, render_dir_dict
 
 
 app = create_app()
@@ -415,6 +415,15 @@ def run_tar2bids(study_id, tar_file_ids):
             err.__cause__.stderr if err.__cause__ is not None else str(err),
         )
         _append_task_log(job.id, str(err))
+        _append_task_log(job.id, "Dataset contents:\n")
+        _append_task_log(
+            job.id,
+            "\n".join(
+                render_dir_dict(
+                    gen_dir_dict(path_dataset_study, {".git", ".datalad"})
+                )
+            ),
+        )
         send_email(
             "Failed tar2bids run",
             "\n".join(

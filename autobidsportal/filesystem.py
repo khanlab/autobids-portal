@@ -3,6 +3,12 @@
 import os
 
 
+SPACE = "    "
+BRANCH = "│   "
+TEE = "├── "
+LAST = "└── "
+
+
 def gen_dir_dict(path, ignore=frozenset()):
     """Generate a dictionary representing a file tree.
 
@@ -47,3 +53,27 @@ def gen_dir_dict(path, ignore=frozenset()):
             if entry.is_dir() and entry.name not in ignore
         },
     }
+
+
+def render_dir_dict(dir_dict, prefix=""):
+    """Render a dir_dict in the style of UNIX tree.
+
+    Returns
+    -------
+    list of str:
+        Strings that when joined by newlines will render the dir_dict.
+    """
+    all_contents = dir_dict["files"] + list(dir_dict["dirs"].keys())
+    pointers = [TEE for _ in range(len(all_contents) - 1)] + [LAST]
+    lines = []
+    for pointer, file_ in zip(
+        pointers[: len(dir_dict["files"])], dir_dict["files"]
+    ):
+        lines.append(f"{prefix}{pointer}{file_}")
+    for pointer, (key, val) in zip(
+        pointers[len(dir_dict["files"]) :], dir_dict["dirs"].items()
+    ):
+        lines.append(f"{prefix}{pointer}{key}")
+        extension = BRANCH if pointer == TEE else SPACE
+        lines.extend(render_dir_dict(val, prefix=f"{prefix}{extension}"))
+    return lines
