@@ -1,41 +1,13 @@
 """Flask entry point with extra CLI commands."""
 
-from autobidsportal.app import create_app
+from flask import current_app
+
 from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
-from autobidsportal.models import (
-    db,
-    User,
-    Study,
-    Principal,
-    Notification,
-    Task,
-    Cfmm2tarOutput,
-    Tar2bidsOutput,
-    ExplicitPatient,
-)
-from autobidsportal.tasks import update_heuristics
+from autobidsportal.models import db, Principal, Study, Task
+from autobidsportal.routes import portal_blueprint
 
 
-app = create_app()
-
-
-@app.shell_context_processor
-def make_shell_context():
-    """Add useful variables into the shell context."""
-    return {
-        "db": db,
-        "User": User,
-        "Study": Study,
-        "Principal": Principal,
-        "Notification": Notification,
-        "Task": Task,
-        "Cfmm2tarOutput": Cfmm2tarOutput,
-        "Tar2bidsOutput": Tar2bidsOutput,
-        "ExplicitPatient": ExplicitPatient,
-    }
-
-
-@app.cli.command()
+@portal_blueprint.cli.command()
 def check_pis():
     """Add a list of pi names from dicom server to the Principal table."""
     try:
@@ -50,17 +22,17 @@ def check_pis():
     return "Success"
 
 
-@app.cli.command()
+@portal_blueprint.cli.command()
 def run_update_heuristics():
     """Clone the heuristic repo if it doesn't exist, then pull from it.
 
     The point of this wrapper function is to expose the task to the CLI.
     """
 
-    update_heuristics()
+    Task.launch_task("update_heuristics", "Update heuristics from CLI")
 
 
-@app.cli.command()
+@portal_blueprint.cli.command()
 def run_all_cfmm2tar():
     """Run cfmm2tar on all active studies.
 
@@ -80,12 +52,12 @@ def run_all_cfmm2tar():
         ) or (not study.active):
             print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        app.task_queue.enqueue(
+        current_app.task_queue.enqueue(
             "autobidsportal.tasks.check_tar_files", study.id
         )
 
 
-@app.cli.command()
+@portal_blueprint.cli.command()
 def run_all_tar2bids():
     """Run tar2bids on all active studies."""
     for study in Study.query.all():
@@ -101,12 +73,12 @@ def run_all_tar2bids():
         ) or not study.active:
             print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        app.task_queue.enqueue(
+        current_app.task_queue.enqueue(
             "autobidsportal.tasks.find_unprocessed_tar_files", study.id
         )
 
 
-@app.cli.command()
+@portal_blueprint.cli.command()
 def run_all_archive():
     """Archive all active studies' raw datasets.
 
