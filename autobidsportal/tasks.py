@@ -39,7 +39,7 @@ from autobidsportal.dcm4cheutils import (
 )
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
-from autobidsportal.filesystem import gen_dir_dict
+from autobidsportal.filesystem import gen_dir_dict, render_dir_dict
 
 
 app = create_app()
@@ -361,18 +361,61 @@ def run_tar2bids(study_id, tar_file_ids):
                     tar_path = get_tar_file_from_dataset(
                         tar_out.tar_file, path_dataset_tar
                     )
-                    _append_task_log(
-                        job.id,
-                        gen_utils().run_tar2bids(
-                            Tar2bidsArgs(
-                                output_dir=pathlib.Path(bids_dir) / "incoming",
-                                tar_files=[tar_path],
-                                heuristic=study.heuristic,
-                                patient_str=study.subj_expr,
-                                temp_dir=temp_dir,
-                            )
-                        ),
-                    )
+                    try:
+                        _append_task_log(
+                            job.id,
+                            gen_utils().run_tar2bids(
+                                Tar2bidsArgs(
+                                    output_dir=pathlib.Path(bids_dir)
+                                    / "incoming",
+                                    tar_files=[tar_path],
+                                    heuristic=study.heuristic,
+                                    patient_str=study.subj_expr,
+                                    temp_dir=temp_dir,
+                                )
+                            ),
+                        )
+                    except Tar2bidsError as err:
+                        app.logger.error("tar2bids failed: %s", err)
+                        _set_task_error(
+                            job.id,
+                            err.__cause__.stderr
+                            if err.__cause__ is not None
+                            else str(err),
+                        )
+                        _append_task_log(job.id, str(err))
+                        _append_task_log(job.id, "Dataset contents:\n")
+                        _append_task_log(
+                            job.id,
+                            "\n".join(
+                                render_dir_dict(
+                                    gen_dir_dict(
+                                        str(pathlib.Path(bids_dir) / "incoming"),
+                                        {".git", ".datalad"},
+                                    )
+                                )
+                            ),
+                        )
+                        send_email(
+                            "Failed tar2bids run",
+                            "\n".join(
+                                ["Tar2bids failed for tar files:"]
+                                + [
+                                    output.tar_file
+                                    for output in cfmm2tar_outputs
+                                ]
+                                + [
+                                    (
+                                        "Note: Some of the tar2bids runs may have "
+                                        "completed. This email is sent if any of them "
+                                        "fail."
+                                    ),
+                                    "Error:",
+                                    str(err),
+                                ]
+                            ),
+                        )
+                        raise err
                 with RiaDataset(
                     pathlib.Path(bids_dir) / "existing",
                     dataset_bids.ria_alias,
@@ -408,28 +451,6 @@ def run_tar2bids(study_id, tar_file_ids):
                     + [output.tar_file for output in cfmm2tar_outputs]
                 ),
             )
-    except Tar2bidsError as err:
-        app.logger.error("tar2bids failed: %s", err)
-        _set_task_error(
-            job.id,
-            err.__cause__.stderr if err.__cause__ is not None else str(err),
-        )
-        _append_task_log(job.id, str(err))
-        send_email(
-            "Failed tar2bids run",
-            "\n".join(
-                ["Tar2bids failed for tar files:"]
-                + [output.tar_file for output in cfmm2tar_outputs]
-                + [
-                    (
-                        "Note: Some of the tar2bids runs may have completed. "
-                        "This email is sent if any of them fail."
-                    ),
-                    "Error:",
-                    str(err),
-                ]
-            ),
-        )
     finally:
         if not Task.query.get(job.id).complete:
             app.logger.error(
