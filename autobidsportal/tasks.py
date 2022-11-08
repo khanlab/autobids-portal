@@ -351,7 +351,9 @@ def run_tar2bids(study_id, tar_file_ids):
         ) as temp_dir, tempfile.TemporaryDirectory(
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
         ) as download_dir, tempfile.NamedTemporaryFile(
-            mode="w+", encoding="utf-8", buffering=1,
+            mode="w+",
+            encoding="utf-8",
+            buffering=1,
         ) as bidsignore:
             app.logger.info("Running tar2bids for study %i", study.id)
             if study.custom_bidsignore is not None:
