@@ -1,2 +1,3 @@
 recursive-include autobidsportal/templates *.html
 recursive-include autobidsportal/static *.css
+include autobidsportal/resources/bidsignore.default

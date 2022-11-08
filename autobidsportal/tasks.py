@@ -350,8 +350,12 @@ def run_tar2bids(study_id, tar_file_ids):
             dir=app.config["TAR2BIDS_TEMP_DIR"]
         ) as temp_dir, tempfile.TemporaryDirectory(
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
-        ) as download_dir:
+        ) as download_dir, tempfile.NamedTemporaryFile(
+            mode="w+", encoding="utf-8", buffering=1,
+        ) as bidsignore:
             app.logger.info("Running tar2bids for study %i", study.id)
+            if study.custom_bidsignore is not None:
+                bidsignore.write(study.custom_bidsignore)
             for tar_out in cfmm2tar_outputs:
                 with RiaDataset(
                     download_dir,
@@ -372,6 +376,9 @@ def run_tar2bids(study_id, tar_file_ids):
                                     heuristic=study.heuristic,
                                     patient_str=study.subj_expr,
                                     temp_dir=temp_dir,
+                                    bidsignore=None
+                                    if study.custom_bidsignore is None
+                                    else bidsignore.name,
                                 )
                             ),
                         )
@@ -390,7 +397,9 @@ def run_tar2bids(study_id, tar_file_ids):
                             "\n".join(
                                 render_dir_dict(
                                     gen_dir_dict(
-                                        str(pathlib.Path(bids_dir) / "incoming"),
+                                        str(
+                                            pathlib.Path(bids_dir) / "incoming"
+                                        ),
                                         {".git", ".datalad"},
                                     )
                                 )
