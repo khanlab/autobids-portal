@@ -173,6 +173,13 @@
                   A search string to extract the patient name from the tar file name.
                 </div>
               </li>
+              <li class="list-group-item">
+                {{ form.bidsignore.label(class="form-label") }}
+                {{ form.bidsignore(class="form-control form-control-sm font-monospace", rows=10, disabled=admin_disable)}}
+                <div class="form-text">
+                  The contents of a custom <code>.bidsignore</code> file to be passed to tar2bids.
+                </div>
+              </li>
             </ul>
             <div class="card-body">
               <h4 class="card-title">Globus Settings</h4>

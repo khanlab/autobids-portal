@@ -1,6 +1,8 @@
 """Forms to be used in some views."""
 
+from functools import lru_cache
 from json import dumps
+from pathlib import Path
 
 from flask_wtf import FlaskForm
 from wtforms import (
@@ -49,6 +51,17 @@ CHOICES_FAMILIARITY = [
     ("4", "Used it regularly"),
     ("5", "I consider myself an expert"),
 ]
+
+
+@lru_cache
+def get_default_bidsignore():
+    """Read the default bidsignore file."""
+    with open(
+        Path(__file__).parent / "resources" / "bidsignore.default",
+        "r",
+        encoding="utf-8",
+    ) as bidsignore_file:
+        return bidsignore_file.read()
 
 
 def _gen_familiarity_field(label):
@@ -290,6 +303,7 @@ class StudyConfigForm(FlaskForm):
     retrospective_end = DateField("End Date")
     heuristic = SelectField("Heuristic", choices=[])
     subj_expr = StringField("Tar2bids Patient Name Search String")
+    bidsignore = TextAreaField("Custom .bidsignore contents")
     patient_str = StringField("DICOM PatientName Identifier")
     patient_re = StringField(
         "Regular expression to match with returned PatientNames"
@@ -388,6 +402,10 @@ class StudyConfigForm(FlaskForm):
             username.id for username in study.globus_usernames
         ]
         self.new_globus_username.default = ""
+        if study.custom_bidsignore is None:
+            self.bidsignore.default = get_default_bidsignore()
+        else:
+            self.bidsignore.default = study.custom_bidsignore
 
         self.process()
 
@@ -442,6 +460,7 @@ class StudyConfigForm(FlaskForm):
         study.subj_expr = self.subj_expr.data
         study.patient_str = self.patient_str.data
         study.patient_name_re = self.patient_re.data
+        study.custom_bidsignore = self.bidsignore.data
         for explicit_patient in study.explicit_patients:
             if explicit_patient.included and (
                 explicit_patient.study_instance_uid

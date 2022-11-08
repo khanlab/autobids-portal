@@ -167,8 +167,9 @@ class Study(db.Model):
     datalad_datasets = db.relationship("DataladDataset", backref="study")
 
     custom_ria_url = db.Column(db.Text, nullable=True)
-
     globus_usernames = db.relationship("GlobusUsername", backref="study")
+
+    custom_bidsignore = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         answer_cols = (

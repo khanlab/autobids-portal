@@ -40,7 +40,7 @@ FROM apptainer AS apptainer-builds
 COPY ./compose/cfmm2tar-custom /opt/cfmm2tar-custom
 RUN mkdir /opt/apptainer-images \
     && apptainer build /opt/apptainer-images/cfmm2tar_v1.0.0.sif docker://tristankk/cfmm2tar-autobids:v1.0.0 \
-    && apptainer build /opt/apptainer-images/tar2bids_v0.1.3.sif docker://khanlab/tar2bids:v0.1.3
+    && apptainer build /opt/apptainer-images/tar2bids_v0.2.0.sif docker://khanlab/tar2bids:v0.2.0
 
 FROM requirements as autobidsportal
 

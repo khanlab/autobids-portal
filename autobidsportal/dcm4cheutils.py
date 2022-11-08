@@ -113,6 +113,7 @@ class Tar2bidsArgs:
     patient_str: str = None
     heuristic: str = None
     temp_dir: str = None
+    bidsignore: str = None
 
 
 def parse_findscu_xml(element_tree, output_fields):
@@ -450,6 +451,7 @@ class Dcm4cheUtils:
             + (["-o", args.output_dir])
             + (["-h", args.heuristic] if args.heuristic is not None else [])
             + (["-w", args.temp_dir] if args.temp_dir is not None else [])
+            + (["-b", args.bidsignore] if args.bidsignore is not None else [])
             + args.tar_files
         )
         try:
