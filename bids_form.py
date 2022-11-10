@@ -131,4 +131,5 @@ def run_all_archive():
             "automatic archive task",
             study.id,
             study_id=study.id,
+            timeout=app.config["ARCHIVE_TIMEOUT"],
         )
