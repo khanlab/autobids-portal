@@ -17,13 +17,16 @@ services:
       AUTOBIDS_HEURISTIC_REPO_PATH: /home
       AUTOBIDS_CFMM2TAR_PATH: "/opt/apptainer-images/cfmm2tar_v1.0.0.sif"
       AUTOBIDS_CFMM2TAR_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp"
+      AUTOBIDS_CFMM2TAR_TIMEOUT: "100000"
       AUTOBIDS_TAR2BIDS_PATH: "/opt/apptainer-images/tar2bids_v0.2.0.sif"
       AUTOBIDS_TAR2BIDS_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/datasets:/datasets,/tmp:/tmp,/home:/home"
+      AUTOBIDS_TAR2BIDS_TIMEOUT: "100000"
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
       AUTOBIDS_DATALAD_RIA_URL: "ria+ssh://user@ria:2222/ria-store"
       AUTOBIDS_ARCHIVE_BASE_URL: "user@archive:/archive"
       AUTOBIDS_ARCHIVE_SSH_PORT: "2222"
       AUTOBIDS_ARCHIVE_SSH_KEY: "/ssh/id_rsa"
+      AUTOBIDS_ARCHIVE_TIMEOUT: "100000"
       AUTOBIDS_MAIL_ENABLED: "false"
       AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
       AUTOBIDS_DICOM_SERVER_USERNAME: "user"

@@ -617,7 +617,7 @@ def archive_tar2bids(study_id):
             f"dataset archive for study {study_id}",
             study_id,
             user=current_user,
-            timeout=1000,
+            timeout=current_app.config["ARCHIVE_TIMEOUT"],
             study_id=study_id,
         )
         current_app.logger.info(
@@ -694,6 +694,7 @@ def run_tar2bids(study_id):
             [tar_file.id for tar_file in tar_files],
             user=current_user,
             study_id=study_id,
+            timeout=current_app.config["TAR2BIDS_TIMEOUT"],
         )
         current_app.logger.info(
             "Launched tar2bids for study %i with files %s",

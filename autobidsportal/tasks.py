@@ -193,6 +193,7 @@ def check_tar_files(study_id, explicit_scans=None, user_id=None):
         studies_to_download,
         user=user,
         study_id=study_id,
+        timeout=app.config["CFMM2TAR_TIMEOUT"],
     )
 
 
@@ -321,6 +322,7 @@ def find_unprocessed_tar_files(study_id):
         study_id,
         list(new_tar_file_ids),
         study_id=study_id,
+        timeout=app.config["TAR2BIDS_TIMEOUT"],
     )
 
 
