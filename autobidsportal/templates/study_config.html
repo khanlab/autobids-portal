@@ -180,6 +180,16 @@
                   The contents of a custom <code>.bidsignore</code> file to be passed to tar2bids.
                 </div>
               </li>
+              <li class="list-group-item">
+                <label class="form-label" for="active">T1w defacing</label>
+                <div class="form-check">
+                  {{ form.deface(class="form-check-input", disabled=admin_disable) }}
+                  {{ form.deface.label(class="form-check-label") }}
+                </div>
+                <div class="form-text">
+                  If enabled, tar2bids will perform defacing on T1w images.
+                </div>
+              </li>
             </ul>
             <div class="card-body">
               <h4 class="card-title">Globus Settings</h4>

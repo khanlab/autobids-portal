@@ -146,6 +146,7 @@ class Study(db.Model):
     )
     patient_str = db.Column(db.String(50), nullable=False, default="*")
     subj_expr = db.Column(db.String(50), nullable=False, default="*_{subject}")
+    deface = db.Column(db.Boolean, nullable=False, default=False)
     users_authorized = db.relationship(
         "User",
         secondary=accessible_studies,
