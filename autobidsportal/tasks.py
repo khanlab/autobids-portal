@@ -383,6 +383,7 @@ def run_tar2bids(study_id, tar_file_ids):
                                     bidsignore=None
                                     if study.custom_bidsignore is None
                                     else bidsignore.name,
+                                    deface=study.deface,
                                 )
                             ),
                         )

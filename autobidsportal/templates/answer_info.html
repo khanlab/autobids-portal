@@ -267,7 +267,7 @@
             start: "{{ task.start_time.strftime("%Y-%m-%d %H:%M") if task.start_time != None else task.start_time }}",
             end: "{{ task.end_time.strftime("%Y-%m-%d %H:%M") if task.end_time != None else task.end_time }}",
             complete: "{% if task.complete == True %}{% if task.success == True %}Completed Successfully{% else %}Failed{% endif %}{% else %}In Progress{% endif %}",
-            log: `{{ task.log|safe if task.log != None else "" }}`
+            log: `{{ task.log|replace("`", "\`")|safe if task.log != None else "" }}`
           },
           null
         ),

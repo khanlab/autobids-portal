@@ -304,6 +304,7 @@ class StudyConfigForm(FlaskForm):
     heuristic = SelectField("Heuristic", choices=[])
     subj_expr = StringField("Tar2bids Patient Name Search String")
     bidsignore = TextAreaField("Custom .bidsignore contents")
+    deface = BooleanField("Enable T1w image defacing?")
     patient_str = StringField("DICOM PatientName Identifier")
     patient_re = StringField(
         "Regular expression to match with returned PatientNames"
@@ -346,6 +347,7 @@ class StudyConfigForm(FlaskForm):
             self.subj_expr.default = "*_{subject}"
         else:
             self.subj_expr.default = study.subj_expr
+        self.deface.default = study.deface
         self.patient_str.default = study.patient_str
         if study.patient_name_re is None:
             self.patient_re.default = ".*"
@@ -458,6 +460,7 @@ class StudyConfigForm(FlaskForm):
         study.dataset_name = self.dataset_name.data
         study.heuristic = self.heuristic.data
         study.subj_expr = self.subj_expr.data
+        study.deface = self.deface.data
         study.patient_str = self.patient_str.data
         study.patient_name_re = self.patient_re.data
         study.custom_bidsignore = self.bidsignore.data
