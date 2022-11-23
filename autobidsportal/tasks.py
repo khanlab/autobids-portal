@@ -129,7 +129,7 @@ def record_cfmm2tar(tar_path, uid, study_id):
     tar_file = pathlib.PurePath(tar_path).name
     try:
         date_match = re.fullmatch(
-            r"[a-zA-Z]+_\w+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
+            r"[a-zA-Z]+_[\w\-]+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
         ).group(1)
     except AttributeError as err:
         raise Cfmm2tarError(f"Output {tar_file} could not be parsed.") from err
