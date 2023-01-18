@@ -1,12 +1,15 @@
-FROM debian:bullseye as requirements
+FROM debian:bullseye-20230109 as requirements
 RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list \
     && apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
         build-essential=12.9 \
         ca-certificates=20210119 \
         cryptsetup=2:2.3.7-1+deb11u1 \
-        curl=7.74.0-1.3+deb11u2 \
+        curl=7.74.0-1.3+deb11u3 \
         default-jre=2:1.11-72 \
+        fakeroot=1.25.3-1.1 \
+        fuse2fs=1.46.2-2 \
+        fuse-overlayfs=1.4.0-1 \
         git=1:2.30.2-1 \
         git-annex=8.20210223-2 \
         libseccomp-dev=2.5.1-1+deb11u1 \
@@ -16,14 +19,16 @@ RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/s
         python3-setuptools=52.0.0-4 \
         python-is-python3=3.9.2-1 \
         squashfs-tools=1:4.4-2+deb11u2 \
+        squashfuse=0.1.103-3 \
         ssh=1:8.4p1-5+deb11u1 \
-        unzip=6.0-26 \
+        uidmap=1:4.8.1-1 \
+        unzip=6.0-26+deb11u1 \
         wget=1.21-1+deb11u1 \
-    && apt-get install -y -q --no-install-recommends -t bullseye-backports golang=2:1.18~3~bpo11+1 \
+    && apt-get install -y -q --no-install-recommends -t bullseye-backports golang=2:1.19~1~bpo11+1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 FROM requirements as apptainer
-ENV APPTAINER_VERSION "1.0.0"
+ENV APPTAINER_VERSION "1.1.5"
 RUN mkdir /opt/download \
     && wget --progress=dot:giga -O /opt/download/apptainer.tar.gz https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer-${APPTAINER_VERSION}.tar.gz \
     && mkdir /opt/apptainer-src \
@@ -31,7 +36,7 @@ RUN mkdir /opt/download \
 WORKDIR /opt/apptainer-src/apptainer-${APPTAINER_VERSION}
 RUN ls \
     && mkdir /opt/apptainer \
-    && ./mconfig --prefix=/opt/apptainer \
+    && ./mconfig --prefix=/opt/apptainer --without-suid \
     && make -C ./builddir \
     && make -C ./builddir install
 ENV PATH /opt/apptainer/bin:$PATH
