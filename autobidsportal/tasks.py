@@ -237,6 +237,7 @@ def run_cfmm2tar(study_id, studies_to_download):
                     )
                 except Cfmm2tarError as err:
                     app.logger.error("cfmm2tar failed: %s", err)
+                    _append_task_log(job.id, str(err))
                     error_msgs.append(str(err))
                     continue
                 _append_task_log(job.id, log)
