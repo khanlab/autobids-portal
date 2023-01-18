@@ -48,21 +48,29 @@ services:
       - "./compose/ria-store:/ria-store"
       - "./compose/datasets:/datasets"
       - "./compose/ssh:/ssh"
+    devices:
+      - "/dev/fuse:/dev/fuse"
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
     depends_on:
       - postgres
       - redis
       - rq
-    privileged: true
   rq:
     build: .
     command: rq worker
     environment: *idautobidsenv
     volumes: *idautobidsvolumes
+    devices:
+      - "/dev/fuse:/dev/fuse"
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
     depends_on:
       - postgres
       - redis
     restart: on-failure
-    privileged: true
   redis:
     image: redis:5.0.14
     ports: ["6379:6379"]
