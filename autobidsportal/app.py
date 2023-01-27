@@ -1,6 +1,8 @@
 """Initialize flask and all its plugins"""
+from __future__ import annotations
 
 import os
+from typing import Optional
 
 from flask import Flask
 from flask_migrate import Migrate
@@ -14,16 +16,18 @@ from autobidsportal.errors import bad_request, not_found_error, internal_error
 from autobidsportal.email import mail
 
 
-def create_app(config_object=None, override_dict=None):
+def create_app(
+    config_object: Optional[str | object] = None, override_dict=None
+):
     """Application factory for the Autobids Portal.
 
     Parameters
     ----------
-    config_object : str or object reference
+    config_object : str or object or None
         Reference to an object with config vars to update. If no
         config_object is provided, the environment variable
         AUTOBIDSPORTAL_CONFIG is used.
-    override_dict : dict
+    override_dict : dict or None
         Dictionary of config vars to update.
     """
     app = Flask(__name__)

@@ -137,7 +137,7 @@ def login():
             return redirect(url_for("portal_blueprint.login"))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get("next")
-        if not next_page or url_parse(next_page).netloc != "":
+        if (not next_page) or url_parse(next_page).netloc:
             next_page = url_for("portal_blueprint.index")
         return redirect(next_page)
     return render_template("login.html", title="Sign In", form=form)
@@ -225,8 +225,7 @@ def reset_password(uuid_reset):
         return redirect(url_for("portal_blueprint.gen_reset"))
     form = ResetPasswordForm()
     email = current_app.redis.get(key_reset)
-    user = User.query.filter_by(email=email).one_or_none()
-    if user is None:
+    if (user := User.query.filter_by(email=email).one_or_none()) is None:
         flash(
             "This password reset link encountered an unexpected error. "
             "Please resubmit your password reset request."
@@ -306,11 +305,7 @@ def admin(user_id):
     user = User.query.get(user_id)
     if request.method == "POST":
         if "admin" in request.form:
-            make_admin = request.form["admin"].lower() == "true"
-            if make_admin:
-                user.admin = True
-            else:
-                user.admin = False
+            user.admin = request.form["admin"].lower() == "true"
             db.session.commit()
             current_app.logger.info(
                 "Changed user %i's admin status to %s", user.id, user.admin
@@ -350,11 +345,7 @@ def results():
     """Get responses and the date and time the current user last logged in."""
     last = current_user.last_seen
 
-    if current_user.admin:
-        studies = Study.query.all()
-    else:
-        studies = current_user.studies
-
+    studies = Study.query.all() if current_user.admin else current_user.studies
     studies = sorted(
         studies,
         key=lambda x: x.submission_date,
@@ -514,12 +505,12 @@ def run_cfmm2tar(study_id):
         return answer_info(study_id)
 
     form = ExplicitCfmm2tarForm()
-    if form.choices_to_run.data not in [None, []]:
-        explicit_scans = [
-            loads(loads(val_json)) for val_json in form.choices_to_run.data
-        ]
-    else:
-        explicit_scans = None
+
+    explicit_scans = (
+        [loads(loads(val_json)) for val_json in form.choices_to_run.data]
+        if form.choices_to_run.data not in [None, []]
+        else None
+    )
     current_app.task_queue.enqueue(
         "autobidsportal.tasks.check_tar_files",
         study_id,
@@ -706,14 +697,43 @@ def run_tar2bids(study_id):
     return answer_info(study_id)
 
 
+def update_scanner(scanner):
+    """Parse scanner data into something readable."""
+    return "3T" if scanner == "type1" else "7T"
+
+
+def update_familiarity(familiarity):
+    """Parse familiarity value into human-readable description."""
+    if familiarity == "1":
+        new_familiarity = "Not familiar at all"
+    elif familiarity == "2":
+        new_familiarity = "Have heard of it"
+    elif familiarity == "3":
+        new_familiarity = "Have used it before"
+    elif familiarity == "4":
+        new_familiarity = "Used it regularly"
+    elif familiarity == "5":
+        new_familiarity = "I consider myself an expert"
+    return new_familiarity
+
+
+def update_date(date):
+    """Parse date into string."""
+    return date.date() if date is not None else date
+
+
+def update_bool(bool_str):
+    """Parse boolean int string into Yes/No"""
+    return "Yes" if bool_str == "1" else "No"
+
+
 @portal_blueprint.route("/results/download", methods=["GET"])
 @login_required
 def download():
     """Downloads csv containing all the survey response"""
-    if current_user.admin:
-        response_list = Study.query.all()
-    else:
-        response_list = current_user.studies
+    response_list = (
+        Study.query.all() if current_user.admin else current_user.studies
+    )
     file_name = "Response_report"
 
     csv_list = [
@@ -744,28 +764,6 @@ def download():
             "Comment",
         ],
     ]
-
-    def update_scanner(scanner):
-        return "3T" if scanner == "type1" else "7T"
-
-    def update_familiarity(familiarity):
-        if familiarity == "1":
-            new_familiarity = "Not familiar at all"
-        elif familiarity == "2":
-            new_familiarity = "Have heard of it"
-        elif familiarity == "3":
-            new_familiarity = "Have used it before"
-        elif familiarity == "4":
-            new_familiarity = "Used it regularly"
-        elif familiarity == "5":
-            new_familiarity = "I consider myself an expert"
-        return new_familiarity
-
-    def update_date(date):
-        return date.date() if date is not None else date
-
-    def update_bool(bool_str):
-        return "Yes" if bool_str == "1" else "No"
 
     for response in response_list:
         csv_list.append(

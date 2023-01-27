@@ -8,7 +8,6 @@ import subprocess
 
 from datalad.support.gitrepo import GitRepo
 from rq import get_current_job
-from rq.job import Job
 
 from autobidsportal.app import create_app
 from autobidsportal.models import (
@@ -46,15 +45,15 @@ app = create_app()
 app.app_context().push()
 
 
-def _set_task_progress(job_id, progress):
-    job = Job.fetch(job_id)
-    if job:
-        job.meta["progress"] = progress
-        job.save_meta()
-    task = Task.query.get(job_id)
+def _set_task_progress(progress):
+    if not (job := get_current_job()):
+        return
+    job.meta["progress"] = progress
+    job.save_meta()
+    task = Task.query.get(job.id)
     if task.user is not None:
         task.user.add_notification(
-            "task_progress", {"task_id": job_id, "progress": progress}
+            "task_progress", {"task_id": job.id, "progress": progress}
         )
     if progress == 100:
         task.complete = True
@@ -64,8 +63,10 @@ def _set_task_progress(job_id, progress):
     db.session.commit()
 
 
-def _set_task_error(job_id, msg):
-    task = Task.query.get(job_id)
+def _set_task_error(msg):
+    if not (job := get_current_job()):
+        return
+    task = Task.query.get(job.id)
     task.complete = True
     task.success = False
     task.error = msg[:128] if msg else ""
@@ -73,8 +74,10 @@ def _set_task_error(job_id, msg):
     db.session.commit()
 
 
-def _append_task_log(job_id, log):
-    task = Task.query.get(job_id)
+def _append_task_log(log):
+    if not (job := get_current_job()):
+        return
+    task = Task.query.get(job.id)
     task.log = "".join([task.log if task.log is not None else "", log])
     db.session.commit()
 
@@ -90,27 +93,29 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
         PatientName string.
     study_description : str
         "Principal^Project" to search for.
+
+    Raises
+    ------
+    Cfmm2tarTimeoutError
+        If cfmm2tar times out too many times.
     """
-    attempts = 0
-    success = False
-    while not success:
+    for attempt in range(1, 6):
         try:
-            attempts += 1
             cfmm2tar_result, log = gen_utils().run_cfmm2tar(
                 out_dir=out_dir,
                 patient_name=target,
                 project=study_description,
             )
-            success = True
         except Cfmm2tarTimeoutError as err:
-            if attempts < 5:
+            if attempt < 5:
                 app.logger.warning(
                     "cfmm2tar timeout after %i attempt(s) (target %s).",
-                    attempts,
+                    attempt,
                     target,
                 )
                 continue
             raise err
+        break
     return cfmm2tar_result, log
 
 
@@ -121,10 +126,15 @@ def record_cfmm2tar(tar_path, uid, study_id):
     ----------
     tar_path : str
         Path to the downloaded tar file.
-    uid_path : str
+    uid : str
         StudyInstanceUID of the tar file..
     study_id : int
         ID of the study associated with this cfmm2tar output.
+
+    Raises
+    ------
+    Cfmm2tarError
+        If cfmm2tar fails.
     """
     tar_file = pathlib.PurePath(tar_path).name
     try:
@@ -181,7 +191,7 @@ def check_tar_files(study_id, explicit_scans=None, user_id=None):
     studies_to_download = find_studies_to_download(
         study, f"{study.principal}^{study.project_name}", explicit_scans
     )
-    if len(studies_to_download) == 0:
+    if not studies_to_download:
         return
     new_studies = ", ".join(
         [new_study["PatientName"] for new_study in studies_to_download]
@@ -197,6 +207,24 @@ def check_tar_files(study_id, explicit_scans=None, user_id=None):
     )
 
 
+def ensure_complete(error_log):
+    """Ensure a cfmm2tar job is complete."""
+
+    def decorate(task):
+        def wrapped_task(*args):
+            try:
+                task(*args)
+            finally:
+                if not Task.query.get(get_current_job().id).complete:
+                    app.logger.error(error_log)
+                    _set_task_error("Unknown uncaught exception")
+
+        return wrapped_task
+
+    return decorate
+
+
+@ensure_complete("Cfmm2tar failed for an unknown reason.")
 def run_cfmm2tar(study_id, studies_to_download):
     """Run cfmm2tar for a given study
 
@@ -207,12 +235,11 @@ def run_cfmm2tar(study_id, studies_to_download):
     ----------
     study_id : int
         ID of the study for which to run cfmm2tar.
-    explicit_scans : list of dict, optional
+    studies_to_download : list of dict, optional
         List of scans to get with cfmm2tar, where each scan is represented by
         a dict with keys "StudyInstanceUID" and "PatientName".
     """
-    job = get_current_job()
-    _set_task_progress(job.id, 0)
+    _set_task_progress(0)
     study = Study.query.get(study_id)
     app.logger.info(
         "Running cfmm2tar for patients %s in study %i",
@@ -220,85 +247,78 @@ def run_cfmm2tar(study_id, studies_to_download):
         study.id,
     )
 
-    try:
-        dataset = ensure_dataset_exists(study.id, DatasetType.SOURCE_DATA)
-        error_msgs = []
-        for target in studies_to_download:
-            with tempfile.TemporaryDirectory(
-                dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
-            ) as download_dir, RiaDataset(
-                download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
-            ) as path_dataset:
-                try:
-                    result, log = run_cfmm2tar_with_retries(
-                        str(path_dataset),
-                        target["PatientName"],
-                        f"{study.principal}^{study.project_name}",
-                    )
-                except Cfmm2tarError as err:
-                    app.logger.error("cfmm2tar failed: %s", err)
-                    _append_task_log(job.id, str(err))
-                    error_msgs.append(str(err))
-                    continue
-                _append_task_log(job.id, log)
-                app.logger.info(
-                    "Successfully ran cfmm2tar for target %s.",
+    dataset = ensure_dataset_exists(study.id, DatasetType.SOURCE_DATA)
+    error_msgs = []
+    for target in studies_to_download:
+        with tempfile.TemporaryDirectory(
+            dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
+        ) as download_dir, RiaDataset(
+            download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+        ) as path_dataset:
+            try:
+                result, log = run_cfmm2tar_with_retries(
+                    str(path_dataset),
                     target["PatientName"],
+                    f"{study.principal}^{study.project_name}",
                 )
-                app.logger.info("Result: %s", result)
-
-                if result == []:
-                    app.logger.error(
-                        "No cfmm2tar results parsed for target %s", target
-                    )
-                    error_msgs.append(
-                        f"No cfmm2tar results parsed for target f{target}. "
-                        "Check the stderr for more information."
-                    )
-                result = [
-                    [
-                        individual_result[0],
-                        process_uid_file(individual_result[1]),
-                    ]
-                    for individual_result in result
-                ]
-
-                finalize_dataset_changes(
-                    str(path_dataset), "Add new tar file."
-                )
-                for individual_result in result:
-                    record_cfmm2tar(
-                        individual_result[0],
-                        individual_result[1],
-                        study.id,
-                    )
-        if len(studies_to_download) > 0:
-            send_email(
-                "New cfmm2tar run",
-                "\n".join(
-                    [
-                        (
-                            "Attempted to download the following tar files "
-                            f"for study {study.id}:"
-                        )
-                    ]
-                    + [
-                        f"PatientName: {target['PatientName']}"
-                        for target in studies_to_download
-                    ]
-                    + ["\nErrors:\n"]
-                    + error_msgs
-                ),
+            except Cfmm2tarError as err:
+                app.logger.error("cfmm2tar failed: %s", err)
+                _append_task_log(str(err))
+                error_msgs.append(str(err))
+                continue
+            _append_task_log(log)
+            app.logger.info(
+                "Successfully ran cfmm2tar for target %s.",
+                target["PatientName"],
             )
+            app.logger.info("Result: %s", result)
 
-        if len(error_msgs) > 0:
-            _set_task_error(job.id, "\n".join(error_msgs))
-        else:
-            _set_task_progress(job.id, 100)
-    finally:
-        if not Task.query.get(job.id).complete:
-            app.logger.error("Cfmm2tar failed for an unknown reason.")
-            _set_task_error(job.id, "Unknown uncaught exception")
+            if result == []:
+                app.logger.error(
+                    "No cfmm2tar results parsed for target %s", target
+                )
+                error_msgs.append(
+                    f"No cfmm2tar results parsed for target f{target}. "
+                    "Check the stderr for more information."
+                )
+            result = [
+                [
+                    individual_result[0],
+                    process_uid_file(individual_result[1]),
+                ]
+                for individual_result in result
+            ]
+
+            finalize_dataset_changes(str(path_dataset), "Add new tar file.")
+            for individual_result in result:
+                record_cfmm2tar(
+                    individual_result[0],
+                    individual_result[1],
+                    study.id,
+                )
+    if len(studies_to_download) > 0:
+        send_email(
+            "New cfmm2tar run",
+            "\n".join(
+                [
+                    (
+                        "Attempted to download the following tar files "
+                        f"for study {study.id}:"
+                    )
+                ]
+                + [
+                    f"PatientName: {target['PatientName']}"
+                    for target in studies_to_download
+                ]
+                + ["\nErrors:\n"]
+                + error_msgs
+            ),
+        )
+
+    if len(error_msgs) > 0:
+        _set_task_error("\n".join(error_msgs))
+    else:
+        _set_task_progress(100)
 
 
 def find_unprocessed_tar_files(study_id):
@@ -315,7 +335,7 @@ def find_unprocessed_tar_files(study_id):
     new_tar_file_ids = {
         tar_file.id for tar_file in study.cfmm2tar_outputs
     } - existing_tar_file_ids
-    if len(new_tar_file_ids) == 0:
+    if not new_tar_file_ids:
         return
     Task.launch_task(
         "run_tar2bids",
@@ -327,6 +347,7 @@ def find_unprocessed_tar_files(study_id):
     )
 
 
+@ensure_complete("tar2bids failed with an uncaught exception.")
 def run_tar2bids(study_id, tar_file_ids):
     """Run tar2bids for a specific study.
 
@@ -337,260 +358,230 @@ def run_tar2bids(study_id, tar_file_ids):
 
     tar_file_ids : list of int
         IDs of the tar files to be included in the tar2bids run.
+
+    Raises
+    ------
+    Tar2bidsError
+        If tar2bids fails.
     """
-    job = get_current_job()
-    _set_task_progress(job.id, 0)
+    _set_task_progress(0)
     study = Study.query.get(study_id)
     cfmm2tar_outputs = [
         Cfmm2tarOutput.query.get(tar_file_id) for tar_file_id in tar_file_ids
     ]
     dataset_tar = ensure_dataset_exists(study_id, DatasetType.SOURCE_DATA)
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
-    try:
-        with tempfile.TemporaryDirectory(
-            dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
-        ) as bids_dir, tempfile.TemporaryDirectory(
-            dir=app.config["TAR2BIDS_TEMP_DIR"]
-        ) as temp_dir, tempfile.TemporaryDirectory(
-            dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
-        ) as download_dir, tempfile.NamedTemporaryFile(
-            mode="w+",
-            encoding="utf-8",
-            buffering=1,
-        ) as bidsignore:
-            app.logger.info("Running tar2bids for study %i", study.id)
-            if study.custom_bidsignore is not None:
-                bidsignore.write(study.custom_bidsignore)
-            for tar_out in cfmm2tar_outputs:
-                with RiaDataset(
-                    download_dir,
-                    dataset_tar.ria_alias,
-                    ria_url=dataset_tar.custom_ria_url,
-                ) as path_dataset_tar:
-                    tar_path = get_tar_file_from_dataset(
-                        tar_out.tar_file, path_dataset_tar
-                    )
-                    try:
-                        _append_task_log(
-                            job.id,
-                            gen_utils().run_tar2bids(
-                                Tar2bidsArgs(
-                                    output_dir=pathlib.Path(bids_dir)
-                                    / "incoming",
-                                    tar_files=[tar_path],
-                                    heuristic=study.heuristic,
-                                    patient_str=study.subj_expr,
-                                    temp_dir=temp_dir,
-                                    bidsignore=None
-                                    if study.custom_bidsignore is None
-                                    else bidsignore.name,
-                                    deface=study.deface,
-                                )
-                            ),
-                        )
-                    except Tar2bidsError as err:
-                        app.logger.error("tar2bids failed: %s", err)
-                        _set_task_error(
-                            job.id,
-                            err.__cause__.stderr
-                            if err.__cause__ is not None
-                            else str(err),
-                        )
-                        _append_task_log(job.id, str(err))
-                        _append_task_log(job.id, "Dataset contents:\n")
-                        _append_task_log(
-                            job.id,
-                            "\n".join(
-                                render_dir_dict(
-                                    gen_dir_dict(
-                                        str(
-                                            pathlib.Path(bids_dir) / "incoming"
-                                        ),
-                                        {".git", ".datalad"},
-                                    )
-                                )
-                            ),
-                        )
-                        send_email(
-                            "Failed tar2bids run",
-                            "\n".join(
-                                ["Tar2bids failed for tar files:"]
-                                + [
-                                    output.tar_file
-                                    for output in cfmm2tar_outputs
-                                ]
-                                + [
-                                    (
-                                        "Note: Some of the tar2bids runs may have "
-                                        "completed. This email is sent if any of them "
-                                        "fail."
-                                    ),
-                                    "Error:",
-                                    str(err),
-                                ]
-                            ),
-                        )
-                        raise err
-                with RiaDataset(
-                    pathlib.Path(bids_dir) / "existing",
-                    dataset_bids.ria_alias,
-                    ria_url=dataset_bids.custom_ria_url,
-                ) as path_dataset_study:
-                    merge_datasets(
-                        pathlib.Path(bids_dir) / "incoming", path_dataset_study
-                    )
-                    finalize_dataset_changes(
-                        path_dataset_study,
-                        f"Ran tar2bids on tar file {tar_path}",
-                    )
-                    study.dataset_content = gen_dir_dict(
-                        path_dataset_study, {".git", ".datalad"}
-                    )
-                    tar_out.datalad_dataset = dataset_bids
-                    db.session.commit()
-            db.session.add(
-                Tar2bidsOutput(
-                    study_id=study_id,
-                    cfmm2tar_outputs=cfmm2tar_outputs,
-                    bids_dir=None,
-                    heuristic=study.heuristic,
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
+    ) as bids_dir, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_TEMP_DIR"]
+    ) as temp_dir, tempfile.TemporaryDirectory(
+        dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
+    ) as download_dir, tempfile.NamedTemporaryFile(
+        mode="w+",
+        encoding="utf-8",
+        buffering=1,
+    ) as bidsignore:
+        app.logger.info("Running tar2bids for study %i", study.id)
+        if study.custom_bidsignore is not None:
+            bidsignore.write(study.custom_bidsignore)
+        for tar_out in cfmm2tar_outputs:
+            with RiaDataset(
+                download_dir,
+                dataset_tar.ria_alias,
+                ria_url=dataset_tar.custom_ria_url,
+            ) as path_dataset_tar:
+                tar_path = get_tar_file_from_dataset(
+                    tar_out.tar_file, path_dataset_tar
                 )
+                try:
+                    _append_task_log(
+                        gen_utils().run_tar2bids(
+                            Tar2bidsArgs(
+                                output_dir=pathlib.Path(bids_dir) / "incoming",
+                                tar_files=[tar_path],
+                                heuristic=study.heuristic,
+                                patient_str=study.subj_expr,
+                                temp_dir=temp_dir,
+                                bidsignore=None
+                                if study.custom_bidsignore is None
+                                else bidsignore.name,
+                                deface=study.deface,
+                            )
+                        ),
+                    )
+                except Tar2bidsError as err:
+                    app.logger.error("tar2bids failed: %s", err)
+                    _set_task_error(
+                        err.__cause__.stderr
+                        if err.__cause__ is not None
+                        else str(err),
+                    )
+                    _append_task_log(str(err))
+                    _append_task_log("Dataset contents:\n")
+                    _append_task_log(
+                        "\n".join(
+                            render_dir_dict(
+                                gen_dir_dict(
+                                    str(pathlib.Path(bids_dir) / "incoming"),
+                                    {".git", ".datalad"},
+                                )
+                            )
+                        ),
+                    )
+                    send_email(
+                        "Failed tar2bids run",
+                        "\n".join(
+                            ["Tar2bids failed for tar files:"]
+                            + [output.tar_file for output in cfmm2tar_outputs]
+                            + [
+                                (
+                                    "Note: Some of the tar2bids runs may have "
+                                    "completed. This email is sent if any of them "
+                                    "fail."
+                                ),
+                                "Error:",
+                                str(err),
+                            ]
+                        ),
+                    )
+                    raise err
+            with RiaDataset(
+                pathlib.Path(bids_dir) / "existing",
+                dataset_bids.ria_alias,
+                ria_url=dataset_bids.custom_ria_url,
+            ) as path_dataset_study:
+                merge_datasets(
+                    pathlib.Path(bids_dir) / "incoming", path_dataset_study
+                )
+                finalize_dataset_changes(
+                    path_dataset_study,
+                    f"Ran tar2bids on tar file {tar_path}",
+                )
+                study.dataset_content = gen_dir_dict(
+                    path_dataset_study, {".git", ".datalad"}
+                )
+                tar_out.datalad_dataset = dataset_bids
+                db.session.commit()
+        db.session.add(
+            Tar2bidsOutput(
+                study_id=study_id,
+                cfmm2tar_outputs=cfmm2tar_outputs,
+                bids_dir=None,
+                heuristic=study.heuristic,
             )
-            db.session.commit()
-        _set_task_progress(job.id, 100)
-        if len(tar_file_ids) > 0:
-            send_email(
-                "Successful tar2bids run.",
-                "\n".join(
-                    ["Tar2bids successfully run for tar files:"]
-                    + [output.tar_file for output in cfmm2tar_outputs]
-                ),
-            )
-    finally:
-        if not Task.query.get(job.id).complete:
-            app.logger.error(
-                "tar2bids for study %i failed with an uncaught exception.",
-                study.id,
-            )
-            _set_task_error(job.id, "Unknown uncaught exception.")
+        )
+        db.session.commit()
+    _set_task_progress(100)
+    if len(tar_file_ids) > 0:
+        send_email(
+            "Successful tar2bids run.",
+            "\n".join(
+                ["Tar2bids successfully run for tar files:"]
+                + [output.tar_file for output in cfmm2tar_outputs]
+            ),
+        )
 
 
+@ensure_complete("raw dataset archival failed with an uncaught exception.")
 def archive_raw_data(study_id):
     """Clone a study dataset and archive it if necessary."""
-    job = get_current_job()
-    _set_task_progress(job.id, 0)
+    _set_task_progress(0)
     study = Study.query.get(study_id)
     if (study.custom_ria_url is not None) or (study.dataset_content is None):
-        _set_task_progress(job.id, 100)
+        _set_task_progress(100)
         return
     dataset_raw = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
-    try:
-        with tempfile.TemporaryDirectory(
-            dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
-        ) as dir_raw_data, RiaDataset(
-            dir_raw_data,
-            dataset_raw.ria_alias,
-            ria_url=dataset_raw.custom_ria_url,
-        ) as path_dataset_raw, tempfile.TemporaryDirectory(
-            dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
-        ) as dir_archive:
-            current_hexsha = GitRepo(str(path_dataset_raw)).get_hexsha()
-            if (dataset_raw.archived_hexsha is not None) and (
-                dataset_raw.archived_hexsha == current_hexsha
-            ):
-                app.logger.info("Archive for study %s up to date", study_id)
-                _set_task_progress(job.id, 100)
-                return
-            get_all_dataset_content(path_dataset_raw)
-            path_archive = (
-                pathlib.Path(dir_archive)
-                / f"{dataset_raw.ria_alias}_{current_hexsha}.zip"
-            )
-            archive_dataset(
-                path_dataset_raw,
-                path_archive,
-            )
-            ssh_port = app.config["ARCHIVE_SSH_PORT"]
-            ssh_key = app.config["ARCHIVE_SSH_KEY"]
-            subprocess.run(
-                [
-                    "ssh",
-                    "-p",
-                    f"{ssh_port}",
-                    "-i",
-                    f"{ssh_key}",
-                    app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                    "mkdir",
-                    "-p",
-                    app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                    + f"/{dataset_raw.ria_alias}",
-                ],
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "scp",
-                    "-P",
-                    f"{ssh_port}",
-                    "-i",
-                    f"{ssh_key}",
-                    str(path_archive),
-                    app.config["ARCHIVE_BASE_URL"]
-                    + f"/{dataset_raw.ria_alias}",
-                ],
-                check=True,
-            )
-            subprocess.run(
-                [
-                    "ssh",
-                    "-p",
-                    f"{ssh_port}",
-                    "-i",
-                    f"{ssh_key}",
-                    app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                    "find",
-                    app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                    + f"/{dataset_raw.ria_alias}",
-                    "!",
-                    "-name",
-                    path_archive.name,
-                    "-type",
-                    "f",
-                    "-exec",
-                    "rm",
-                    "-f",
-                    "{}",
-                    "+",
-                ],
-                check=True,
-            )
-        dataset_raw.archived_hexsha = current_hexsha
-        db.session.commit()
-        _set_task_progress(job.id, 100)
-    finally:
-        if not Task.query.get(job.id).complete:
-            app.logger.error(
-                (
-                    "raw dataset archival for study %i failed with an "
-                    "uncaught exception."
-                ),
-                study.id,
-            )
-            _set_task_error(job.id, "Unknown uncaught exception.")
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
+    ) as dir_raw_data, RiaDataset(
+        dir_raw_data,
+        dataset_raw.ria_alias,
+        ria_url=dataset_raw.custom_ria_url,
+    ) as path_dataset_raw, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
+    ) as dir_archive:
+        current_hexsha = GitRepo(str(path_dataset_raw)).get_hexsha()
+        if (dataset_raw.archived_hexsha is not None) and (
+            dataset_raw.archived_hexsha == current_hexsha
+        ):
+            app.logger.info("Archive for study %s up to date", study_id)
+            _set_task_progress(100)
+            return
+        get_all_dataset_content(path_dataset_raw)
+        path_archive = (
+            pathlib.Path(dir_archive)
+            / f"{dataset_raw.ria_alias}_{current_hexsha}.zip"
+        )
+        archive_dataset(
+            path_dataset_raw,
+            path_archive,
+        )
+        ssh_port = app.config["ARCHIVE_SSH_PORT"]
+        ssh_key = app.config["ARCHIVE_SSH_KEY"]
+        subprocess.run(
+            [
+                "ssh",
+                "-p",
+                f"{ssh_port}",
+                "-i",
+                f"{ssh_key}",
+                app.config["ARCHIVE_BASE_URL"].split(":")[0],
+                "mkdir",
+                "-p",
+                app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                + f"/{dataset_raw.ria_alias}",
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "scp",
+                "-P",
+                f"{ssh_port}",
+                "-i",
+                f"{ssh_key}",
+                str(path_archive),
+                app.config["ARCHIVE_BASE_URL"] + f"/{dataset_raw.ria_alias}",
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "ssh",
+                "-p",
+                f"{ssh_port}",
+                "-i",
+                f"{ssh_key}",
+                app.config["ARCHIVE_BASE_URL"].split(":")[0],
+                "find",
+                app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                + f"/{dataset_raw.ria_alias}",
+                "!",
+                "-name",
+                path_archive.name,
+                "-type",
+                "f",
+                "-exec",
+                "rm",
+                "-f",
+                "{}",
+                "+",
+            ],
+            check=True,
+        )
+    dataset_raw.archived_hexsha = current_hexsha
+    db.session.commit()
+    _set_task_progress(100)
 
 
 def update_heuristics():
     """Clone the heuristic repo if it doesn't exist, then pull from it."""
-    job = get_current_job()
-    if job is not None:
-        _set_task_progress(job.id, 0)
-    if (
-        subprocess.run(
-            ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "status"],
-            check=False,
-        ).returncode
-        != 0
-    ):
+    _set_task_progress(0)
+    if subprocess.run(
+        ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "status"],
+        check=False,
+    ).returncode:
         app.logger.info("No heuristic repo present. Cloning it...")
         subprocess.run(
             [
@@ -602,15 +593,13 @@ def update_heuristics():
             check=True,
         )
 
+    app.logger.info("Pulling heuristic repo.")
     try:
-        app.logger.info("Pulling heuristic repo.")
         subprocess.run(
             ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "pull"],
             check=True,
         )
-        if job is not None:
-            _set_task_progress(job.id, 100)
-    finally:
-        if (job is not None) and not Task.query.get(job.id).complete:
-            app.logger.error("Pull from heuristic repo unsuccessful.")
-            _set_task_error(job.id, "Unknown uncaught exception.")
+    except subprocess.CalledProcessError as err:
+        app.logger.error("Pull from heuristic repo unsuccessful.")
+        _set_task_error(f"Uncaught exception: {err}.")
+    _set_task_progress(100)

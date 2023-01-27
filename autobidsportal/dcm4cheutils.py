@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""
+"""Utilities for working with dcm4che and derived tools.
 Define a (limited) Dcm4cheUtils class, which can query a DICOM server for
 specified information. Adapted from YingLi Lu's class in the cfmm2tar
 project.
@@ -126,6 +126,11 @@ def parse_findscu_xml(element_tree, output_fields):
         One XML document produced by findscu.
     output_fields : list of str
         List of output fields we're interested in (passed to findscu)
+
+    Raises
+    ------
+    Dcm4cheError
+        If dcm4che fails for any reason
     """
     output_fields = [
         f"{field[:8]}".upper()
@@ -161,7 +166,7 @@ def parse_findscu_xml(element_tree, output_fields):
                 for element in attribute.findall(".//*")
                 if element.text is not None
             ]
-            if len(value_elements) == 0:
+            if not value_elements:
                 raise Dcm4cheError(
                     f"Found PN attribute with no text: {attribute}"
                 )
@@ -174,9 +179,7 @@ def parse_findscu_xml(element_tree, output_fields):
 
 
 class Dcm4cheUtils:
-    """
-    dcm4che utils
-    """
+    """dcm4che utils"""
 
     def __init__(
         self,
@@ -279,6 +282,11 @@ class Dcm4cheUtils:
             A list containing one value for each result, where each result
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
+
+        Raises
+        ------
+        Dcm4cheError
+            If dcm4che fails for any reason.
         """
         cmd = self._findscu_list.copy()
 
@@ -329,21 +337,23 @@ class Dcm4cheUtils:
         )
         cmd.extend(["-L", f"{retrieve_level}"])
 
-        try:
-            with tempfile.TemporaryDirectory() as tmpdir:
-                cmd.extend(
-                    ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"]
-                )
-                current_app.logger.info("Querying study with findscu.")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cmd.extend(
+                ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"]
+            )
+            current_app.logger.info("Querying study with findscu.")
+            try:
                 completed_proc = self.exec_cfmm2tar(cmd)
-
-                trees_xml = [
-                    parse(child) for child in pathlib.Path(tmpdir).iterdir()
-                ]
-        except subprocess.CalledProcessError as error:
-            current_app.logger.error("Findscu failed while querying study.")
-            raise Dcm4cheError("Non-zero exit status from findscu.") from error
-
+            except subprocess.CalledProcessError as error:
+                current_app.logger.error(
+                    "Findscu failed while querying study."
+                )
+                raise Dcm4cheError(
+                    "Non-zero exit status from findscu."
+                ) from error
+            trees_xml = [
+                parse(child) for child in pathlib.Path(tmpdir).iterdir()
+            ]
         err = completed_proc.stderr
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
@@ -372,8 +382,15 @@ class Dcm4cheUtils:
         list of list of str
             A list containing the tar file name and uid file name (in that
             order) for each result.
+
+        Raises
+        ------
+        Cfmm2tarError
+            If the arguments are malformed.
+        Cfmm2tarTimeoutError
+            If cfmm2tar times out.
         """
-        if all(arg is None for arg in [date_str, patient_name, project]):
+        if all(arg is None for arg in (date_str, patient_name, project)):
             raise Cfmm2tarError(
                 "At least one search argument must be provided."
             )
@@ -394,10 +411,8 @@ class Dcm4cheUtils:
                 + [out_dir]
             )
 
+            current_app.logger.info("Running cfmm2tar: %s", " ".join(arg_list))
             try:
-                current_app.logger.info(
-                    "Running cfmm2tar: %s", " ".join(arg_list)
-                )
                 out = self.exec_cfmm2tar(arg_list)
             except subprocess.CalledProcessError as err:
                 if "Timeout.java" in err.stderr:
@@ -441,6 +456,11 @@ class Dcm4cheUtils:
         Returns
         -------
         The given output_dir, if successful.
+
+        Raises
+        ------
+        Tar2bidsError
+            If Tar2bids fails for any reason.
         """
         arg_list = (
             ["/opt/tar2bids/tar2bids"]
@@ -456,8 +476,9 @@ class Dcm4cheUtils:
             + (["-D"] if args.deface else [])
             + args.tar_files
         )
+
+        current_app.logger.info("Running tar2bids.")
         try:
-            current_app.logger.info("Running tar2bids.")
             out = apptainer_exec(
                 arg_list,
                 self.tar2bids_spec.image_path,
