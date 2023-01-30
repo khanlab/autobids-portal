@@ -31,7 +31,7 @@ def get_inclusion_records(uids_included):
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
-    if len(uids_included) == 0:
+    if not uids_included:
         return []
     responses_flat = rearrange_response(
         gen_utils().query_single_study(

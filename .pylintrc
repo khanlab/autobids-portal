@@ -1,7 +1,7 @@
 [MASTER]
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
-load-plugins=pylint_flask,pylint_flask_sqlalchemy,pylint_pytest
+load-plugins=pylint_flask,pylint_flask_sqlalchemy,pylint_pytest,pylint.extensions.comparetozero,pylint.extensions.redefined_variable_type,pylint.extensions.while_used,pylint.extensions.mccabe,pylint.extensions.typing,pylint.extensions.docstyle,pylint.extensions.private_import,pylint.extensions.broad_try_clause,pylint.extensions.comparison_placement,pylint.extensions.for_any_all,pylint.extensions.check_elif,pylint.extensions.docparams,pylint.extensions.empty_comment,pylint.extensions.code_style,pylint.extensions.eq_without_hash,pylint.extensions.overlapping_exceptions,pylint.extensions.redefined_loop_name,pylint.extensions.bad_builtin,pylint.extensions.no_self_use,pylint.extensions.set_membership,pylint.extensions.consider_ternary_expression,pylint.extensions.confusing_elif,pylint.extensions.emptystring
 generated-members=db.session.*,self.notifications.*,err.__cause__.*,app.logger, datalad.api.*
 ignored-classes=Tar2bidsRunForm,StudyConfigForm
 

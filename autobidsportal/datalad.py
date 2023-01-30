@@ -50,6 +50,11 @@ def get_alias(study_id, dataset_type):
         ID of the study.
     dataset_type: DatasetType
         "tar2bids" or "cfmm2tar".
+
+    Raises
+    ------
+    TypeError
+        If dataset_type is not DatasetType
     """
     if dataset_type is DatasetType.SOURCE_DATA:
         text = "sourcedata"
@@ -58,7 +63,7 @@ def get_alias(study_id, dataset_type):
     elif dataset_type is DatasetType.DERIVED_DATA:
         text = "deriveddata"
     else:
-        raise TypeError()
+        raise TypeError
     return f"study-{study_id}_{text}"
 
 

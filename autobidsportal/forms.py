@@ -90,8 +90,7 @@ class LoginForm(FlaskForm):
 
 def unique_email(_, email):
     """Check that no user with this email address exists."""
-    user = User.query.filter_by(email=email.data).one_or_none()
-    if user is not None:
+    if User.query.filter_by(email=email.data).one_or_none() is not None:
         raise ValidationError(
             "There is already an account using this email address. "
             + "Please use a different email address."
@@ -258,7 +257,7 @@ class BidsForm(FlaskForm):
 
         dataset_name = (
             self.dataset_name.data
-            if self.dataset_name.data != ""
+            if self.dataset_name.data
             else self.project_name.data
         )
 
@@ -418,6 +417,8 @@ class StudyConfigForm(FlaskForm):
         ----------
         study : Study
             The study to update
+        user_is_admin : bool
+            True if the user updating is an administrator.
 
         Returns
         -------
@@ -430,20 +431,18 @@ class StudyConfigForm(FlaskForm):
         ids_authorized : list of int
             IDs of users to add to the authorized list.
         """
-        # pylint: disable=too-many-branches
         to_add = []
         to_delete = []
         ids_authorized = self.users_authorized.data
-        if self.new_globus_username.data != "":
+        if self.new_globus_username.data:
             to_add.append(
                 GlobusUsername(
                     study_id=study.id, username=self.new_globus_username.data
                 )
             )
-        if self.example_date.data:
-            study.sample = self.example_date.data
-        else:
-            study.sample = None
+        study.sample = (
+            self.example_date.data if self.example_date.data else None
+        )
         if self.retrospective_data.data:
             study.retrospective_data = True
             study.retrospective_start = self.retrospective_start.data
@@ -465,17 +464,21 @@ class StudyConfigForm(FlaskForm):
         study.patient_name_re = self.patient_re.data
         study.custom_bidsignore = self.bidsignore.data
         for explicit_patient in study.explicit_patients:
-            if explicit_patient.included and (
-                explicit_patient.study_instance_uid
-                not in self.included_patients.data
+            if (
+                explicit_patient.included
+                and (
+                    explicit_patient.study_instance_uid
+                    not in self.included_patients.data
+                )
+            ) or (
+                (not explicit_patient.included)
+                and (
+                    explicit_patient.study_instance_uid
+                    not in self.excluded_patients.data
+                )
             ):
                 to_delete.append(explicit_patient)
-            elif (not explicit_patient.included) and (
-                explicit_patient.study_instance_uid
-                not in self.excluded_patients.data
-            ):
-                to_delete.append(explicit_patient)
-        if self.newly_excluded.data != "":
+        if self.newly_excluded.data:
             to_add.append(
                 ExplicitPatient(
                     study_id=study.id,
@@ -483,7 +486,7 @@ class StudyConfigForm(FlaskForm):
                     included=False,
                 )
             )
-        if self.newly_included.data != "":
+        if self.newly_included.data:
             to_add.append(
                 ExplicitPatient(
                     study_id=study.id,
@@ -492,10 +495,9 @@ class StudyConfigForm(FlaskForm):
                 )
             )
         study.active = self.active.data
-        if self.custom_ria_url.data == "":
-            study.update_custom_ria_url(None)
-        else:
-            study.update_custom_ria_url(self.custom_ria_url.data)
+        study.update_custom_ria_url(
+            self.custom_ria_url.data if self.custom_ria_url.data else None
+        )
         for username in study.globus_usernames:
             if str(username.id) not in self.globus_usernames.data:
                 to_delete.append(username)

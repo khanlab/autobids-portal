@@ -59,8 +59,7 @@ def merge_participants_tsv(tsv_incoming, tsv_existing):
         list_existing = list(csv.reader(file_existing, delimiter="\t"))
     subjects_existing = {row[0] for row in list_existing}
     for line_incoming in list_incoming[1:]:
-        subject_incoming = line_incoming[0]
-        if subject_incoming in subjects_existing:
+        if line_incoming[0] in subjects_existing:
             continue
         list_existing.append(line_incoming)
         to_write = ["\t".join(row) + "\n" for row in list_existing]
