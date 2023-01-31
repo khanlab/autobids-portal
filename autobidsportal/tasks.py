@@ -243,9 +243,7 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
     )
     app.logger.info("Log: %s", log)
 
-    if not (
-        created_files := list(pathlib.Path(download_dir).iterdir())
-    ):
+    if not (created_files := list(pathlib.Path(download_dir).iterdir())):
         raise Cfmm2tarError(
             f"No cfmm2tar results parsed for target f{target}. "
             "Check the stderr for more information."
