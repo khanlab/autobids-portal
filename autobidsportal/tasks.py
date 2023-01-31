@@ -4,6 +4,7 @@ from datetime import datetime
 import tempfile
 import pathlib
 import re
+from shutil import copy2
 import subprocess
 
 from datalad.support.gitrepo import GitRepo
@@ -119,24 +120,25 @@ def run_cfmm2tar_with_retries(out_dir, target, study_description):
     return cfmm2tar_result, log
 
 
-def record_cfmm2tar(tar_path, uid, study_id):
+def record_cfmm2tar(tar_file, uid, study_id, attached_tar_file=None):
     """Parse cfmm2tar output files and record them in the db.
 
     Parameters
     ----------
-    tar_path : str
-        Path to the downloaded tar file.
+    tar_file : str
+        Name of the downloaded tar file.
     uid : str
         StudyInstanceUID of the tar file..
     study_id : int
         ID of the study associated with this cfmm2tar output.
+    attached_tar_file : str, optional
+        Name of the attached tar file.
 
     Raises
     ------
     Cfmm2tarError
         If cfmm2tar fails.
     """
-    tar_file = pathlib.PurePath(tar_path).name
     try:
         date_match = re.fullmatch(
             r"[a-zA-Z]+_[\w\-]+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
@@ -153,6 +155,7 @@ def record_cfmm2tar(tar_path, uid, study_id):
             int(date_match[4:6]),
             int(date_match[6:8]),
         ),
+        attached_tar_file=attached_tar_file,
     )
     db.session.add(cfmm2tar)
     db.session.commit()
@@ -224,6 +227,62 @@ def ensure_complete(error_log):
     return decorate
 
 
+def handle_cfmm2tar(download_dir, study, target, dataset):
+    """Run cfmm2tar on one target."""
+
+    _, log = run_cfmm2tar_with_retries(
+        str(download_dir),
+        target["PatientName"],
+        f"{study.principal}^{study.project_name}",
+    )
+
+    _append_task_log(log)
+    app.logger.info(
+        "Successfully ran cfmm2tar for target %s.",
+        target["PatientName"],
+    )
+    app.logger.info("Log: %s", log)
+
+    if not (
+        created_files := list(pathlib.Path(download_dir).iterdir())
+    ):
+        raise Cfmm2tarError(
+            f"No cfmm2tar results parsed for target f{target}. "
+            "Check the stderr for more information."
+        )
+
+    tar, uid_file, attached_tar = None, None, None
+    for file_ in created_files:
+        if file_.name.endswith(".attached.tar"):
+            attached_tar = file_.name
+        elif file_.name.endswith(".uid"):
+            uid_file = file_
+        elif file_.name.endswith(".tar"):
+            tar = file_.name
+        else:
+            app.logger.warning("Unknown cfmm2tar output: %s", file_)
+    if not tar:
+        raise Cfmm2tarError("No tar file produced.")
+    if not uid_file:
+        raise Cfmm2tarError("No uid file produced.")
+
+    created_files = list(set(created_files) - {uid_file})
+    uid = process_uid_file(uid_file)
+
+    with RiaDataset(
+        download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+    ) as path_dataset:
+        for file_ in created_files:
+            copy2(file_, path_dataset / file_.name)
+        finalize_dataset_changes(str(path_dataset), "Add new tar file.")
+    record_cfmm2tar(
+        tar,
+        uid,
+        study.id,
+        attached_tar_file=attached_tar,
+    )
+
+
 @ensure_complete("Cfmm2tar failed for an unknown reason.")
 def run_cfmm2tar(study_id, studies_to_download):
     """Run cfmm2tar for a given study
@@ -252,50 +311,14 @@ def run_cfmm2tar(study_id, studies_to_download):
     for target in studies_to_download:
         with tempfile.TemporaryDirectory(
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"]
-        ) as download_dir, RiaDataset(
-            download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
-        ) as path_dataset:
+        ) as download_dir:
             try:
-                result, log = run_cfmm2tar_with_retries(
-                    str(path_dataset),
-                    target["PatientName"],
-                    f"{study.principal}^{study.project_name}",
-                )
+                handle_cfmm2tar(download_dir, study, target, dataset)
             except Cfmm2tarError as err:
                 app.logger.error("cfmm2tar failed: %s", err)
                 _append_task_log(str(err))
                 error_msgs.append(str(err))
                 continue
-            _append_task_log(log)
-            app.logger.info(
-                "Successfully ran cfmm2tar for target %s.",
-                target["PatientName"],
-            )
-            app.logger.info("Result: %s", result)
-
-            if result == []:
-                app.logger.error(
-                    "No cfmm2tar results parsed for target %s", target
-                )
-                error_msgs.append(
-                    f"No cfmm2tar results parsed for target f{target}. "
-                    "Check the stderr for more information."
-                )
-            result = [
-                [
-                    individual_result[0],
-                    process_uid_file(individual_result[1]),
-                ]
-                for individual_result in result
-            ]
-
-            finalize_dataset_changes(str(path_dataset), "Add new tar file.")
-            for individual_result in result:
-                record_cfmm2tar(
-                    individual_result[0],
-                    individual_result[1],
-                    study.id,
-                )
     if len(studies_to_download) > 0:
         send_email(
             "New cfmm2tar run",

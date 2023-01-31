@@ -317,6 +317,7 @@ class Cfmm2tarOutput(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
     tar_file = db.Column(db.String(200), index=True, nullable=False)
+    attached_tar_file = db.Column(db.Text, nullable=True)
     uid = db.Column(db.String(200), index=True, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     datalad_dataset_id = db.Column(
