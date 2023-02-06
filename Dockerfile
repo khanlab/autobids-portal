@@ -54,19 +54,16 @@ COPY --from=apptainer-builds /opt/apptainer-images /opt/apptainer-images/
 
 ENV OTHER_OPTIONS='--tls-aes'
 WORKDIR /src
-COPY ./requirements.txt .
-COPY ./setup.cfg .
-COPY ./pyproject.toml .
 RUN mkdir autobidsportal
 
 RUN pip install --no-cache-dir pip==22.2.2 \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir pyuwsgi==2.0.20 \
+    && pip install --no-cache-dir poetry==1.3.0 \
     && git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com"
 
 COPY . .
-RUN pip install --no-cache-dir -r requirements.txt \
+RUN poetry build \
+    && pip install --no-cache-dir dist/autobidsportal-2.1.0-py3-none-any.whl[deploy] \
     && mv autobidsportal.ini.example autobidsportal.ini \
     && cat ./compose/known_hosts >> /etc/ssh/ssh_known_hosts
 
