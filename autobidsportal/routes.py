@@ -182,7 +182,7 @@ def gen_reset():
             if not exists:
                 uuid_reset = str(uuid.uuid4())
                 key_reset = f"reset_{uuid_reset}"
-                current_app.redis.set(key_reset, email, ex=(10 * 60))
+                current_app.redis.set(key_reset, email, ex=10 * 60)
                 current_app.logger.info(
                     "Generated reset url for user %s. UUID: %s",
                     user.email,

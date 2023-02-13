@@ -16,6 +16,9 @@ version = "2.1.0"
 description = ""
 authors = ["Tristan Kuehn <tkuehn@uwo.ca>"]
 readme = "README.md"
+packages = [
+    { include = "autobidsportal" }
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4"
@@ -25,6 +28,7 @@ Flask-Excel = "^0.0.7"
 Flask-Login = "^0.6.2"
 Flask-Migrate = "^4.0.4"
 Flask-SQLAlchemy = "^3.0.3"
+SQLAlchemy = "<2.0"
 Flask-WTF = "~1.0.1"
 Flask-Mail = "^0.9.1"
 rq = "^1.12.0"
@@ -45,6 +49,7 @@ pyright = "^1.1.292"
 flake8 = "^6.0.0"
 djlint = "^1.19.13"
 pytest = "^7.2.1"
+pylint-pytest = "^1.1.2"
 
 
 [tool.poetry.extras]
