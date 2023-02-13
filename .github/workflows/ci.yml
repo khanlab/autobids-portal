@@ -82,7 +82,7 @@ jobs:
       - name: Set up environment
         shell: bash
         run: |
-          poetry install --no-interaction --no-root --with dev
+          poetry install --no-interaction --with dev
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.1.0
