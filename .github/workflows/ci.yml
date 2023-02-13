@@ -44,19 +44,14 @@ jobs:
           poetry install --no-interaction --no-root --with dev
 
       - name: Run black
-        uses: wearerequired/lint-action@v1
-        with:
-          black: true
-          black_args: "-l 79"
-          black_extensions: py
-          auto_fix: true
+        run: poetry run black --check
       - name: Run pylint
         run: |
-          pylint autobidsportal
+          poetry run pylint autobidsportal
       - name: run djLint
         run: |
-          djlint --lint autobidsportal/templates
-          djlint --check autobidsportal/templates
+          poetry run djlint --lint autobidsportal/templates
+          poetry run djlint --check autobidsportal/templates
   test:
     name: Set up environment and run tests
     if: github.event.pull_request.draft == false
@@ -97,4 +92,4 @@ jobs:
       - name: Run pytest
         shell: bash
         run: |
-          pytest --cov=autobidsportal
+          poetry run pytest --cov=autobidsportal
