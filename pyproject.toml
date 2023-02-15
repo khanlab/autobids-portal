@@ -17,7 +17,8 @@ description = ""
 authors = ["Tristan Kuehn <tkuehn@uwo.ca>"]
 readme = "README.md"
 packages = [
-    { include = "autobidsportal" }
+    { include = "autobidsportal" },
+    { include = "autobidsportal_migrations" }
 ]
 
 [tool.poetry.dependencies]

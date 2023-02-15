@@ -363,11 +363,28 @@ class DataladDataset(db.Model):
     dataset_type = db.Column(db.Enum(DatasetType), nullable=False)
     ria_alias = db.Column(db.String, nullable=False, unique=True)
     custom_ria_url = db.Column(db.Text, nullable=True)
-    archived_hexsha = db.Column(db.Text, nullable=True)
     cfmm2tar_outputs = db.relationship(
         "Cfmm2tarOutput", backref="datalad_dataset"
     )
+    dataset_archives = db.relationship(
+        "DatasetArchive", backref="datalad_dataset"
+    )
     db.UniqueConstraint(study_id, dataset_type)
+
+
+class DatasetArchive(db.Model):
+    """An archive containing a portion of the dataset's content."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    dataset_id = db.Column(
+        db.Integer, db.ForeignKey("datalad_dataset.id"), nullable=False
+    )
+    parent_id = db.Column(
+        db.Integer, db.ForeignKey("dataset_archive.id"), nullable=True
+    )
+    parent = db.relationship("DatasetArchive", remote_side=[id])
+    dataset_hexsha = db.Column(db.Text, nullable=False)
+    commit_datetime = db.Column(db.DateTime, nullable=False)
 
 
 class Principal(db.Model):

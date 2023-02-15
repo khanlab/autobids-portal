@@ -134,10 +134,10 @@
             <h4 class="card-title">Accessing this study data</h4>
             <p class="card-text">
               {% if archive_exists is true %}
-                A .zip archive of your study is shared with <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured users</a> on Globus, under a guest collection with the name "autobids_study-{{ submitter_answer.id }}".
+                One or more .zip archives containing your study data are shared with <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured users</a> on Globus, under a guest collection with the name "autobids_study-{{ submitter_answer.id }}".
               </p>
               <p class="card-text">
-                This guest collection can be accessed with any Globus front end. Instructions to access the zip archive with the Globus web app follow:
+                This guest collection can be accessed with any Globus front end. Instructions to access the zip archive(s) with the Globus web app follow:
               </p>
               <ol>
                 <li>
@@ -156,10 +156,13 @@
                   Click the "autobids_study-{{ submitter_answer.id }}" collection.
                 </li>
                 <li>
-                  Select the only zip file in the collection (it will have a long name).
+                  Select any zip files in the collection you want to download (i.e. any files named with a date since the last time you downloaded an archive).
                 </li>
                 <li>
                   Click "Download" on the right sidebar.
+                </li>
+                <li>
+                  Unzip the files and copy them all to the same directory to merge them into one BIDS dataset.
                 </li>
               </ol>
             {% else %}

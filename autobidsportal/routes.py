@@ -3,6 +3,7 @@
 from datetime import datetime
 from json import loads, dumps
 from pathlib import Path
+import subprocess
 import tempfile
 import uuid
 
@@ -388,8 +389,8 @@ def answer_info(study_id):
     archive_dataset = DataladDataset.query.filter_by(
         study_id=study_id, dataset_type=DatasetType.RAW_DATA
     ).one_or_none()
-    archive_exists = (archive_dataset is not None) and (
-        archive_dataset.archived_hexsha is not None
+    archive_exists = bool(
+        (archive_dataset) and (archive_dataset.dataset_archives)
     )
 
     form = Tar2bidsRunForm()
@@ -644,6 +645,23 @@ def delete_tar2bids(study_id):
         delete_all_content(path_dataset)
         study.dataset_content = None
         dataset.cfmm2tar_outputs = []
+        for archive in dataset.dataset_archives:
+            db.session.delete(archive)
+        subprocess.run(
+            [
+                "ssh",
+                "-p",
+                str(current_app.config["ARCHIVE_SSH_PORT"]),
+                "-i",
+                str(current_app.config["ARCHIVE_SSH_KEY"]),
+                current_app.config["ARCHIVE_BASE_URL"].split(":")[0],
+                "rm",
+                current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
+                + f"/{dataset.ria_alias}/*.zip",
+            ],
+            check=True,
+        )
+
         db.session.commit()
 
     return answer_info(study_id)
