@@ -13,3 +13,4 @@ compose
 !compose/*.pem
 !compose/cfmm2tar-custom
 !compose/known_hosts
+dist

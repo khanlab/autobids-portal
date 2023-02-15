@@ -47,28 +47,33 @@ RUN mkdir /opt/apptainer-images \
     && apptainer build /opt/apptainer-images/cfmm2tar_v1.0.0.sif docker://tristankk/cfmm2tar-autobids:v1.0.0 \
     && apptainer build /opt/apptainer-images/tar2bids_v0.2.0.sif docker://khanlab/tar2bids:v0.2.0
 
+FROM requirements as wheel
+
+WORKDIR /opt/autobidsportal
+
+COPY . .
+
+RUN pip install --no-cache-dir pip==22.2.2 \
+    && pip install --no-cache-dir poetry==1.3.0 \
+    && poetry build -f wheel
+
 FROM requirements as autobidsportal
 
+COPY --from=wheel /opt/autobidsportal/dist/*.whl /opt/wheels/
 COPY --from=apptainer /opt/apptainer /opt/apptainer/
 COPY --from=apptainer-builds /opt/apptainer-images /opt/apptainer-images/
 
 ENV OTHER_OPTIONS='--tls-aes'
-WORKDIR /src
-COPY ./requirements.txt .
-COPY ./setup.cfg .
-COPY ./pyproject.toml .
-RUN mkdir autobidsportal
+WORKDIR /opt/autobidsportal
+COPY ./autobidsportal.ini.example autobidsportal.ini
+COPY ./compose/known_hosts /etc/ssh/ssh_known_hosts
+COPY ./bids_form.py .
 
-RUN pip install --no-cache-dir pip==22.2.2 \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir pyuwsgi==2.0.20 \
-    && git config --system user.name "Autobids Portal" \
-    && git config --system user.email "autobids@dummy.com"
-
-COPY . .
-RUN pip install --no-cache-dir -r requirements.txt \
-    && mv autobidsportal.ini.example autobidsportal.ini \
-    && cat ./compose/known_hosts >> /etc/ssh/ssh_known_hosts
+RUN git config --system user.name "Autobids Portal" \
+    && git config --system user.email "autobids@dummy.com" \
+    && WHEEL=$(ls /opt/wheels | grep whl) \
+    && pip install --no-cache-dir "/opt/wheels/${WHEEL}[deploy]" \
+    && rm -r /opt/wheels
 
 ENV DCM4CHE_VERSION=5.24.1
 ENV PATH=/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:/opt/apptainer/bin:$PATH
