@@ -3,7 +3,6 @@
 from datetime import datetime
 from json import loads, dumps
 from pathlib import Path
-import subprocess
 import tempfile
 import uuid
 
@@ -60,6 +59,7 @@ from autobidsportal.datalad import (
 )
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
+from autobidsportal.ssh import remove_zip_files
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -108,10 +108,7 @@ def new_study():
         db.session.add(study)
         db.session.commit()
 
-        current_app.logger.info("Study %i successfully submitted.", study.id)
-
         flash("Thanks, the survey has been submitted!")
-
         send_email(
             "New study request",
             (
@@ -121,7 +118,6 @@ def new_study():
         )
 
         return redirect(url_for("portal_blueprint.new_study"))
-
     return render_template("survey.html", form=form)
 
 
@@ -196,10 +192,10 @@ def gen_reset():
                 send_email(
                     "Autobids password reset",
                     (
-                        "Please visit the following link to reset your password. "
-                        "The link will expire in ten minutes.\n\n"
+                        "Please visit the following link to reset your "
+                        "password. The link will expire in ten minutes.\n\n"
                         f"{root_url}{sub_url}\n\n"
-                        "Please ignore this email if it has been sent in error."
+                        "Ignore this email if it has been sent in error."
                     ),
                     recipients=[email],
                 )
@@ -647,19 +643,10 @@ def delete_tar2bids(study_id):
         dataset.cfmm2tar_outputs = []
         for archive in dataset.dataset_archives:
             db.session.delete(archive)
-        subprocess.run(
-            [
-                "ssh",
-                "-p",
-                str(current_app.config["ARCHIVE_SSH_PORT"]),
-                "-i",
-                str(current_app.config["ARCHIVE_SSH_KEY"]),
-                current_app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                "rm",
-                current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                + f"/{dataset.ria_alias}/*.zip",
-            ],
-            check=True,
+        remove_zip_files(
+            current_app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset.ria_alias}",
         )
 
         db.session.commit()

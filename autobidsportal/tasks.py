@@ -42,6 +42,7 @@ from autobidsportal.dcm4cheutils import (
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
 from autobidsportal.filesystem import gen_dir_dict, render_dir_dict
+from autobidsportal.ssh import make_remote_dir, copy_file
 
 
 app = create_app()
@@ -609,34 +610,15 @@ def archive_raw_data(study_id):
                 dataset_raw.id,
             )
         )
-        ssh_port = app.config["ARCHIVE_SSH_PORT"]
-        ssh_key = app.config["ARCHIVE_SSH_KEY"]
-        subprocess.run(
-            [
-                "ssh",
-                "-p",
-                f"{ssh_port}",
-                "-i",
-                f"{ssh_key}",
-                app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                "mkdir",
-                "-p",
-                app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                + f"/{dataset_raw.ria_alias}",
-            ],
-            check=True,
+        make_remote_dir(
+            app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset_raw.ria_alias}",
         )
-        subprocess.run(
-            [
-                "scp",
-                "-P",
-                f"{ssh_port}",
-                "-i",
-                f"{ssh_key}",
-                str(path_archive),
-                app.config["ARCHIVE_BASE_URL"] + f"/{dataset_raw.ria_alias}",
-            ],
-            check=True,
+        copy_file(
+            app.config["ARCHIVE_BASE_URL"],
+            str(path_archive),
+            f"/{dataset_raw.ria_alias}",
         )
     db.session.add(archive)
     db.session.commit()
