@@ -59,6 +59,7 @@ from autobidsportal.datalad import (
 )
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
+from autobidsportal.ssh import remove_zip_files
 
 portal_blueprint = Blueprint(
     "portal_blueprint", __name__, template_folder="templates"
@@ -107,10 +108,7 @@ def new_study():
         db.session.add(study)
         db.session.commit()
 
-        current_app.logger.info("Study %i successfully submitted.", study.id)
-
         flash("Thanks, the survey has been submitted!")
-
         send_email(
             "New study request",
             (
@@ -120,7 +118,6 @@ def new_study():
         )
 
         return redirect(url_for("portal_blueprint.new_study"))
-
     return render_template("survey.html", form=form)
 
 
@@ -195,10 +192,10 @@ def gen_reset():
                 send_email(
                     "Autobids password reset",
                     (
-                        "Please visit the following link to reset your password. "
-                        "The link will expire in ten minutes.\n\n"
+                        "Please visit the following link to reset your "
+                        "password. The link will expire in ten minutes.\n\n"
                         f"{root_url}{sub_url}\n\n"
-                        "Please ignore this email if it has been sent in error."
+                        "Ignore this email if it has been sent in error."
                     ),
                     recipients=[email],
                 )
@@ -388,8 +385,8 @@ def answer_info(study_id):
     archive_dataset = DataladDataset.query.filter_by(
         study_id=study_id, dataset_type=DatasetType.RAW_DATA
     ).one_or_none()
-    archive_exists = (archive_dataset is not None) and (
-        archive_dataset.archived_hexsha is not None
+    archive_exists = bool(
+        (archive_dataset) and (archive_dataset.dataset_archives)
     )
 
     form = Tar2bidsRunForm()
@@ -644,6 +641,14 @@ def delete_tar2bids(study_id):
         delete_all_content(path_dataset)
         study.dataset_content = None
         dataset.cfmm2tar_outputs = []
+        for archive in dataset.dataset_archives:
+            db.session.delete(archive)
+        remove_zip_files(
+            current_app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset.ria_alias}",
+        )
+
         db.session.commit()
 
     return answer_info(study_id)

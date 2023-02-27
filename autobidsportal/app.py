@@ -55,7 +55,13 @@ def create_app(
     excel.init_excel(app)
     app.redis = Redis.from_url(app.config["REDIS_URL"], decode_responses=True)
     app.task_queue = rq.Queue(connection=app.redis)
-    Migrate(app, db, render_as_batch=True, compare_type=True)
+    Migrate(
+        app,
+        db,
+        render_as_batch=True,
+        compare_type=True,
+        directory="autobidsportal_migrations",
+    )
     login.init_app(app)
     login.login_view = "login"
     mail.init_app(app)

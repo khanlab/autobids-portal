@@ -6,6 +6,7 @@ import pathlib
 import re
 from shutil import copy2
 import subprocess
+from zipfile import ZipFile
 
 from datalad.support.gitrepo import GitRepo
 from rq import get_current_job
@@ -17,6 +18,7 @@ from autobidsportal.models import (
     Task,
     Cfmm2tarOutput,
     DataladDataset,
+    DatasetArchive,
     Tar2bidsOutput,
     DatasetType,
     User,
@@ -40,6 +42,7 @@ from autobidsportal.dcm4cheutils import (
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
 from autobidsportal.filesystem import gen_dir_dict, render_dir_dict
+from autobidsportal.ssh import make_remote_dir, copy_file
 
 
 app = create_app()
@@ -458,8 +461,8 @@ def run_tar2bids(study_id, tar_file_ids):
                             + [
                                 (
                                     "Note: Some of the tar2bids runs may have "
-                                    "completed. This email is sent if any of them "
-                                    "fail."
+                                    "completed. This email is sent if any of "
+                                    "them fail."
                                 ),
                                 "Error:",
                                 str(err),
@@ -504,6 +507,57 @@ def run_tar2bids(study_id, tar_file_ids):
         )
 
 
+def archive_entire_dataset(
+    path_dataset_raw, path_archive, dataset_id: int, repo: GitRepo
+):
+    """Make a new archive of an entire dataset."""
+    get_all_dataset_content(path_dataset_raw)
+    archive_dataset(
+        path_dataset_raw,
+        path_archive,
+    )
+    return DatasetArchive(
+        dataset_id=dataset_id,
+        dataset_hexsha=repo.get_hexsha(),
+        commit_datetime=datetime.fromtimestamp(
+            repo.get_commit_date(date="committed")
+        ),
+    )
+
+
+def archive_partial_dataset(
+    repo: GitRepo,
+    latest_archive,
+    path_archive,
+    path_dataset_raw,
+    dataset_id,
+):
+    """Make an archive of changed files since the latest archive."""
+    updated_files = [
+        path
+        for path, entry in GitRepo(str(path_dataset_raw))
+        .diff(latest_archive.dataset_hexsha, repo.get_hexsha())
+        .items()
+        if (entry["state"] in {"added", "modified"})
+        and (entry["type"] in {"file", "symlink"})
+    ]
+    with ZipFile(path_archive, mode="x") as zip_file:
+        for file_ in updated_files:
+            get_tar_file_from_dataset(
+                (archive_path := file_.relative_to(path_dataset_raw)),
+                path_dataset_raw,
+            )
+            zip_file.write(file_, archive_path)
+    return DatasetArchive(
+        dataset_id=dataset_id,
+        parent_id=latest_archive.id,
+        dataset_hexsha=repo.get_hexsha(),
+        commit_datetime=datetime.fromtimestamp(
+            repo.get_commit_date(date="committed")
+        ),
+    )
+
+
 @ensure_complete("raw dataset archival failed with an uncaught exception.")
 def archive_raw_data(study_id):
     """Clone a study dataset and archive it if necessary."""
@@ -522,76 +576,51 @@ def archive_raw_data(study_id):
     ) as path_dataset_raw, tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"]
     ) as dir_archive:
-        current_hexsha = GitRepo(str(path_dataset_raw)).get_hexsha()
-        if (dataset_raw.archived_hexsha is not None) and (
-            dataset_raw.archived_hexsha == current_hexsha
+        latest_archive = max(
+            dataset_raw.dataset_archives,
+            default=None,
+            key=lambda archive: archive.commit_datetime,
+        )
+        repo = GitRepo(str(path_dataset_raw))
+        if (latest_archive) and (
+            latest_archive.dataset_hexsha == repo.get_hexsha()
         ):
             app.logger.info("Archive for study %s up to date", study_id)
             _set_task_progress(100)
             return
-        get_all_dataset_content(path_dataset_raw)
-        path_archive = (
-            pathlib.Path(dir_archive)
-            / f"{dataset_raw.ria_alias}_{current_hexsha}.zip"
+
+        commit_datetime = datetime.fromtimestamp(
+            repo.get_commit_date(date="committed")
         )
-        archive_dataset(
-            path_dataset_raw,
-            path_archive,
+        path_archive = pathlib.Path(dir_archive) / (
+            f"{dataset_raw.ria_alias}_"
+            f"{commit_datetime.isoformat().replace(':', '.')}_"
+            f"{repo.get_hexsha()[:6]}.zip"
         )
-        ssh_port = app.config["ARCHIVE_SSH_PORT"]
-        ssh_key = app.config["ARCHIVE_SSH_KEY"]
-        subprocess.run(
-            [
-                "ssh",
-                "-p",
-                f"{ssh_port}",
-                "-i",
-                f"{ssh_key}",
-                app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                "mkdir",
-                "-p",
-                app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                + f"/{dataset_raw.ria_alias}",
-            ],
-            check=True,
+        archive = (
+            archive_entire_dataset(
+                path_dataset_raw, path_archive, dataset_raw.id, repo
+            )
+            if not latest_archive
+            else archive_partial_dataset(
+                repo,
+                latest_archive,
+                path_archive,
+                path_dataset_raw,
+                dataset_raw.id,
+            )
         )
-        subprocess.run(
-            [
-                "scp",
-                "-P",
-                f"{ssh_port}",
-                "-i",
-                f"{ssh_key}",
-                str(path_archive),
-                app.config["ARCHIVE_BASE_URL"] + f"/{dataset_raw.ria_alias}",
-            ],
-            check=True,
+        make_remote_dir(
+            app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset_raw.ria_alias}",
         )
-        subprocess.run(
-            [
-                "ssh",
-                "-p",
-                f"{ssh_port}",
-                "-i",
-                f"{ssh_key}",
-                app.config["ARCHIVE_BASE_URL"].split(":")[0],
-                "find",
-                app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                + f"/{dataset_raw.ria_alias}",
-                "!",
-                "-name",
-                path_archive.name,
-                "-type",
-                "f",
-                "-exec",
-                "rm",
-                "-f",
-                "{}",
-                "+",
-            ],
-            check=True,
+        copy_file(
+            app.config["ARCHIVE_BASE_URL"],
+            str(path_archive),
+            f"/{dataset_raw.ria_alias}",
         )
-    dataset_raw.archived_hexsha = current_hexsha
+    db.session.add(archive)
     db.session.commit()
     _set_task_progress(100)
 

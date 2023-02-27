@@ -12,6 +12,7 @@ RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/s
         fuse-overlayfs=1.4.0-1 \
         git=1:2.30.2-1 \
         git-annex=8.20210223-2 \
+        libcurl4=7.74.0-1.3+deb11u3 \
         libseccomp-dev=2.5.1-1+deb11u1 \
         pkg-config=0.29.2-1 \
         python3=3.9.2-3 \
