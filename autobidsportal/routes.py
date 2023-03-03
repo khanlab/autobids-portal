@@ -66,14 +66,8 @@ portal_blueprint = Blueprint(
 )
 
 
-def check_current_authorized(study):
-    """Check that the current_user is authorized to view this study.
-
-    Parameters
-    ----------
-    study : Study
-        Study to check the current user against.
-    """
+def check_current_authorized(study: Study):
+    """Check that the current_user is authorized to view this study."""
     if (not current_user.admin) and (
         current_user not in study.users_authorized
     ):
@@ -115,6 +109,9 @@ def new_study():
                 f"A new request has been submitted by {form.name.data}"
                 f" ({form.email.data}). ID: {study.id}"
             ),
+            additional_recipients=[
+                admin.email for admin in User.query.filter_by(admin=True).all()
+            ],
         )
 
         return redirect(url_for("portal_blueprint.new_study"))
@@ -197,7 +194,7 @@ def gen_reset():
                         f"{root_url}{sub_url}\n\n"
                         "Ignore this email if it has been sent in error."
                     ),
-                    recipients=[email],
+                    additional_recipients=[email],
                 )
         else:
             current_app.logger.info(
