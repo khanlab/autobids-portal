@@ -337,6 +337,11 @@ def run_cfmm2tar(study_id, studies_to_download):
                 + ["\nErrors:\n"]
                 + error_msgs
             ),
+            additional_recipients=[
+                admin.email for admin in User.query.filter_by(admin=True).all()
+            ]
+            if error_msgs
+            else None,
         )
 
     if len(error_msgs) > 0:
@@ -468,6 +473,10 @@ def run_tar2bids(study_id, tar_file_ids):
                                 str(err),
                             ]
                         ),
+                        additional_recipients=[
+                            admin.email
+                            for admin in User.query.filter_by(admin=True).all()
+                        ],
                     )
                     raise err
             with RiaDataset(
@@ -504,6 +513,8 @@ def run_tar2bids(study_id, tar_file_ids):
                 ["Tar2bids successfully run for tar files:"]
                 + [output.tar_file for output in cfmm2tar_outputs]
             ),
+            additional_recipients={study.submitter_email}
+            | {user.email for user in study.users_authorized},
         )
 
 
