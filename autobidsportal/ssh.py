@@ -30,7 +30,7 @@ def make_remote_dir(url: str, dir_path: str):
 
 def remove_zip_files(url: str, remote_dir: str):
     """Remove all zip files in a directory on the archive filesystem."""
-    run_ssh_command(url, ["rm", f"{remote_dir}/*.zip"])
+    run_ssh_command(url, ["rm", "-f", f"{remote_dir}/*.zip"])
 
 
 def copy_file(url: str, local_path: str, remote_path: str):
