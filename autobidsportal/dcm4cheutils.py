@@ -174,7 +174,7 @@ def parse_findscu_xml(element_tree, output_fields):
         else:
             value = (
                 value_attr.text
-                if (value_attr := attribute.find("./Value"))
+                if (value_attr := attribute.find("./Value")) is not None
                 else ""
             )
         out_dict["tag_value"] = value
