@@ -7,21 +7,21 @@ For this to work, the machine must have dcm4che installed in some way (i.e.
 natively or in a container).
 """
 
-import subprocess
 import logging
-import re
-import tempfile
 import pathlib
+import pipes
+import re
+import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import date
-from typing import Sequence
-import pipes
 from itertools import chain
+from typing import Sequence
 
 from defusedxml.ElementTree import parse
 from flask import current_app
 
-from autobidsportal.apptainer import apptainer_exec, ImageSpec
+from autobidsportal.apptainer import ImageSpec, apptainer_exec
 
 
 @dataclass
@@ -172,7 +172,11 @@ def parse_findscu_xml(element_tree, output_fields):
                 )
             value = value_elements[0].text
         else:
-            value = attribute.find("./Value").text
+            value = (
+                value_attr.text
+                if (value_attr := attribute.find("./Value"))
+                else ""
+            )
         out_dict["tag_value"] = value
         out_list.append(out_dict)
     return out_list
