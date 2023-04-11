@@ -6,7 +6,7 @@
   <div class="container">
     <div class="row my-3">
       <div class="col">
-        <form action="{{ url_for('portal_blueprint.study_config', study_id=study.id)}}"
+        <form action="{{ url_for('portal_blueprint.study_config', study_id=study.id) }}"
               method="post">
           <div class="card">
             <h3 class="card-header">
@@ -17,11 +17,11 @@
             </div>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
-                {{ form.users_authorized.label(class="form-label")}}
+                {{ form.users_authorized.label(class="form-label") }}
                 {% for choice in form.users_authorized %}
                   <div class="form-check">
-                    {{ choice(class="form-check-input")}}
-                    {{ choice.label(class="form-check-label")}}
+                    {{ choice(class="form-check-input") }}
+                    {{ choice.label(class="form-check-label") }}
                   </div>
                 {% endfor %}
                 <div class="form-text">
@@ -42,7 +42,7 @@
               </li>
               <li class="list-group-item">
                 {{ form.custom_ria_url.label(class="form-label") }}
-                {{ form.custom_ria_url(class="form-control", disabled=admin_disable)}}
+                {{ form.custom_ria_url(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   Experienced DataLad users can request a custom RIA for
                   their dataset, allowing them to manually edit it.
@@ -62,34 +62,34 @@
               </li>
               <li class="list-group-item">
                 <div class="form-check">
-                  {{ form.retrospective_data(class="form-check-input")}}
-                  {{ form.retrospective_data.label(class="form-check-label")}}
+                  {{ form.retrospective_data(class="form-check-input") }}
+                  {{ form.retrospective_data.label(class="form-check-label") }}
                 </div>
-                {{ form.retrospective_start.label(class="form-label")}}
-                {{ form.retrospective_start(class="form-control")}}
-                {{ form.retrospective_end.label(class="form-label")}}
-                {{ form.retrospective_end(class="form-control")}}
+                {{ form.retrospective_start.label(class="form-label") }}
+                {{ form.retrospective_start(class="form-control") }}
+                {{ form.retrospective_end.label(class="form-label") }}
+                {{ form.retrospective_end(class="form-control") }}
                 <div class="form-text">
                   Optionally, dates between which cfmm2tar should download
                   scans.
                 </div>
               </li>
               <li class="list-group-item">
-                {{ form.pi_name.label(class="form-label")}}
-                {{ form.pi_name(class="form-select", disabled=admin_disable)}}
+                {{ form.pi_name.label(class="form-label") }}
+                {{ form.pi_name(class="form-select", disabled=admin_disable) }}
                 <div class="form-text">
                   The study PI's identifier (generally their last name) on
                   the DICOM Server.
                 </div>
               </li>
               <li class="list-group-item">
-                {{ form.project_name.label(class="form-label")}}
-                {{ form.project_name(class="form-control", disabled=admin_disable)}}
+                {{ form.project_name.label(class="form-label") }}
+                {{ form.project_name(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">The project's name on the DICOM server.</div>
               </li>
               <li class="list-group-item">
-                {{ form.patient_str.label(class="form-label")}}
-                {{ form.patient_str(class="form-control", disabled=admin_disable)}}
+                {{ form.patient_str.label(class="form-label") }}
+                {{ form.patient_str(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   A DICOM query string to match with scans' PatientName field.
                   Relatively limited, but
@@ -98,15 +98,13 @@
                 </div>
               </li>
               <li class="list-group-item">
-                {{ form.patient_re.label(class="form-label")}}
-                {{ form.patient_re(class="form-control", disabled=admin_disable)}}
+                {{ form.patient_re.label(class="form-label") }}
+                {{ form.patient_re(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   A
                   <a href="https://docs.python.org/3/library/re.html#regular-expression-syntax"
                      target="_blank"
-                     rel="noreferrer">
-                    Python regular expression
-                  </a>
+                     rel="noreferrer">Python regular expression</a>
                   that's applied to incoming scans. Scans that don't match the
                   expression are not downloaded.
                 </div>
@@ -154,28 +152,28 @@
             </div>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
-                {{ form.dataset_name.label(class="form-label")}}
-                {{ form.dataset_name(class="form-control", disabled=admin_disable)}}
+                {{ form.dataset_name.label(class="form-label") }}
+                {{ form.dataset_name(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   A name for this dataset. By default, the name is
                   {PI}^{Project Name}.
                 </div>
               </li>
               <li class="list-group-item">
-                {{ form.heuristic.label(class="form-label")}}
-                {{ form.heuristic(class="form-select", disabled=admin_disable)}}
+                {{ form.heuristic.label(class="form-label") }}
+                {{ form.heuristic(class="form-select", disabled=admin_disable) }}
                 <div class="form-text">The heudiconv heuristic to use for this study.</div>
               </li>
               <li class="list-group-item">
-                {{ form.subj_expr.label(class="form-label")}}
-                {{ form.subj_expr(class="form-control", disabled=admin_disable)}}
+                {{ form.subj_expr.label(class="form-label") }}
+                {{ form.subj_expr(class="form-control", disabled=admin_disable) }}
                 <div class="form-text">
                   A search string to extract the patient name from the tar file name.
                 </div>
               </li>
               <li class="list-group-item">
                 {{ form.bidsignore.label(class="form-label") }}
-                {{ form.bidsignore(class="form-control form-control-sm font-monospace", rows=10, disabled=admin_disable)}}
+                {{ form.bidsignore(class="form-control form-control-sm font-monospace", rows=10, disabled=admin_disable) }}
                 <div class="form-text">
                   The contents of a custom <code>.bidsignore</code> file to be passed to tar2bids.
                 </div>
@@ -223,7 +221,7 @@
                      name="study-config"
                      value="Update Config"
                      class="btn btn-primary"/>
-              <a href={{ url_for('portal_blueprint.answer_info', study_id=study.id)}} class="btn btn-link" role="button">
+              <a href={{ url_for('portal_blueprint.answer_info', study_id=study.id) }} class="btn btn-link" role="button">
                 Back to study
               </a>
             </div>
