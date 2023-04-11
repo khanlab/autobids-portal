@@ -1,4 +1,5 @@
 """Utilities to handle tasks put on the queue."""
+from __future__ import annotations
 
 from datetime import datetime
 import tempfile
@@ -34,6 +35,7 @@ from autobidsportal.datalad import (
 from autobidsportal.bids import merge_datasets
 from autobidsportal.dcm4cheutils import (
     gen_utils,
+    Cfmm2tarArgs,
     Tar2bidsArgs,
     Cfmm2tarError,
     Cfmm2tarTimeoutError,
@@ -86,36 +88,38 @@ def _append_task_log(log):
     db.session.commit()
 
 
-def run_cfmm2tar_with_retries(out_dir, target, study_description):
+def run_cfmm2tar_with_retries(
+    out_dir: str, study_instance_uid: str
+) -> tuple[list[list[str]], str]:
     """Run cfmm2tar, retrying multiple times if it times out.
 
     Parameters
     ----------
-    out_dir : str
+    out_dir
         Directory to which to download tar files.
-    target : str
-        PatientName string.
-    study_description : str
-        "Principal^Project" to search for.
+    study_instance_uid
+        StudyInstanceUid to download
 
     Raises
     ------
     Cfmm2tarTimeoutError
         If cfmm2tar times out too many times.
     """
+    cfmm2tar_result, log = [], ""
     for attempt in range(1, 6):
         try:
             cfmm2tar_result, log = gen_utils().run_cfmm2tar(
-                out_dir=out_dir,
-                patient_name=target,
-                project=study_description,
+                Cfmm2tarArgs(
+                    out_dir=out_dir,
+                    study_instance_uid=study_instance_uid,
+                ),
             )
         except Cfmm2tarTimeoutError as err:
             if attempt < 5:
                 app.logger.warning(
                     "cfmm2tar timeout after %i attempt(s) (target %s).",
                     attempt,
-                    target,
+                    study_instance_uid,
                 )
                 continue
             raise err
@@ -142,13 +146,13 @@ def record_cfmm2tar(tar_file, uid, study_id, attached_tar_file=None):
     Cfmm2tarError
         If cfmm2tar fails.
     """
-    try:
-        date_match = re.fullmatch(
-            r"[a-zA-Z]+_[\w\-]+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
-        ).group(1)
-    except AttributeError as err:
-        raise Cfmm2tarError(f"Output {tar_file} could not be parsed.") from err
+    date_match = re.fullmatch(
+        r"[a-zA-Z]+_[\w\-]+_(\d{8})_[\w\-]+_[\.a-zA-Z\d]+\.tar", tar_file
+    )
+    if not date_match:
+        raise Cfmm2tarError(f"Output {tar_file} could not be parsed.")
 
+    date_match = date_match.group(1)
     cfmm2tar = Cfmm2tarOutput(
         study_id=study_id,
         tar_file=tar_file,
@@ -235,8 +239,7 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
 
     _, log = run_cfmm2tar_with_retries(
         str(download_dir),
-        target["PatientName"],
-        f"{study.principal}^{study.project_name}",
+        target["StudyInstanceUID"],
     )
 
     _append_task_log(log)
@@ -285,7 +288,7 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
 
 
 @ensure_complete("Cfmm2tar failed for an unknown reason.")
-def run_cfmm2tar(study_id, studies_to_download):
+def run_cfmm2tar(study_id: int, studies_to_download: dict):
     """Run cfmm2tar for a given study
 
     This will check which patients have already been downloaded, download any
@@ -427,7 +430,9 @@ def run_tar2bids(study_id, tar_file_ids):
                     _append_task_log(
                         gen_utils().run_tar2bids(
                             Tar2bidsArgs(
-                                output_dir=pathlib.Path(bids_dir) / "incoming",
+                                output_dir=str(
+                                    pathlib.Path(bids_dir) / "incoming"
+                                ),
                                 tar_files=[tar_path],
                                 heuristic=study.heuristic,
                                 patient_str=study.subj_expr,
@@ -453,7 +458,7 @@ def run_tar2bids(study_id, tar_file_ids):
                             render_dir_dict(
                                 gen_dir_dict(
                                     str(pathlib.Path(bids_dir) / "incoming"),
-                                    {".git", ".datalad"},
+                                    frozenset({".git", ".datalad"}),
                                 )
                             )
                         ),
@@ -492,7 +497,7 @@ def run_tar2bids(study_id, tar_file_ids):
                     f"Ran tar2bids on tar file {tar_path}",
                 )
                 study.dataset_content = gen_dir_dict(
-                    path_dataset_study, {".git", ".datalad"}
+                    path_dataset_study, frozenset({".git", ".datalad"})
                 )
                 tar_out.datalad_dataset = dataset_bids
                 db.session.commit()
