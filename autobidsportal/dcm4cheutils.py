@@ -1,11 +1,13 @@
-#!/usr/bin/env python
 """Utilities for working with dcm4che and derived tools.
+
 Define a (limited) Dcm4cheUtils class, which can query a DICOM server for
 specified information. Adapted from YingLi Lu's class in the cfmm2tar
 project.
+
 For this to work, the machine must have dcm4che installed in some way (i.e.
 natively or in a container).
 """
+from __future__ import annotations
 
 import logging
 import pathlib
@@ -16,7 +18,7 @@ import tempfile
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
-from typing import Sequence
+from collections.abc import Iterable
 
 from defusedxml.ElementTree import parse
 from flask import current_app
@@ -63,12 +65,12 @@ class DicomQueryAttributes:
         The end, inclusive, of a range of dates to query.
     """
 
-    study_description: str = None
-    study_date: date = None
-    patient_name: str = None
-    study_instance_uids: Sequence[str] = None
-    date_range_start: date = None
-    date_range_end: date = None
+    study_description: str | None = None
+    study_date: date | None = None
+    patient_name: str | None = None
+    study_instance_uids: Iterable[str] | None = None
+    date_range_start: date | None = None
+    date_range_end: date | None = None
 
     def __post_init__(self):
         if all(
@@ -97,23 +99,50 @@ class DicomQueryAttributes:
 
 
 @dataclass
+class Cfmm2tarArgs:
+    """A set of arguments for an invocation of cfmm2tar.
+
+    Attributes
+    ----------
+    out_dir
+        Directory to which to download tar files.
+    study_instance_uid
+        String specifying the StudyInstanceUid to download
+    date_str
+        String specifying the date(s) to download. Can include up to two
+        dates and a "-" to indicate an open or closed interval of dates.
+    patient_name
+        PatientName string.
+    project
+        "Principal^Project" to search for.
+
+    """
+
+    out_dir: str
+    study_instance_uid: str | None = None
+    date_str: str | None = None
+    patient_name: str | None = None
+    project: str | None = None
+
+
+@dataclass
 class Tar2bidsArgs:
     """A set of arguments for an invocation of tar2bids.
 
     Attributes
     ----------
-    tar_files : list of str
+    tar_files
         Tar files on which to run tar2bids
-    output_dir : str
+    output_dir
         Directory for the output BIDS dataset
     """
 
-    tar_files: Sequence[str]
+    tar_files: Iterable[str]
     output_dir: str
-    patient_str: str = None
-    heuristic: str = None
-    temp_dir: str = None
-    bidsignore: str = None
+    patient_str: str | None = None
+    heuristic: str | None = None
+    temp_dir: str | None = None
+    bidsignore: str | None = None
     deface: bool = False
 
 
@@ -258,7 +287,7 @@ class Dcm4cheUtils:
         )
 
         if len(all_pis) < 1:
-            current_app.log.error("findscu completed but no PIs found.")
+            current_app.logger.error("findscu completed but no PIs found.")
             raise Dcm4cheError("No PIs accessible.")
 
         return all_pis
@@ -365,25 +394,20 @@ class Dcm4cheUtils:
         return [parse_findscu_xml(tree, output_fields) for tree in trees_xml]
 
     def run_cfmm2tar(
-        self, out_dir, date_str=None, patient_name=None, project=None
-    ):
+        self,
+        args: Cfmm2tarArgs,
+    ) -> tuple[list[list[str]], str]:
         """Run cfmm2tar with the given options.
+
         At least one of the optional search arguments must be provided.
+
         Arguments
         ---------
-        out_dir : str
-            Directory to which to download tar files.
-        date_str : str, optional
-            String specifying the date(s) to download. Can include up to two
-            dates and a "-" to indicate an open or closed interval of dates.
-        patient_name : str, optional
-            PatientName string.
-        project : str, optional
-            "Principal^Project" to search for.
+        args
+            Arguments to pass to cfmm2tar
 
         Returns
         -------
-        list of list of str
             A list containing the tar file name and uid file name (in that
             order) for each result.
 
@@ -394,13 +418,27 @@ class Dcm4cheUtils:
         Cfmm2tarTimeoutError
             If cfmm2tar times out.
         """
-        if all(arg is None for arg in (date_str, patient_name, project)):
+        if all(
+            arg is None
+            for arg in (
+                args.study_instance_uid,
+                args.date_str,
+                args.patient_name,
+                args.project,
+            )
+        ):
             raise Cfmm2tarError(
                 "At least one search argument must be provided."
             )
-        date_query = ["-d", date_str] if date_str is not None else []
-        name_query = ["-n", patient_name] if patient_name is not None else []
-        project_query = ["-p", project] if project is not None else []
+        uid_query = [
+            "-u",
+            args.study_instance_uid
+            if args.study_instance_uid is not None
+            else [],
+        ]
+        project_query = (
+            ["-p", args.project] if args.project is not None else []
+        )
 
         with tempfile.NamedTemporaryFile(mode="w+", buffering=1) as cred_file:
             cred_file.write(self.username + "\n")
@@ -408,11 +446,16 @@ class Dcm4cheUtils:
             arg_list = (
                 ["cfmm2tar"]
                 + ["-c", cred_file.name]
-                + date_query
-                + name_query
+                + uid_query
+                + (["-d", args.date_str] if args.date_str is not None else [])
+                + (
+                    ["-n", args.patient_name]
+                    if args.patient_name is not None
+                    else []
+                )
                 + project_query
                 + ["-s", current_app.config["DICOM_SERVER_URL"]]
-                + [out_dir]
+                + [args.out_dir]
             )
 
             current_app.logger.info("Running cfmm2tar: %s", " ".join(arg_list))
@@ -478,7 +521,7 @@ class Dcm4cheUtils:
             + (["-w", args.temp_dir] if args.temp_dir is not None else [])
             + (["-b", args.bidsignore] if args.bidsignore is not None else [])
             + (["-D"] if args.deface else [])
-            + args.tar_files
+            + list(args.tar_files)
         )
 
         current_app.logger.info("Running tar2bids.")

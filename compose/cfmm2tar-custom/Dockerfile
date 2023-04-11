@@ -1,4 +1,4 @@
-FROM khanlab/cfmm2tar:v1.0.0
+FROM khanlab/cfmm2tar:v1.1.1
 
 RUN echo '1.3.12.2.1107.5.9.1:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> "/opt/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties" \
     && echo 'EnhancedMRImageStorage:ImplicitVRLittleEndian;ExplicitVRLittleEndian' >> "/opt/dcm4che-${DCM4CHE_VERSION}/etc/getscu/store-tcs.properties" \

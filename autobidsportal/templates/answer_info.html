@@ -111,7 +111,7 @@
     </div>
     <div class="row mb-2">
       <div class="col text-center">
-        <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}"
+        <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id) }}"
            class="btn btn-link"
            role="button">Study Config</a>
         <a href="{{ url_for('portal_blueprint.study_demographics', study_id=submitter_answer.id) }}"
@@ -134,14 +134,14 @@
             <h4 class="card-title">Accessing this study data</h4>
             <p class="card-text">
               {% if archive_exists is true %}
-                One or more .zip archives containing your study data are shared with <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured users</a> on Globus, under a guest collection with the name "autobids_study-{{ submitter_answer.id }}".
+                One or more .zip archives containing your study data are shared with <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id) }}">configured users</a> on Globus, under a guest collection with the name "autobids_study-{{ submitter_answer.id }}".
               </p>
               <p class="card-text">
                 This guest collection can be accessed with any Globus front end. Instructions to access the zip archive(s) with the Globus web app follow:
               </p>
               <ol>
                 <li>
-                  Log in to <a href="https://app.globus.org">Globus</a> using one of the authorized identities <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id)}}">configured for this study</a>.
+                  Log in to <a href="https://app.globus.org">Globus</a> using one of the authorized identities <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id) }}">configured for this study</a>.
                 </li>
                 <li>
                   Navigate to "File Manager" on the sidebar.

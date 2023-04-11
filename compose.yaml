@@ -15,7 +15,7 @@ services:
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
       AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
       AUTOBIDS_HEURISTIC_REPO_PATH: /home
-      AUTOBIDS_CFMM2TAR_PATH: "/opt/apptainer-images/cfmm2tar_v1.0.0.sif"
+      AUTOBIDS_CFMM2TAR_PATH: "/opt/apptainer-images/cfmm2tar_v1.1.1.sif"
       AUTOBIDS_CFMM2TAR_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp"
       AUTOBIDS_CFMM2TAR_TIMEOUT: "100000"
       AUTOBIDS_TAR2BIDS_PATH: "/opt/apptainer-images/tar2bids_v0.2.0.sif"
