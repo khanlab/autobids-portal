@@ -2,15 +2,15 @@
 
 import csv
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 
 def _check_existing(path_incoming, path_existing, dir_incoming, contents):
     ignore = []
     for file_incoming in contents:
         path_relative = (Path(dir_incoming) / file_incoming).relative_to(
-            path_incoming
+            path_incoming,
         )
         new_file = path_existing / path_relative
         if (new_file.exists() and new_file.is_file()) or new_file.is_symlink():
@@ -23,7 +23,10 @@ def merge_datasets(path_incoming, path_existing):
 
     def _ignore(dir_incoming, contents):
         return _check_existing(
-            path_incoming, path_existing, dir_incoming, contents
+            path_incoming,
+            path_existing,
+            dir_incoming,
+            contents,
         )
 
     names_existing = {entry.name for entry in os.scandir(path_existing)}
@@ -50,10 +53,14 @@ def merge_datasets(path_incoming, path_existing):
 
 def merge_participants_tsv(tsv_incoming, tsv_existing):
     """Merge an incoming participants.tsv file with an existing one."""
-    with open(
-        tsv_incoming, "r+", encoding="utf-8", newline=""
-    ) as file_incoming, open(
-        tsv_existing, "r+", encoding="utf-8", newline=""
+    with tsv_incoming.open(
+        "r+",
+        encoding="utf-8",
+        newline="",
+    ) as file_incoming, tsv_existing.open(
+        "r+",
+        encoding="utf-8",
+        newline="",
     ) as file_existing:
         list_incoming = list(csv.reader(file_incoming, delimiter="\t"))
         list_existing = list(csv.reader(file_existing, delimiter="\t"))
@@ -64,8 +71,10 @@ def merge_participants_tsv(tsv_incoming, tsv_existing):
         list_existing.append(line_incoming)
         to_write = ["\t".join(row) + "\n" for row in list_existing]
         if not list_existing[0][0].startswith("participant_id"):
-            to_write = ["participant_id\n"] + to_write
-        with open(
-            tsv_existing, "w", encoding="utf-8", newline=""
+            to_write = ["participant_id\n", *to_write]
+        with tsv_existing.open(
+            "w",
+            encoding="utf-8",
+            newline="",
         ) as file_existing:
             file_existing.writelines(to_write)

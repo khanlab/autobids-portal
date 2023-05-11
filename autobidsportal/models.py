@@ -1,22 +1,23 @@
 """Define SQL models."""
 
-# pylint: disable=too-few-public-methods
-# Table classes are useful without public methods
+# id is needed for these models
+# ruff: noqa: A003
 
+import json
 from datetime import datetime
 from enum import Enum
 from time import time
-import json
 
-from flask import current_app
-from flask_login import LoginManager, UserMixin
-from sqlalchemy import MetaData
-from werkzeug.security import generate_password_hash, check_password_hash
 import redis
 import rq
-from rq.job import Job
+from flask import current_app
+from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from rq.job import Job
+from sqlalchemy import MetaData
+from werkzeug.security import check_password_hash, generate_password_hash
 
+from autobidsportal.dateutils import TIME_ZONE
 
 login = LoginManager()
 convention = {
@@ -32,10 +33,16 @@ db = SQLAlchemy(metadata=metadata)
 accessible_studies = db.Table(
     "accessible_studies",
     db.Column(
-        "user_id", db.Integer, db.ForeignKey("user.id"), primary_key=True
+        "user_id",
+        db.Integer,
+        db.ForeignKey("user.id"),
+        primary_key=True,
     ),
     db.Column(
-        "study_id", db.Integer, db.ForeignKey("study.id"), primary_key=True
+        "study_id",
+        db.Integer,
+        db.ForeignKey("study.id"),
+        primary_key=True,
     ),
 )
 
@@ -67,7 +74,8 @@ class User(UserMixin, db.Model):
     tasks = db.relationship("Task", backref="user", lazy=True)
     notifications = db.relationship("Notification", backref="user", lazy=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a nice str representation of this user."""
         return f"<User ID {self.id} {self.admin, self.email, self.last_seen}>"
 
     def set_password(self, password):
@@ -82,7 +90,9 @@ class User(UserMixin, db.Model):
         """Set the user's active notification."""
         Notification.query.filter_by(name=name, user_id=self.id).delete()
         notification = Notification(
-            name=name, payload_json=json.dumps(data), user=self
+            name=name,
+            payload_json=json.dumps(data),
+            user=self,
         )
         db.session.add(notification)
         return notification
@@ -135,14 +145,19 @@ class Study(db.Model):
     consent = db.Column(db.Boolean, nullable=False)
     comment = db.Column(db.String(200), nullable=True)
     submission_date = db.Column(
-        db.DateTime, index=True, default=datetime.utcnow, nullable=False
+        db.DateTime,
+        index=True,
+        default=datetime.utcnow,
+        nullable=False,
     )
 
     active = db.Column(db.Boolean, nullable=False, default=False)
 
     # Study config
     heuristic = db.Column(
-        db.String(200), nullable=False, default="cfmm_base.py"
+        db.String(200),
+        nullable=False,
+        default="cfmm_base.py",
     )
     patient_str = db.Column(db.String(50), nullable=False, default="*")
     subj_expr = db.Column(db.String(50), nullable=False, default="*_{subject}")
@@ -159,10 +174,14 @@ class Study(db.Model):
     # Study outputs
     tasks = db.relationship("Task", backref="study", lazy=True)
     cfmm2tar_outputs = db.relationship(
-        "Cfmm2tarOutput", backref="study", lazy=True
+        "Cfmm2tarOutput",
+        backref="study",
+        lazy=True,
     )
     tar2bids_outputs = db.relationship(
-        "Tar2bidsOutput", backref="study", lazy=True
+        "Tar2bidsOutput",
+        backref="study",
+        lazy=True,
     )
     dataset_content = db.Column(db.JSON(), nullable=True)
     datalad_datasets = db.relationship("DataladDataset", backref="study")
@@ -172,7 +191,8 @@ class Study(db.Model):
 
     custom_bidsignore = db.Column(db.Text, nullable=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a str representation of this study."""
         answer_cols = (
             self.status,
             self.scanner,
@@ -204,9 +224,7 @@ class Study(db.Model):
         return Task.query.filter_by(study=self, complete=False).all()
 
     def update_custom_ria_url(self, new_url):
-        """Update the custom ria URL for this study and its associated
-        datasets.
-        """
+        """Update the custom ria URL for this study and its associated datasets."""
         self.custom_ria_url = new_url
         for (
             dataset
@@ -227,7 +245,8 @@ class Notification(db.Model):
         """Get the notification contents."""
         return json.loads(str(self.payload_json))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a str representation of this notification."""
         return f"<Notification {self.name}, {self.timestamp}>"
 
 
@@ -253,7 +272,8 @@ class Task(db.Model):
     end_time = db.Column(db.DateTime, nullable=True)
     log = db.Column(db.Text, nullable=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a string representation of this task."""
         task_cols = (
             self.user_id,
             self.study_id,
@@ -276,7 +296,8 @@ class Task(db.Model):
     ):
         """Enqueue a task with rq and record it in the DB."""
         if name not in cls.TASKS:
-            raise ValueError("Invalid task name")
+            msg = "Invalid task name"
+            raise ValueError(msg)
         rq_job = Job.create(
             f"autobidsportal.tasks.{name}",
             args=args,
@@ -289,7 +310,7 @@ class Task(db.Model):
             name=name,
             description=description,
             user=user,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(tz=TIME_ZONE),
             study_id=study_id,
         )
         db.session.add(task)
@@ -321,7 +342,9 @@ class Cfmm2tarOutput(db.Model):
     uid = db.Column(db.String(200), index=True, nullable=False)
     date = db.Column(db.DateTime, nullable=False)
     datalad_dataset_id = db.Column(
-        db.Integer, db.ForeignKey("datalad_dataset.id"), nullable=True
+        db.Integer,
+        db.ForeignKey("datalad_dataset.id"),
+        nullable=True,
     )
     tar2bids_outputs = db.relationship(
         "Tar2bidsOutput",
@@ -330,7 +353,8 @@ class Cfmm2tarOutput(db.Model):
         backref=db.backref("cfmm2tar_outputs", lazy=True),
     )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a str representation of this output."""
         return f"<Cfmm2tar {self.tar_file, self.uid, self.date}>"
 
 
@@ -342,7 +366,8 @@ class Tar2bidsOutput(db.Model):
     bids_dir = db.Column(db.String(200), index=True, nullable=True)
     heuristic = db.Column(db.String(200), index=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a str representation of this output."""
         out_fields = (self.cfmm2tar_output_id, self.bids_dir, self.heuristic)
         return f"<Tar2bids {out_fields}>"
 
@@ -364,10 +389,12 @@ class DataladDataset(db.Model):
     ria_alias = db.Column(db.String, nullable=False, unique=True)
     custom_ria_url = db.Column(db.Text, nullable=True)
     cfmm2tar_outputs = db.relationship(
-        "Cfmm2tarOutput", backref="datalad_dataset"
+        "Cfmm2tarOutput",
+        backref="datalad_dataset",
     )
     dataset_archives = db.relationship(
-        "DatasetArchive", backref="datalad_dataset"
+        "DatasetArchive",
+        backref="datalad_dataset",
     )
     db.UniqueConstraint(study_id, dataset_type)
 
@@ -377,10 +404,14 @@ class DatasetArchive(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     dataset_id = db.Column(
-        db.Integer, db.ForeignKey("datalad_dataset.id"), nullable=False
+        db.Integer,
+        db.ForeignKey("datalad_dataset.id"),
+        nullable=False,
     )
     parent_id = db.Column(
-        db.Integer, db.ForeignKey("dataset_archive.id"), nullable=True
+        db.Integer,
+        db.ForeignKey("dataset_archive.id"),
+        nullable=True,
     )
     parent = db.relationship("DatasetArchive", remote_side=[id])
     dataset_hexsha = db.Column(db.Text, nullable=False)
@@ -393,7 +424,8 @@ class Principal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     principal_name = db.Column(db.String(200))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Generate a string representation of this PI."""
         return f"<Principal {self.principal_name}>"
 
 

@@ -123,7 +123,7 @@
       <div class="col text-center">
         <form method="post"
               action="{{ url_for('portal_blueprint.run_cfmm2tar', study_id=submitter_answer.id) }}">
-          <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary" {{ "disabled" if not submitter_answer.active }}/>
+          <input type="submit" name="cfmm2tar" value="Run cfmm2tar" class="btn btn-primary" {{ "disabled" if not submitter_answer.active }} />
         </form>
       </div>
     </div>
@@ -143,24 +143,14 @@
                 <li>
                   Log in to <a href="https://app.globus.org">Globus</a> using one of the authorized identities <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id) }}">configured for this study</a>.
                 </li>
-                <li>
-                  Navigate to "File Manager" on the sidebar.
-                </li>
-                <li>
-                  Click on the "Collection" input.
-                </li>
-                <li>
-                  Navigate to the "Shared with You" tab.
-                </li>
-                <li>
-                  Click the "autobids_study-{{ submitter_answer.id }}" collection.
-                </li>
+                <li>Navigate to "File Manager" on the sidebar.</li>
+                <li>Click on the "Collection" input.</li>
+                <li>Navigate to the "Shared with You" tab.</li>
+                <li>Click the "autobids_study-{{ submitter_answer.id }}" collection.</li>
                 <li>
                   Select any zip files in the collection you want to download (i.e. any files named with a date since the last time you downloaded an archive).
                 </li>
-                <li>
-                  Click "Download" on the right sidebar.
-                </li>
+                <li>Click "Download" on the right sidebar.</li>
                 <li>
                   Unzip the files and copy them all to the same directory to merge them into one BIDS dataset.
                 </li>
@@ -176,34 +166,22 @@
     </div>
     <div class="row">
       <div class="col-6">
-        <h2 class="sub-header">
-          Cfmm2tar Runs
-        </h2>
-        <div id="cfmm2tar-table-mount">
-        </div>
+        <h2 class="sub-header">Cfmm2tar Runs</h2>
+        <div id="cfmm2tar-table-mount"></div>
       </div>
       <div class="col-6">
-        <h2 class="sub-header">
-          Tar Files
-        </h2>
-        <div id="tar-table-mount">
-        </div>
+        <h2 class="sub-header">Tar Files</h2>
+        <div id="tar-table-mount"></div>
       </div>
     </div>
     <div class="row">
       <div class="col-6">
-        <h2 class="sub-header">
-          Tar2bids Runs
-        </h2>
-        <div id="tar2bids-table-mount">
-        </div>
+        <h2 class="sub-header">Tar2bids Runs</h2>
+        <div id="tar2bids-table-mount"></div>
       </div>
       <div class="col-6">
-        <h2 class="sub-header">
-          BIDS Dataset
-        </h2>
-        <div id="filetree-mount">
-        </div>
+        <h2 class="sub-header">BIDS Dataset</h2>
+        <div id="filetree-mount"></div>
         <a class="btn btn-primary my-2 {{ "disabled" if not submitter_answer.active }}"
            href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) if submitter_answer.active }}"
            role="button">Archive BIDS dataset</a>

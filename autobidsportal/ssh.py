@@ -17,8 +17,8 @@ def run_ssh_command(url: str, command: list[str]):
             "-i",
             str(current_app.config["ARCHIVE_SSH_KEY"]),
             url,
-        ]
-        + command,
+            *command,
+        ],
         check=True,
     )
 

@@ -2,8 +2,7 @@
 
 import re
 
-from autobidsportal.dcm4cheutils import gen_utils, DicomQueryAttributes
-
+from autobidsportal.dcm4cheutils import DicomQueryAttributes, gen_utils
 
 ATTRIBUTES_QUERIED = [
     "0020000D",  # StudyInstanceUID
@@ -38,7 +37,7 @@ def get_inclusion_records(uids_included):
             ATTRIBUTES_QUERIED,
             DicomQueryAttributes(study_instance_uids=uids_included),
             retrieve_level="SERIES",
-        )
+        ),
     )
     patient_info = {
         (
@@ -93,7 +92,7 @@ def get_description_records(study, date=None, description=None):
                 patient_name=study.patient_str,
             ),
             retrieve_level="SERIES",
-        )
+        ),
     )
     patient_info_description = {
         (
@@ -115,7 +114,8 @@ def get_description_records(study, date=None, description=None):
         and (response["StudyInstanceUID"] not in uids_excluded)
     }
     return organize_flat_responses(
-        responses_description, patient_info_description
+        responses_description,
+        patient_info_description,
     )
 
 

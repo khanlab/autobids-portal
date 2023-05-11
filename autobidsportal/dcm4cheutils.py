@@ -15,10 +15,10 @@ import pipes
 import re
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
-from collections.abc import Iterable
 
 from defusedxml.ElementTree import parse
 from flask import current_app
@@ -73,6 +73,7 @@ class DicomQueryAttributes:
     date_range_end: date | None = None
 
     def __post_init__(self):
+        """Check invariants of the args."""
         if all(
             [
                 self.study_description is None,
@@ -81,20 +82,25 @@ class DicomQueryAttributes:
                 self.study_instance_uids in [None, []],
                 self.date_range_start is None,
                 self.date_range_end is None,
-            ]
+            ],
         ):
+            msg = (
+                "You must specify at least one of study_description, study_date, or "
+                "patient_name"
+            )
             raise Dcm4cheError(
-                "You must specify at least one of study_description, "
-                "study_date, or patient_name"
+                msg,
             )
         if (self.study_date is not None) and (
             (self.date_range_start is not None)
             or (self.date_range_end is not None)
         ):
+            msg = (
+                "You may not define both study_date and either of date_range_start or "
+                "date_range_end. Choose only one way to filter StudyDate."
+            )
             raise Dcm4cheError(
-                "You may not define both study_date and either of "
-                "date_range_start or date_range_end. Choose only one way to "
-                "filter StudyDate."
+                msg,
             )
 
 
@@ -170,10 +176,10 @@ def parse_findscu_xml(element_tree, output_fields):
     out_list = []
     for field in output_fields:
         attribute_by_tag = element_tree.getroot().find(
-            f"./DicomAttribute[@tag='{field}']"
+            f"./DicomAttribute[@tag='{field}']",
         )
         attribute_by_keyword = element_tree.getroot().find(
-            f"./DicomAttribute[@keyword='{field}']"
+            f"./DicomAttribute[@keyword='{field}']",
         )
         attribute = (
             attribute_by_tag
@@ -181,8 +187,9 @@ def parse_findscu_xml(element_tree, output_fields):
             else attribute_by_keyword
         )
         if attribute is None:
+            msg = f"Missing expected output field {field} in findscu output"
             raise Dcm4cheError(
-                f"Missing expected output field {field} in findscu output"
+                msg,
             )
         tag_code = attribute.attrib["tag"]
         out_dict = {
@@ -196,8 +203,9 @@ def parse_findscu_xml(element_tree, output_fields):
                 if element.text is not None
             ]
             if not value_elements:
+                msg = f"Found PN attribute with no text: {attribute}"
                 raise Dcm4cheError(
-                    f"Found PN attribute with no text: {attribute}"
+                    msg,
                 )
             value = value_elements[0].text
         else:
@@ -212,7 +220,7 @@ def parse_findscu_xml(element_tree, output_fields):
 
 
 class Dcm4cheUtils:
-    """dcm4che utils"""
+    """dcm4che utils."""
 
     def __init__(
         self,
@@ -220,7 +228,8 @@ class Dcm4cheUtils:
         credentials,
         cfmm2tar_spec,
         tar2bids_spec,
-    ):
+    ) -> None:
+        """Set up the attrs for this utils instance."""
         self.logger = logging.getLogger(__name__)
         self.connect = connection_details.connect
         self.username = credentials.username
@@ -257,17 +266,21 @@ class Dcm4cheUtils:
 
     def get_all_pi_names(self):
         """Find all PIs the user has access to (by StudyDescription).
+
         Specifically, find all StudyDescriptions, take the portion before
-        the caret, and return each unique value."""
-        cmd = self._findscu_list + ["-r", "StudyDescription"]
+        the caret, and return each unique value.
+        """
+        cmd = [*self._findscu_list, "-r", "StudyDescription"]
 
         try:
             completed_proc = self.exec_cfmm2tar(cmd)
         except subprocess.CalledProcessError as error:
             current_app.logger.error(
-                "findscu failed while getting PI names: %s", error
+                "findscu failed while getting PI names: %s",
+                error,
             )
-            raise Dcm4cheError("Non-zero exit status from findscu.") from error
+            msg = "Non-zero exit status from findscu."
+            raise Dcm4cheError(msg) from error
         err = completed_proc.stderr
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
@@ -283,12 +296,13 @@ class Dcm4cheUtils:
         pis = [match.group(1) for match in pi_matches if match is not None]
 
         all_pis = list(
-            set(pis) - set(current_app.config["DICOM_PI_BLACKLIST"])
+            set(pis) - set(current_app.config["DICOM_PI_BLACKLIST"]),
         )
 
         if len(all_pis) < 1:
             current_app.logger.error("findscu completed but no PIs found.")
-            raise Dcm4cheError("No PIs accessible.")
+            msg = "No PIs accessible."
+            raise Dcm4cheError(msg)
 
         return all_pis
 
@@ -298,7 +312,8 @@ class Dcm4cheUtils:
         attributes,
         retrieve_level="STUDY",
     ):
-        """Queries a DICOM server for specified tags from one study.
+        """Query a DICOM server for specified tags from one study.
+
         Parameters
         ----------
         output_fields : list of str
@@ -309,6 +324,7 @@ class Dcm4cheUtils:
         retrieve_level : str
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
+
         Returns
         -------
         list of list of dict
@@ -328,14 +344,14 @@ class Dcm4cheUtils:
                 [
                     "-m",
                     f"StudyDescription={attributes.study_description}",
-                ]
+                ],
             )
         if attributes.study_date is not None:
             cmd.extend(
                 [
                     "-m",
                     f'StudyDate={attributes.study_date.strftime("%Y%m%d")}',
-                ]
+                ],
             )
         elif (attributes.date_range_start is not None) or (
             attributes.date_range_end is not None
@@ -358,31 +374,32 @@ class Dcm4cheUtils:
                 [
                     "-m",
                     "StudyInstanceUID={}".format(
-                        "\\\\".join(attributes.study_instance_uids)
+                        "\\\\".join(attributes.study_instance_uids),
                     ),
-                ]
+                ],
             )
         elif current_app.config["DICOM_SERVER_STUDYINSTANCEUID_WILDCARD"]:
             cmd.extend(["-m", "StudyInstanceUID=*"])
 
         cmd.extend(
-            list(chain(*[["-r", f"{field}"] for field in output_fields]))
+            list(chain(*[["-r", f"{field}"] for field in output_fields])),
         )
         cmd.extend(["-L", f"{retrieve_level}"])
 
         with tempfile.TemporaryDirectory() as tmpdir:
             cmd.extend(
-                ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"]
+                ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"],
             )
             current_app.logger.info("Querying study with findscu.")
             try:
                 completed_proc = self.exec_cfmm2tar(cmd)
             except subprocess.CalledProcessError as error:
                 current_app.logger.error(
-                    "Findscu failed while querying study."
+                    "Findscu failed while querying study.",
                 )
+                msg = "Non-zero exit status from findscu."
                 raise Dcm4cheError(
-                    "Non-zero exit status from findscu."
+                    msg,
                 ) from error
             trees_xml = [
                 parse(child) for child in pathlib.Path(tmpdir).iterdir()
@@ -401,8 +418,8 @@ class Dcm4cheUtils:
 
         At least one of the optional search arguments must be provided.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         args
             Arguments to pass to cfmm2tar
 
@@ -427,8 +444,9 @@ class Dcm4cheUtils:
                 args.project,
             )
         ):
+            msg = "At least one search argument must be provided."
             raise Cfmm2tarError(
-                "At least one search argument must be provided."
+                msg,
             )
         uid_query = [
             "-u",
@@ -464,9 +482,10 @@ class Dcm4cheUtils:
             except subprocess.CalledProcessError as err:
                 if "Timeout.java" in err.stderr:
                     current_app.logger.warning("cfmm2tar timed out.")
-                    raise Cfmm2tarTimeoutError() from err
+                    raise Cfmm2tarTimeoutError from err
                 current_app.logger.error("cfmm2tar failed: %s", err.stderr)
-                raise Cfmm2tarError(f"Cfmm2tar failed:\n{err.stderr}") from err
+                msg = f"Cfmm2tar failed:\n{err.stderr}"
+                raise Cfmm2tarError(msg) from err
 
             all_out = out.stdout + out.stderr
             split_out = all_out.split("Retrieving #")[1:]
@@ -482,7 +501,7 @@ class Dcm4cheUtils:
                         [
                             "tar file created" in line,
                             "uid file created" in line,
-                        ]
+                        ],
                     )
                 ]
                 for file_out in split_out
@@ -491,7 +510,7 @@ class Dcm4cheUtils:
                 current_app.logger.warning("No tar files found for cfmm2tar.")
                 if "Timeout.java" in all_out:
                     current_app.logger.warning("cfmm2tar timed out.")
-                    raise Cfmm2tarTimeoutError()
+                    raise Cfmm2tarTimeoutError
 
             return tar_files, all_out
 
@@ -500,6 +519,7 @@ class Dcm4cheUtils:
         args,
     ):
         """Run tar2bids with the given arguments.
+
         Returns
         -------
         The given output_dir, if successful.
@@ -536,7 +556,8 @@ class Dcm4cheUtils:
             ).stdout
         except subprocess.CalledProcessError as err:
             current_app.logger.warning("tar2bids failed: %s", err.stdout)
-            raise Tar2bidsError(f"Tar2bids failed:\n{err.stdout}") from err
+            msg = f"Tar2bids failed:\n{err.stdout}"
+            raise Tar2bidsError(msg) from err
 
         return out
 

@@ -2,7 +2,6 @@
 
 import os
 
-
 SPACE = "    "
 BRANCH = "│   "
 TEE = "├── "
@@ -39,7 +38,6 @@ def gen_dir_dict(path, ignore=frozenset()):
             },
         }
     """
-
     return {
         "files": [
             entry.name
@@ -67,11 +65,13 @@ def render_dir_dict(dir_dict, prefix=""):
     pointers = [TEE for _ in range(len(all_contents) - 1)] + [LAST]
     lines = []
     for pointer, file_ in zip(
-        pointers[: len(dir_dict["files"])], dir_dict["files"]
+        pointers[: len(dir_dict["files"])],
+        dir_dict["files"],
     ):
         lines.append(f"{prefix}{pointer}{file_}")
     for pointer, (key, val) in zip(
-        pointers[len(dir_dict["files"]) :], dir_dict["dirs"].items()
+        pointers[len(dir_dict["files"]) :],
+        dir_dict["dirs"].items(),
     ):
         lines.append(f"{prefix}{pointer}{key}")
         extension = BRANCH if pointer == TEE else SPACE
