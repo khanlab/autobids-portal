@@ -1,10 +1,12 @@
 """Manage apptainer invocations of other tools."""
 
+from __future__ import annotations
+
+import subprocess
+from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import chain
 from pathlib import Path
-import subprocess
-from typing import Union, Sequence
 
 
 def apptainer_exec(cmd_list, container_path, binds, **kwargs):
@@ -29,15 +31,9 @@ def apptainer_exec(cmd_list, container_path, binds, **kwargs):
     if "check" in kwargs:
         del kwargs["check"]
     return subprocess.run(
-        [
-            "apptainer",
-            "exec",
-        ]
-        + bind_list
-        + [str(container_path)]
-        + cmd_list,
+        ["apptainer", "exec", *bind_list] + [str(container_path)] + cmd_list,
         check=True,
-        **kwargs
+        **kwargs,
     )
 
 
@@ -53,5 +49,5 @@ class ImageSpec:
         List of bind strings of the form src[:dest[:opts]]
     """
 
-    image_path: Union[str, Path]
+    image_path: str | Path
     binds: Sequence[str]

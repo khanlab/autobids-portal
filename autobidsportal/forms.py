@@ -6,28 +6,27 @@ from pathlib import Path
 
 from flask_wtf import FlaskForm
 from wtforms import (
-    StringField,
-    PasswordField,
-    SubmitField,
     BooleanField,
+    PasswordField,
     RadioField,
     SelectField,
-    TextAreaField,
     SelectMultipleField,
+    StringField,
+    SubmitField,
+    TextAreaField,
     widgets,
 )
-from wtforms.fields.html5 import EmailField, IntegerField, DateField
+from wtforms.fields.html5 import DateField, EmailField, IntegerField
 from wtforms.validators import (
-    ValidationError,
     DataRequired,
-    Optional,
-    InputRequired,
     Email,
     EqualTo,
+    InputRequired,
+    Optional,
+    ValidationError,
 )
 
-from autobidsportal.models import User, ExplicitPatient, Study, GlobusUsername
-
+from autobidsportal.models import ExplicitPatient, GlobusUsername, Study, User
 
 DEFAULT_HEURISTICS = [
     "cfmm_baron.py",
@@ -56,9 +55,7 @@ CHOICES_FAMILIARITY = [
 @lru_cache
 def get_default_bidsignore():
     """Read the default bidsignore file."""
-    with open(
-        Path(__file__).parent / "resources" / "bidsignore.default",
-        "r",
+    with (Path(__file__).parent / "resources" / "bidsignore.default").open(
         encoding="utf-8",
     ) as bidsignore_file:
         return bidsignore_file.read()
@@ -91,9 +88,12 @@ class LoginForm(FlaskForm):
 def unique_email(_, email):
     """Check that no user with this email address exists."""
     if User.query.filter_by(email=email.data).one_or_none() is not None:
+        msg = (
+            "There is already an account using this email address. Please use a "
+            "different email address."
+        )
         raise ValidationError(
-            "There is already an account using this email address. "
-            + "Please use a different email address."
+            msg,
         )
 
 
@@ -101,11 +101,13 @@ class RegistrationForm(FlaskForm):
     """A form for registering new users."""
 
     email = StringField(
-        "Email", validators=[DataRequired(), Email(), unique_email]
+        "Email",
+        validators=[DataRequired(), Email(), unique_email],
     )
     password = PasswordField("Password", validators=[DataRequired()])
     password2 = PasswordField(
-        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+        "Repeat Password",
+        validators=[DataRequired(), EqualTo("password")],
     )
     submit = SubmitField("Register")
 
@@ -125,7 +127,8 @@ class ResetPasswordForm(FlaskForm):
 
     password = PasswordField("Password", validators=[DataRequired()])
     password2 = PasswordField(
-        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+        "Repeat Password",
+        validators=[DataRequired(), EqualTo("password")],
     )
     submit = SubmitField("Reset password")
 
@@ -166,7 +169,7 @@ class BidsForm(FlaskForm):
 
     study_type = BooleanField(
         "Is this study longitudinal or multi-session (i.e. same subject "
-        + "scanned multiple times)? If so, check the box below.:",
+        "scanned multiple times)? If so, check the box below:",
         validators=[Optional()],
     )
 
@@ -186,7 +189,7 @@ class BidsForm(FlaskForm):
 
     principal_other = StringField(
         'If you selected "Other" for the question above please enter the '
-        + '"Principal" or "PI" identifier for this study below:',
+        '"Principal" or "PI" identifier for this study below:',
         validators=[Optional()],
     )
 
@@ -197,8 +200,8 @@ class BidsForm(FlaskForm):
 
     dataset_name = StringField(
         'The name for your BIDS dataset will by default be the "Project '
-        + 'Name". If you wish to override this, please enter a new name '
-        + "below (optional):",
+        'Name". If you wish to override this, please enter a new name '
+        "below (optional):",
         validators=[Optional()],
     )
 
@@ -210,7 +213,7 @@ class BidsForm(FlaskForm):
 
     retrospective_data = BooleanField(
         "Does this study have retrospective (previously acquired) data to "
-        + "convert? If so, check the box below.:"
+        "convert? If so, check the box below.:",
     )
 
     retrospective_start = DateField(
@@ -306,20 +309,20 @@ class StudyConfigForm(FlaskForm):
     deface = BooleanField("Enable T1w image defacing?")
     patient_str = StringField("DICOM PatientName Identifier")
     patient_re = StringField(
-        "Regular expression to match with returned PatientNames"
+        "Regular expression to match with returned PatientNames",
     )
     excluded_patients = MultiCheckboxField(
-        "Excluded Patient StudyInstanceUIDs"
+        "Excluded Patient StudyInstanceUIDs",
     )
     newly_excluded = StringField("New StudyInstanceUID to exclude")
     included_patients = MultiCheckboxField(
-        "Included Patient StudyInstanceUIDs"
+        "Included Patient StudyInstanceUIDs",
     )
     newly_included = StringField("New StudyInstanceUID to include")
     users_authorized = MultiCheckboxField("Users With Access", coerce=int)
     custom_ria_url = StringField("Custom RIA URL")
     globus_usernames = MultiCheckboxField(
-        "Globus identities with access to dataset archives"
+        "Globus identities with access to dataset archives",
     )
     new_globus_username = StringField("New Globus identity to grant access")
 
@@ -410,7 +413,7 @@ class StudyConfigForm(FlaskForm):
 
         self.process()
 
-    def update_study(self, study, user_is_admin=False):
+    def update_study(self, study, *, user_is_admin=False):
         """Process updates to a study from this form.
 
         Parameters
@@ -437,8 +440,9 @@ class StudyConfigForm(FlaskForm):
         if self.new_globus_username.data:
             to_add.append(
                 GlobusUsername(
-                    study_id=study.id, username=self.new_globus_username.data
-                )
+                    study_id=study.id,
+                    username=self.new_globus_username.data,
+                ),
             )
         study.sample = (
             self.example_date.data if self.example_date.data else None
@@ -484,7 +488,7 @@ class StudyConfigForm(FlaskForm):
                     study_id=study.id,
                     study_instance_uid=self.newly_excluded.data,
                     included=False,
-                )
+                ),
             )
         if self.newly_included.data:
             to_add.append(
@@ -492,11 +496,11 @@ class StudyConfigForm(FlaskForm):
                     study_id=study.id,
                     study_instance_uid=self.newly_included.data,
                     included=True,
-                )
+                ),
             )
         study.active = self.active.data
         study.update_custom_ria_url(
-            self.custom_ria_url.data if self.custom_ria_url.data else None
+            self.custom_ria_url.data if self.custom_ria_url.data else None,
         )
         for username in study.globus_usernames:
             if str(username.id) not in self.globus_usernames.data:
@@ -539,5 +543,6 @@ class ExplicitCfmm2tarForm(FlaskForm):
     """A form for picking specific scans to include in a cfmm2tar run."""
 
     choices_to_run = MultiCheckboxField(
-        "Include in cfmm2tar run", coerce=dumps
+        "Include in cfmm2tar run",
+        coerce=dumps,
     )

@@ -58,7 +58,7 @@
                   {% endfor %}
                 </fieldset>
                 <br />
-                <input type="submit" name=access-{{ user.id }} value="Grant Access" class="btn btn-primary" {% if user.admin %}disabled="disabled"{% endif %}/>
+                <input type="submit" name=access-{{ user.id }} value="Grant Access" class="btn btn-primary" {% if user.admin %}disabled="disabled"{% endif %} />
               </form>
             </td>
             <td>
@@ -78,9 +78,9 @@
                 </fieldset>
                 <br />
                 {% if user.admin == True %}
-                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" disabled="disabled"/>
+                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" disabled="disabled" />
                 {% else %}
-                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary"/>
+                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" />
                 {% endif %}
               </form>
             </td>

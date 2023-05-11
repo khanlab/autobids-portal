@@ -1,26 +1,27 @@
 """Handle interaction with datalad datasets."""
 
 import os
-from pathlib import Path
 import shutil
 import tempfile
+from pathlib import Path
 
 from datalad import api as datalad_api
 from datalad.support.annexrepo import AnnexRepo
 from flask import current_app
 
 from autobidsportal.models import (
-    db,
-    DatasetType,
     DataladDataset,
+    DatasetType,
     Study,
+    db,
 )
 
 
 class RiaDataset:
     """Context manager to clone/create a local RIA dataset."""
 
-    def __init__(self, parent, alias, ria_url=None):
+    def __init__(self, parent, alias, ria_url=None) -> None:
+        """Set up attrs for the dataset."""
         self.parent = parent
         self.alias = alias
         self.path_dataset = None
@@ -31,13 +32,17 @@ class RiaDataset:
         )
 
     def __enter__(self):
+        """Clone the dataset and return its path."""
         self.path_dataset = Path(self.parent) / self.alias
         clone_ria_dataset(
-            str(self.path_dataset), self.alias, ria_url=self.ria_url
+            str(self.path_dataset),
+            self.alias,
+            ria_url=self.ria_url,
         )
         return self.path_dataset
 
     def __exit__(self, exc_type, exc_value, traceback):
+        """Clean up the finalized dataset."""
         remove_finalized_dataset(self.path_dataset)
 
 
@@ -70,13 +75,14 @@ def get_alias(study_id, dataset_type):
 def ensure_dataset_exists(study_id, dataset_type):
     """Check whether a dataset is in the RIA store, and create it if not."""
     dataset = DataladDataset.query.filter_by(
-        study_id=study_id, dataset_type=dataset_type
+        study_id=study_id,
+        dataset_type=dataset_type,
     ).one_or_none()
     study = Study.query.get(study_id)
     if dataset is None:
         alias = get_alias(study_id, dataset_type)
         with tempfile.TemporaryDirectory(
-            dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+            dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"],
         ) as dir_temp:
             create_ria_dataset(
                 str(Path(dir_temp) / alias),
@@ -120,7 +126,7 @@ def clone_ria_dataset(path, alias, ria_url=None):
                 else current_app.config["DATALAD_RIA_URL"],
                 "#~",
                 alias,
-            ]
+            ],
         ),
         path=str(path),
         reckless="ephemeral",
@@ -130,12 +136,15 @@ def clone_ria_dataset(path, alias, ria_url=None):
 def delete_tar_file(study_id, tar_file):
     """Delete a tar file from the configured tar files dataset."""
     dataset = DataladDataset.query.filter_by(
-        study_id=study_id, dataset_type=DatasetType.SOURCE_DATA
+        study_id=study_id,
+        dataset_type=DatasetType.SOURCE_DATA,
     ).first_or_404()
     with tempfile.TemporaryDirectory(
-        dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+        dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"],
     ) as download_dir, RiaDataset(
-        download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+        download_dir,
+        dataset.ria_alias,
+        ria_url=dataset.custom_ria_url,
     ) as path_dataset:
         to_delete = str(path_dataset / tar_file)
         current_app.logger.info("Removing %s", to_delete)
@@ -150,21 +159,27 @@ def delete_tar_file(study_id, tar_file):
 def rename_tar_file(study_id, tar_file, new_name):
     """Rename a single tar file and push the results."""
     dataset = DataladDataset.query.filter_by(
-        study_id=study_id, dataset_type=DatasetType.SOURCE_DATA
+        study_id=study_id,
+        dataset_type=DatasetType.SOURCE_DATA,
     ).first_or_404()
     with tempfile.TemporaryDirectory(
-        dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"]
+        dir=current_app.config["CFMM2TAR_DOWNLOAD_DIR"],
     ) as download_dir, RiaDataset(
-        download_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+        download_dir,
+        dataset.ria_alias,
+        ria_url=dataset.custom_ria_url,
     ) as path_dataset:
         to_rename = path_dataset / tar_file
         new_name = path_dataset / Path(new_name).name
         current_app.logger.info(
-            "Renaming %s to %s", str(to_rename), str(new_name)
+            "Renaming %s to %s",
+            str(to_rename),
+            str(new_name),
         )
         to_rename.rename(new_name)
         finalize_dataset_changes(
-            str(path_dataset), f"Rename {to_rename} to {new_name}"
+            str(path_dataset),
+            f"Rename {to_rename} to {new_name}",
         )
 
 
@@ -200,7 +215,9 @@ def archive_dataset(path_dataset, path_out):
     """Archive a dataset to a given path."""
     get_all_dataset_content(str(path_dataset))
     datalad_api.export_archive(
-        filename=str(path_out), dataset=str(path_dataset), archivetype="zip"
+        filename=str(path_out),
+        dataset=str(path_dataset),
+        archivetype="zip",
     )
 
 

@@ -1,68 +1,69 @@
 """All routes in the portal are defined here."""
 
-from datetime import datetime
-from json import loads, dumps
-from pathlib import Path
 import tempfile
 import uuid
+from datetime import datetime
+from json import dumps, loads
+from pathlib import Path
 
-from flask import (
-    current_app,
-    Blueprint,
-    render_template,
-    flash,
-    redirect,
-    url_for,
-    request,
-    abort,
-    jsonify,
-)
-from flask_login import login_user, logout_user, current_user, login_required
 import flask_excel as excel
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import desc
-
 from werkzeug.urls import url_parse
-from autobidsportal.models import (
-    db,
-    User,
-    Study,
-    Principal,
-    Task,
-    Cfmm2tarOutput,
-    ExplicitPatient,
-    DatasetType,
-    DataladDataset,
-)
-from autobidsportal.dcm4cheutils import (
-    Dcm4cheError,
-)
-from autobidsportal.forms import (
-    LoginForm,
-    BidsForm,
-    RegistrationForm,
-    GenResetForm,
-    ResetPasswordForm,
-    AccessForm,
-    RemoveAccessForm,
-    StudyConfigForm,
-    Tar2bidsRunForm,
-    ExcludeScansForm,
-    IncludeScansForm,
-    ExplicitCfmm2tarForm,
-    DEFAULT_HEURISTICS,
-)
+
 from autobidsportal.datalad import (
-    delete_tar_file,
     RiaDataset,
     delete_all_content,
+    delete_tar_file,
     rename_tar_file,
 )
+from autobidsportal.dateutils import TIME_ZONE
+from autobidsportal.dcm4cheutils import Dcm4cheError
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
+from autobidsportal.forms import (
+    DEFAULT_HEURISTICS,
+    AccessForm,
+    BidsForm,
+    ExcludeScansForm,
+    ExplicitCfmm2tarForm,
+    GenResetForm,
+    IncludeScansForm,
+    LoginForm,
+    RegistrationForm,
+    RemoveAccessForm,
+    ResetPasswordForm,
+    StudyConfigForm,
+    Tar2bidsRunForm,
+)
+from autobidsportal.models import (
+    Cfmm2tarOutput,
+    DataladDataset,
+    DatasetType,
+    ExplicitPatient,
+    Principal,
+    Study,
+    Task,
+    User,
+    db,
+)
 from autobidsportal.ssh import remove_zip_files
 
 portal_blueprint = Blueprint(
-    "portal_blueprint", __name__, template_folder="templates"
+    "portal_blueprint",
+    __name__,
+    template_folder="templates",
 )
 
 
@@ -77,13 +78,13 @@ def check_current_authorized(study: Study):
 @portal_blueprint.route("/", methods=["GET"])
 @portal_blueprint.route("/index", methods=["GET"])
 def index():
-    """A splash page to describe autobids."""
+    """Render a splash page to describe autobids."""
     return render_template("index.html")
 
 
 @portal_blueprint.route("/new", methods=["GET", "POST"])
 def new_study():
-    """Provides a survey form for users to fill out.
+    """Provide a survey form for users to fill out.
 
     If the Principal table is not empty, the principal names are added to
     the principal dropdown in the form. Submitter information and their
@@ -139,7 +140,7 @@ def login():
 
 @portal_blueprint.route("/register", methods=["GET", "POST"])
 def register():
-    """Validates that provided email and password are valid.
+    """Validate that provided email and password are valid.
 
     After the user is registered, they are redirected to login.
     """
@@ -170,7 +171,9 @@ def gen_reset():
                 if current_app.redis.get(key) == email:
                     exists = True
                     current_app.logger.info(
-                        "Found existing key for user %s. Key: %s.", email, key
+                        "Found existing key for user %s. Key: %s.",
+                        email,
+                        key,
                     )
                     break
             if not exists:
@@ -184,7 +187,8 @@ def gen_reset():
                 )
                 root_url = current_app.config["ROOT_URL"]
                 sub_url = url_for(
-                    "portal_blueprint.reset_password", uuid_reset=uuid_reset
+                    "portal_blueprint.reset_password",
+                    uuid_reset=uuid_reset,
                 )
                 send_email(
                     "Autobids password reset",
@@ -198,11 +202,12 @@ def gen_reset():
                 )
         else:
             current_app.logger.info(
-                "Attempted reset for nonassociated email %s ignored.", email
+                "Attempted reset for nonassociated email %s ignored.",
+                email,
             )
         flash(
             "An email with further instructions has been sent if the "
-            "provided email is associated with a user account."
+            "provided email is associated with a user account.",
         )
     return render_template("gen_reset.html", form=form)
 
@@ -214,7 +219,7 @@ def reset_password(uuid_reset):
     if current_app.redis.exists(key_reset) < 1:
         flash(
             "The reset password link is incorrect or has expired. Please "
-            "resubmit your password reset request."
+            "resubmit your password reset request.",
         )
         return redirect(url_for("portal_blueprint.gen_reset"))
     form = ResetPasswordForm()
@@ -222,7 +227,7 @@ def reset_password(uuid_reset):
     if (user := User.query.filter_by(email=email).one_or_none()) is None:
         flash(
             "This password reset link encountered an unexpected error. "
-            "Please resubmit your password reset request."
+            "Please resubmit your password reset request.",
         )
         current_app.redis.delete(key_reset)
         return redirect(url_for("portal_blueprint.gen_reset"))
@@ -239,7 +244,7 @@ def reset_password(uuid_reset):
 @portal_blueprint.route("/admin", methods=["GET", "POST"])
 @login_required
 def user_list():
-    """Obtains all the registered users from the database."""
+    """Obtain all registered users from the database."""
     if not current_user.admin:
         abort(404)
     users = User.query.all()
@@ -302,14 +307,18 @@ def admin(user_id):
             user.admin = request.form["admin"].lower() == "true"
             db.session.commit()
             current_app.logger.info(
-                "Changed user %i's admin status to %s", user.id, user.admin
+                "Changed user %i's admin status to %s",
+                user.id,
+                user.admin,
             )
         if form.validate_on_submit():
             for study_id in form.choices.data:
                 print(study_id)
                 study = Study.query.get(study_id)
                 current_app.logger.info(
-                    "Added user %i to study %i.", user.id, study.id
+                    "Added user %i to study %i.",
+                    user.id,
+                    study.id,
                 )
                 if user not in study.users_authorized:
                     study.users_authorized.append(user)
@@ -320,7 +329,9 @@ def admin(user_id):
                 if user in study.users_authorized:
                     study.users_authorized.remove(user)
                     current_app.logger.info(
-                        "Removed user %i from study %i", user.id, study.id
+                        "Removed user %i from study %i",
+                        user.id,
+                        study.id,
                     )
             db.session.commit()
 
@@ -347,14 +358,17 @@ def results():
     )
 
     return render_template(
-        "results.html", title="Responses", answers=studies, last=last
+        "results.html",
+        title="Responses",
+        answers=studies,
+        last=last,
     )
 
 
 @portal_blueprint.route("/results/<int:study_id>", methods=["GET"])
 @login_required
 def answer_info(study_id):
-    """Obtains complete survey response based on the submission id"""
+    """Obtain complete survey response based on the submission id."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     cfmm2tar_tasks = (
@@ -380,10 +394,11 @@ def answer_info(study_id):
     )
     json_filetree = dumps(bids_dict)
     archive_dataset = DataladDataset.query.filter_by(
-        study_id=study_id, dataset_type=DatasetType.RAW_DATA
+        study_id=study_id,
+        dataset_type=DatasetType.RAW_DATA,
     ).one_or_none()
     archive_exists = bool(
-        (archive_dataset) and (archive_dataset.dataset_archives)
+        (archive_dataset) and (archive_dataset.dataset_archives),
     )
 
     form = Tar2bidsRunForm()
@@ -410,7 +425,8 @@ def answer_info(study_id):
 
 
 @portal_blueprint.route(
-    "/results/<int:study_id>/demographics", methods=["GET"]
+    "/results/<int:study_id>/demographics",
+    methods=["GET"],
 )
 def study_demographics(study_id):
     """Render page with information about a study's submitter."""
@@ -420,7 +436,8 @@ def study_demographics(study_id):
 
 
 @portal_blueprint.route(
-    "/results/<int:study_id>/config", methods=["GET", "POST"]
+    "/results/<int:study_id>/config",
+    methods=["GET", "POST"],
 )
 @login_required  # pylint: disable=too-many-statements,too-many-branches
 def study_config(study_id):
@@ -432,7 +449,8 @@ def study_config(study_id):
     form = StudyConfigForm()
     if request.method == "POST":
         study, to_add, to_delete, users_authorized = form.update_study(
-            study, user_is_admin=current_user.admin
+            study,
+            user_is_admin=current_user.admin,
         )
         study.users_authorized = [
             User.query.get(user_id) for user_id in users_authorized
@@ -466,7 +484,10 @@ def study_config(study_id):
         principal_names.insert(0, study.principal)
 
     form.defaults_from_study(
-        study, principal_names, available_heuristics, User.query.all()
+        study,
+        principal_names,
+        available_heuristics,
+        User.query.all(),
     )
 
     return render_template(
@@ -480,7 +501,7 @@ def study_config(study_id):
 @portal_blueprint.route("/results/<int:study_id>/cfmm2tar", methods=["POST"])
 @login_required
 def run_cfmm2tar(study_id):
-    """Launch cfmm2tar task and refresh answer_info.html"""
+    """Launch cfmm2tar task and refresh answer_info.html."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     if (
@@ -489,7 +510,7 @@ def run_cfmm2tar(study_id):
                 study_id=study_id,
                 name="run_cfmm2tar",
                 complete=False,
-            ).all()
+            ).all(),
         )
         > 0
     ):
@@ -522,7 +543,8 @@ def run_cfmm2tar(study_id):
     methods=["GET"],
 )
 @portal_blueprint.route(
-    "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>", methods=["DELETE"]
+    "/results/<int:study_id>/cfmm2tar/<int:cfmm2tar_id>",
+    methods=["DELETE"],
 )
 @login_required
 def delete_cfmm2tar(study_id, cfmm2tar_id):
@@ -553,7 +575,8 @@ def rename_cfmm2tar(study_id, cfmm2tar_id):
     if not study.active:
         return answer_info(study_id)
     current_app.logger.info(
-        "Attempting to rename cfmm2tar output %s", cfmm2tar_id
+        "Attempting to rename cfmm2tar output %s",
+        cfmm2tar_id,
     )
     cfmm2tar_output = Cfmm2tarOutput.query.get_or_404(cfmm2tar_id)
     current_app.logger.info(
@@ -591,7 +614,7 @@ def archive_tar2bids(study_id):
             Task.query.filter_by(
                 study_id=study_id,
                 complete=False,
-            ).all()
+            ).all(),
         )
         > 0
     ):
@@ -628,12 +651,15 @@ def delete_tar2bids(study_id):
         return answer_info(study_id)
 
     dataset = DataladDataset.query.filter_by(
-        study_id=study_id, dataset_type=DatasetType.RAW_DATA
+        study_id=study_id,
+        dataset_type=DatasetType.RAW_DATA,
     ).first_or_404()
     with tempfile.TemporaryDirectory(
-        dir=current_app.config["TAR2BIDS_DOWNLOAD_DIR"]
+        dir=current_app.config["TAR2BIDS_DOWNLOAD_DIR"],
     ) as bids_dir, RiaDataset(
-        bids_dir, dataset.ria_alias, ria_url=dataset.custom_ria_url
+        bids_dir,
+        dataset.ria_alias,
+        ria_url=dataset.custom_ria_url,
     ) as path_dataset:
         delete_all_content(path_dataset)
         study.dataset_content = None
@@ -654,7 +680,7 @@ def delete_tar2bids(study_id):
 @portal_blueprint.route("/results/<int:study_id>/tar2bids", methods=["POST"])
 @login_required
 def run_tar2bids(study_id):
-    """Launch tar2bids task and refresh answer_info.html"""
+    """Launch tar2bids task and refresh answer_info.html."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     if not study.active:
@@ -674,7 +700,7 @@ def run_tar2bids(study_id):
                 study_id=study_id,
                 name="run_tar2bids",
                 complete=False,
-            ).all()
+            ).all(),
         )
         > 0
     ):
@@ -704,19 +730,17 @@ def update_scanner(scanner):
     return "3T" if scanner == "type1" else "7T"
 
 
-def update_familiarity(familiarity):
+def update_familiarity(familiarity: str) -> str:
     """Parse familiarity value into human-readable description."""
-    if familiarity == "1":
-        new_familiarity = "Not familiar at all"
-    elif familiarity == "2":
-        new_familiarity = "Have heard of it"
-    elif familiarity == "3":
-        new_familiarity = "Have used it before"
-    elif familiarity == "4":
-        new_familiarity = "Used it regularly"
-    elif familiarity == "5":
-        new_familiarity = "I consider myself an expert"
-    return new_familiarity
+    familiarity_map = {
+        "1": "Not familiar at all",
+        "2": "Have heard of it",
+        "3": "Have used it before",
+        "4": "Used it regularly",
+        "5": "I consider myself an expert",
+    }
+
+    return familiarity_map[familiarity]
 
 
 def update_date(date):
@@ -725,14 +749,14 @@ def update_date(date):
 
 
 def update_bool(bool_str):
-    """Parse boolean int string into Yes/No"""
+    """Parse boolean int string into Yes/No."""
     return "Yes" if bool_str == "1" else "No"
 
 
 @portal_blueprint.route("/results/download", methods=["GET"])
 @login_required
 def download():
-    """Downloads csv containing all the survey response"""
+    """Download csv containing all the survey response."""
     response_list = (
         Study.query.all() if current_user.admin else current_user.studies
     )
@@ -793,17 +817,18 @@ def download():
                 update_date(response.retrospective_end),
                 update_bool(response.consent),
                 response.comment,
-            ]
+            ],
         )
     return excel.make_response_from_array(csv_list, "csv", file_name=file_name)
 
 
 @portal_blueprint.route(
-    "results/<int:study_id>/dicom/process", methods=["POST"]
+    "results/<int:study_id>/dicom/process",
+    methods=["POST"],
 )
 @login_required
 def process_dicom_form(study_id):
-    """Pass off processing to run cfmm2tar or update exclusions"""
+    """Pass off processing to run cfmm2tar or update exclusions."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     if "update-exclusions" in request.form:
@@ -816,7 +841,7 @@ def process_dicom_form(study_id):
 @portal_blueprint.route("results/<int:study_id>/exclusions", methods=["POST"])
 @login_required
 def update_exclusions(study_id):
-    """Updates the excluded UIDs for a study."""
+    """Update the excluded UIDs for a study."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
 
@@ -824,7 +849,7 @@ def update_exclusions(study_id):
     for val_json in form_exclude.choices_to_exclude.data:
         val = loads(loads(val_json))
         old_uid = ExplicitPatient.query.filter_by(
-            study_instance_uid=val["StudyInstanceUID"]
+            study_instance_uid=val["StudyInstanceUID"],
         ).one_or_none()
         if old_uid is not None:
             db.session.delete(old_uid)
@@ -842,7 +867,7 @@ def update_exclusions(study_id):
     for val_json in form_include.choices_to_include.data:
         val = loads(loads(val_json))
         old_uid = ExplicitPatient.query.filter_by(
-            study_instance_uid=val["StudyInstanceUID"]
+            study_instance_uid=val["StudyInstanceUID"],
         ).one_or_none()
         if old_uid is not None:
             break
@@ -860,11 +885,12 @@ def update_exclusions(study_id):
 
 
 @portal_blueprint.route(
-    "/results/<int:study_id>/dicom/<string:method>", methods=["GET"]
+    "/results/<int:study_id>/dicom/<string:method>",
+    methods=["GET"],
 )
 @login_required
 def dicom_verify(study_id, method):
-    """Gets all DICOM results for a specific study."""
+    """Get all DICOM results for a specific study."""
     study = Study.query.get_or_404(study_id)
     check_current_authorized(study)
     study_info = f"{study.principal}^{study.project_name}"
@@ -886,12 +912,16 @@ def dicom_verify(study_id, method):
 
     try:
         responses = get_study_records(
-            study, date=date, description=description
+            study,
+            date=date,
+            description=description,
         )
     except Dcm4cheError as err:
         err_cause = err.__cause__.stderr if err.__cause__ is not None else ""
         current_app.logger.warning(
-            "Failed to get DICOM info for study %i: %s", study_id, err
+            "Failed to get DICOM info for study %i: %s",
+            study_id,
+            err,
         )
         return render_template(
             "dicom_error.html",
@@ -912,7 +942,7 @@ def dicom_verify(study_id, method):
                     "StudyInstanceUID": response["StudyInstanceUID"],
                     "PatientName": response["PatientName"],
                     "StudyID": response["StudyID"],
-                }
+                },
             ),
             "Exclude",
         )
@@ -926,7 +956,7 @@ def dicom_verify(study_id, method):
                     "StudyInstanceUID": response["StudyInstanceUID"],
                     "PatientName": response["PatientName"],
                     "StudyID": response["StudyID"],
-                }
+                },
             ),
             "Include",
         )
@@ -939,7 +969,7 @@ def dicom_verify(study_id, method):
                 {
                     "StudyInstanceUID": response["StudyInstanceUID"],
                     "PatientName": response["PatientName"],
-                }
+                },
             ),
             "Include in cfmm2tar",
         )
@@ -959,11 +989,11 @@ def dicom_verify(study_id, method):
 
 @portal_blueprint.route("/logout", methods=["GET", "POST"])
 def logout():
-    """Logs out current user."""
+    """Log out current user."""
     if current_user.is_authenticated:
         # pylint doesn't like werkzeug proxies
         # pylint: disable=assigning-non-slot
-        current_user.last_seen = datetime.utcnow()
+        current_user.last_seen = datetime.now(tz=TIME_ZONE)
         # pylint: enable=assigning-non-slot
         db.session.commit()
     logout_user()
@@ -972,7 +1002,7 @@ def logout():
 
 @portal_blueprint.route("/api/globus_users", methods=["GET"])
 def list_globus_users():
-    """Returns a JSON list of users."""
+    """Return a JSON list of users."""
     return jsonify(
         [
             {
@@ -980,7 +1010,8 @@ def list_globus_users():
                 "path": current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
                 + "/"
                 + DataladDataset.query.filter_by(
-                    study_id=study.id, dataset_type=DatasetType.RAW_DATA
+                    study_id=study.id,
+                    dataset_type=DatasetType.RAW_DATA,
                 )
                 .one()
                 .ria_alias,
@@ -990,8 +1021,9 @@ def list_globus_users():
             }
             for study in Study.query.all()
             if DataladDataset.query.filter_by(
-                study_id=study.id, dataset_type=DatasetType.RAW_DATA
+                study_id=study.id,
+                dataset_type=DatasetType.RAW_DATA,
             ).one_or_none()
             is not None
-        ]
+        ],
     )

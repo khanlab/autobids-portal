@@ -1,23 +1,23 @@
-"""Initialize flask and all its plugins"""
+"""Initialize flask and all its plugins."""
 from __future__ import annotations
 
 import os
-from typing import Optional
 
+import flask_excel as excel
+import rq
 from flask import Flask
 from flask_migrate import Migrate
-import flask_excel as excel
 from redis import Redis
-import rq
 
-from autobidsportal.routes import portal_blueprint
-from autobidsportal.models import db, login
-from autobidsportal.errors import bad_request, not_found_error, internal_error
 from autobidsportal.email import mail
+from autobidsportal.errors import bad_request, internal_error, not_found_error
+from autobidsportal.models import db, login
+from autobidsportal.routes import portal_blueprint
 
 
 def create_app(
-    config_object: Optional[str | object] = None, override_dict=None
+    config_object: str | object | None = None,
+    override_dict=None,
 ):
     """Application factory for the Autobids Portal.
 

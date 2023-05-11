@@ -45,9 +45,9 @@ jobs:
 
       - name: Run black
         run: poetry run black --check autobidsportal
-      - name: Run pylint
+      - name: Run ruff
         run: |
-          poetry run pylint autobidsportal
+          poetry run ruff autobidsportal
       - name: run djLint
         run: |
           poetry run djlint --lint autobidsportal/templates
