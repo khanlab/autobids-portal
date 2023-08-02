@@ -51,7 +51,7 @@ ruff = "^0.0.265"
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["ANN", "TCH", "T20", "S603", "S607", "B905"]
+ignore = ["ANN", "TCH", "T20", "S603", "S607", "B905", "D203", "D213"]
 unfixable = ["F841"]
 
 [tool.poetry.extras]
