@@ -11,7 +11,7 @@ from shutil import copy2
 from zipfile import ZipFile
 
 from datalad.support.gitrepo import GitRepo
-from rq import get_current_job
+from rq.job import get_current_job
 
 from autobidsportal.app import create_app
 from autobidsportal.bids import merge_datasets
