@@ -258,6 +258,7 @@ class Task(db.Model):
         "run_tar2bids",
         "update_heuristics",
         "archive_raw_data",
+        "gradcorrect_study",
     )
 
     id = db.Column(db.String(36), primary_key=True)

@@ -5,6 +5,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from datetime import datetime
 from os import PathLike
 from shutil import copy2
@@ -14,6 +15,7 @@ from datalad.support.gitrepo import GitRepo
 from rq.job import get_current_job
 
 from autobidsportal.app import create_app
+from autobidsportal.apptainer import apptainer_exec
 from autobidsportal.bids import merge_datasets
 from autobidsportal.datalad import (
     RiaDataset,
@@ -699,4 +701,65 @@ def update_heuristics():
     except subprocess.CalledProcessError as err:
         app.logger.exception("Pull from heuristic repo unsuccessful.")
         _set_task_error(f"Uncaught exception: {err}.")
+    _set_task_progress(100)
+
+
+def run_gradcorrect(
+    path_dataset_raw: PathLike[str] | str,
+    path_out: PathLike[str] | str,
+    subject_ids: Iterable[str] | None,
+) -> None:
+    """Run gradcorrect on a BIDS dataset, optionally on a subset of subjects."""
+    participant_label = (
+        ["--participant_label", *subject_ids] if subject_ids else []
+    )
+    apptainer_exec(
+        [
+            "gradcorrect",
+            str(path_dataset_raw),
+            str(path_out),
+            *participant_label,
+        ],
+        app.config["GRADCORRECT_PATH"],
+        app.config["GRADCORRECT_BINDS"],
+    )
+
+
+@ensure_complete("gradcorrect failed with an uncaught exception.")
+def gradcorrect_study(study_id: int, subject_labels: Iterable[str]) -> None:
+    """Run gradcorrect on a set of subjects in a study."""
+    _set_task_progress(0)
+    dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
+    dataset_derivatives = ensure_dataset_exists(
+        study_id,
+        DatasetType.DERIVED_DATA,
+    )
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as bids_dir, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as derivatives_dir, RiaDataset(
+        derivatives_dir,
+        dataset_derivatives.ria_alias,
+        ria_url=dataset_derivatives.custom_ria_url,
+    ) as path_dataset_derivatives:
+        with RiaDataset(
+            bids_dir,
+            dataset_bids.ria_alias,
+            ria_url=dataset_bids.custom_ria_url,
+        ) as path_dataset_bids:
+            for subject_label in subject_labels:
+                get_tar_file_from_dataset(
+                    f"sub-{subject_label}",
+                    path_dataset_bids,
+                )
+            run_gradcorrect(
+                bids_dir,
+                path_dataset_derivatives / "gradcorrect",
+                subject_labels,
+            )
+        finalize_dataset_changes(
+            str(path_dataset_derivatives),
+            "Run gradcorrect on subjects {','.join(subject_labels}",
+        )
     _set_task_progress(100)
