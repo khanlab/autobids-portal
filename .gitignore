@@ -12,3 +12,4 @@ compose/*
 !compose/*.pem
 !compose/ssh
 .coverage
+*.grad

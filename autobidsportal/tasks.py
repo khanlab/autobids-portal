@@ -715,13 +715,16 @@ def run_gradcorrect(
     )
     apptainer_exec(
         [
-            "gradcorrect",
+            "/gradcorrect/run.sh",
             str(path_dataset_raw),
             str(path_out),
+            "participant",
+            "--grad_coeff_file",
+            app.config["GRADCORRECT_COEFF_FILE"],
             *participant_label,
         ],
         app.config["GRADCORRECT_PATH"],
-        app.config["GRADCORRECT_BINDS"],
+        app.config["GRADCORRECT_BINDS"].split(","),
     )
 
 
@@ -754,7 +757,7 @@ def gradcorrect_study(study_id: int, subject_labels: Iterable[str]) -> None:
                     path_dataset_bids,
                 )
             run_gradcorrect(
-                bids_dir,
+                path_dataset_bids,
                 path_dataset_derivatives / "gradcorrect",
                 subject_labels,
             )
