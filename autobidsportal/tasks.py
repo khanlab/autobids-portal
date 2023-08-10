@@ -239,7 +239,7 @@ def ensure_complete(error_log):
             try:
                 task(*args)
             finally:
-                if not Task.query.get(get_current_job().id).complete:
+                if (job := get_current_job()) and (not Task.query.get(job.id).complete):
                     app.logger.error(error_log)
                     _set_task_error("Unknown uncaught exception")
 
@@ -765,4 +765,75 @@ def gradcorrect_study(study_id: int, subject_labels: Iterable[str]) -> None:
             str(path_dataset_derivatives),
             "Run gradcorrect on subjects {','.join(subject_labels}",
         )
+    _set_task_progress(100)
+
+
+@ensure_complete("derivative dataset archival failed with an uncaught exception.")
+def archive_derivative_data(study_id):
+    """Clone a study dataset and archive it if necessary."""
+    _set_task_progress(0)
+    study = Study.query.get(study_id)
+    if (study.custom_ria_url is not None):
+        _set_task_progress(100)
+        return
+    dataset_derived = ensure_dataset_exists(study_id, DatasetType.DERIVED_DATA)
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as dir_derived_data, RiaDataset(
+        dir_derived_data,
+        dataset_derived.ria_alias,
+        ria_url=dataset_derived.custom_ria_url,
+    ) as path_dataset_raw, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as dir_archive:
+        latest_archive = max(
+            dataset_derived.dataset_archives,
+            default=None,
+            key=lambda archive: archive.commit_datetime,
+        )
+        repo = GitRepo(str(path_dataset_raw))
+        if (latest_archive) and (
+            latest_archive.dataset_hexsha == repo.get_hexsha()
+        ):
+            app.logger.info("Archive for study %s up to date", study_id)
+            _set_task_progress(100)
+            return
+
+        commit_datetime = datetime.fromtimestamp(
+            repo.get_commit_date(date="committed"),
+            tz=TIME_ZONE,
+        )
+        path_archive = pathlib.Path(dir_archive) / (
+            f"{dataset_derived.ria_alias}_"
+            f"{commit_datetime.isoformat().replace(':', '.')}_"
+            f"{repo.get_hexsha()[:6]}.zip"
+        )
+        archive = (
+            archive_entire_dataset(
+                path_dataset_raw,
+                path_archive,
+                dataset_derived.id,
+                repo,
+            )
+            if not latest_archive
+            else archive_partial_dataset(
+                repo,
+                latest_archive,
+                path_archive,
+                path_dataset_raw,
+                dataset_derived.id,
+            )
+        )
+        make_remote_dir(
+            app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset_derived.ria_alias}",
+        )
+        copy_file(
+            app.config["ARCHIVE_BASE_URL"],
+            str(path_archive),
+            f"/{dataset_derived.ria_alias}",
+        )
+    db.session.add(archive)
+    db.session.commit()
     _set_task_progress(100)
