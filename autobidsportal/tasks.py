@@ -8,7 +8,7 @@ import tempfile
 from collections.abc import Iterable
 from datetime import datetime
 from os import PathLike
-from shutil import copy2
+from shutil import copy2, rmtree
 from zipfile import ZipFile
 
 from datalad.support.gitrepo import GitRepo
@@ -761,6 +761,7 @@ def gradcorrect_study(study_id: int, subject_labels: Iterable[str]) -> None:
                 path_dataset_derivatives / "gradcorrect",
                 subject_labels,
             )
+        rmtree(path_dataset_derivatives / "gradcorrect" / "sourcedata" / "scratch")
         finalize_dataset_changes(
             str(path_dataset_derivatives),
             "Run gradcorrect on subjects {','.join(subject_labels}",
