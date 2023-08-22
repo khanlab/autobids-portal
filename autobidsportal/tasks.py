@@ -764,7 +764,7 @@ def gradcorrect_study(study_id: int, subject_labels: Iterable[str]) -> None:
         rmtree(path_dataset_derivatives / "gradcorrect" / "sourcedata" / "scratch")
         finalize_dataset_changes(
             str(path_dataset_derivatives),
-            "Run gradcorrect on subjects {','.join(subject_labels}",
+            f"Run gradcorrect on subjects {','.join(subject_labels)}",
         )
     _set_task_progress(100)
 
