@@ -259,6 +259,7 @@ class Task(db.Model):
         "update_heuristics",
         "archive_raw_data",
         "gradcorrect_study",
+        "archive_derived_data",
     )
 
     id = db.Column(db.String(36), primary_key=True)
