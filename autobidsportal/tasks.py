@@ -11,6 +11,7 @@ from os import PathLike
 from shutil import copy2, rmtree
 from zipfile import ZipFile
 
+from bids import BIDSLayout
 from datalad.support.gitrepo import GitRepo
 from rq.job import get_current_job
 
@@ -731,14 +732,55 @@ def find_uncorrected_images(study_id):
             timeout=app.config["GRADCORRECT_TIMEOUT"],
         )
         return
-    if not new_tar_file_ids:
+    correctable_args = {
+        "extension": "nii.gz",
+        "datatype": ["anat", "func", "fmap", "dwi", "asl"],
+    }
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as derivatives_dir, RiaDataset(
+        derivatives_dir,
+        derived_dataset.ria_alias,
+        ria_url=derived_dataset.custom_ria_url,
+    ) as path_dataset_derived:
+        gradcorrect_path = path_dataset_derived / "gradcorrect"
+        gradcorrect_path.mkdir(exist_ok=True)
+        derived_layout = BIDSLayout(
+            gradcorrect_path,
+            validate=False,
+        )
+        corrected_files = {
+            str(
+                pathlib.Path(img.path).relative_to(
+                    path_dataset_derived / "gradcorrect",
+                ),
+            )
+            for img in derived_layout.get(**correctable_args)
+        }
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as bids_dir, RiaDataset(
+        bids_dir,
+        raw_dataset.ria_alias,
+        ria_url=raw_dataset.custom_ria_url,
+    ) as path_dataset_raw:
+        raw_layout = BIDSLayout(path_dataset_raw, validate=False)
+        subjects = {
+            img.get_entities()["subject"]
+            for img in raw_layout.get(**correctable_args)
+            if str(pathlib.Path(img.path).relative_to(path_dataset_raw))
+            not in corrected_files
+        }
+
+    if not subjects:
         return
     Task.launch_task(
-        "run_tar2bids",
-        "tar2bids run for all new tar files",
+        "gradcorrect_study",
+        f"gradcorrect run for subjects {subjects}",
         study_id,
         study_id=study_id,
-        timeout=app.config["TAR2BIDS_TIMEOUT"],
+        timeout=app.config["GRADCORRECT_TIMEOUT"],
+        subject_labels=subjects,
     )
 
 

@@ -180,10 +180,7 @@ def run_all_gradcorrect():
         ):
             print(f"Skipping study {study.id}. Active: {study.active}")
             continue
-        Task.launch_task(
-            "gradcorrect_study",
-            "run gradcorrect on 7T study",
+        app.task_queue.enqueue(
+            "autobidsportal.tasks.find_uncorrected_images",
             study.id,
-            study_id=study.id,
-            timeout=app.config["GRADCORRECT_TIMEOUT"],
         )

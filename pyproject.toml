@@ -40,6 +40,7 @@ Werkzeug = "^2.2.2"
 WTForms = "^2.3.3"
 pyuwsgi = { version = "^2.0.21", optional = true }
 psycopg2-binary = "^2.9.5"
+pybids = "^0.16.3"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
