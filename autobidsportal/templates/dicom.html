@@ -25,10 +25,10 @@
                   <td>
                     <button class="btn btn-outline-dark"
                             data-bs-toggle="collapse"
-                            data-bs-target="#collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}"
+                            data-bs-target="#collapse{{ response["StudyInstanceUID"]|replace('.', 'dot') }}"
                             type="button"
                             aria-expanded="false"
-                            aria-controls="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
+                            aria-controls="collapse{{ response["StudyInstanceUID"]|replace('.', 'dot') }}">
                       <code>{{ response["PatientName"] }}</code>
                     </button>
                   </td>
@@ -69,7 +69,7 @@
                   </td>
                 </tr>
                 <tr class="collapse"
-                    id="collapse{{ response["StudyInstanceUID"]|replace(".", "dot") }}">
+                    id="collapse{{ response["StudyInstanceUID"]|replace('.', 'dot') }}">
                   <td colspan="7">
                     <table class="table table-light">
                       <thead>

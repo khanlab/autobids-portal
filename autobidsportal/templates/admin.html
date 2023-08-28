@@ -38,7 +38,7 @@
                     <td>{{ u.email }}</td>
                     <td>
                       {% for a in u.access_to %}
-                        <div>{{ a.desc.replace(" ", "^") }}</div>
+                        <div>{{ a.desc.replace(' ', '^') }}</div>
                       {% endfor %}
                     </td>
                   </tr>
@@ -55,7 +55,7 @@
           <div class="card-body">
             <h3 class="card-title">Actions</h3>
             <form method="post"
-                  action="{{ url_for('portal_blueprint.update_heuristics') }}">
+                  action="{{ url_for("portal_blueprint.update_heuristics") }}">
               <input type="submit"
                      name="update-heuristics"
                      value="Update custom heuristics"
