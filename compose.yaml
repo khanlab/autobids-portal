@@ -21,6 +21,10 @@ services:
       AUTOBIDS_TAR2BIDS_PATH: "/opt/apptainer-images/tar2bids_v0.2.0.sif"
       AUTOBIDS_TAR2BIDS_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/datasets:/datasets,/tmp:/tmp,/home:/home"
       AUTOBIDS_TAR2BIDS_TIMEOUT: "100000"
+      AUTOBIDS_GRADCORRECT_PATH: "/opt/apptainer-images/gradcorrect_v0.0.3a.sif"
+      AUTOBIDS_GRADCORRECT_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp,/datasets:/datasets,/appdata:/appdata"
+      AUTOBIDS_GRADCORRECT_COEFF_FILE: '/appdata/coeff.grad'
+      AUTOBIDS_GRADCORRECT_TIMEOUT: '100000'
       AUTOBIDS_HEURISTIC_DIR_PATH: /home
       AUTOBIDS_DATALAD_RIA_URL: "ria+ssh://user@ria:2222/ria-store"
       AUTOBIDS_ARCHIVE_BASE_URL: "user@archive:/archive"
@@ -48,6 +52,7 @@ services:
       - "./compose/ria-store:/ria-store"
       - "./compose/datasets:/datasets"
       - "./compose/ssh:/ssh"
+      - "./compose/appdata:/appdata"
     devices:
       - "/dev/fuse:/dev/fuse"
     cap_add:

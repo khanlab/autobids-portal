@@ -5,15 +5,18 @@ import pathlib
 import re
 import subprocess
 import tempfile
+from collections.abc import Iterable
 from datetime import datetime
 from os import PathLike
-from shutil import copy2
+from shutil import copy2, rmtree
 from zipfile import ZipFile
 
+from bids import BIDSLayout
 from datalad.support.gitrepo import GitRepo
-from rq import get_current_job
+from rq.job import get_current_job
 
 from autobidsportal.app import create_app
+from autobidsportal.apptainer import apptainer_exec
 from autobidsportal.bids import merge_datasets
 from autobidsportal.datalad import (
     RiaDataset,
@@ -237,7 +240,9 @@ def ensure_complete(error_log):
             try:
                 task(*args)
             finally:
-                if not Task.query.get(get_current_job().id).complete:
+                if (job := get_current_job()) and (
+                    not Task.query.get(job.id).complete
+                ):
                     app.logger.error(error_log)
                     _set_task_error("Unknown uncaught exception")
 
@@ -699,4 +704,233 @@ def update_heuristics():
     except subprocess.CalledProcessError as err:
         app.logger.exception("Pull from heuristic repo unsuccessful.")
         _set_task_error(f"Uncaught exception: {err}.")
+    _set_task_progress(100)
+
+
+def find_uncorrected_images(study_id):
+    """Check for NIfTI images that haven't had gradcorrect applied."""
+    # anat,func,fmap,dwi,asl
+    study = Study.query.get(study_id)
+    if study.scanner != "type2":
+        return
+    raw_dataset = DataladDataset.query.filter_by(
+        study_id=study.id,
+        dataset_type=DatasetType.RAW_DATA,
+    ).one_or_none()
+    if not raw_dataset:
+        return
+    derived_dataset = DataladDataset.query.filter_by(
+        study_id=study.id,
+        dataset_type=DatasetType.DERIVED_DATA,
+    ).one_or_none()
+    if not derived_dataset:
+        Task.launch_task(
+            "gradcorrect_study",
+            "gradcorrect for new BIDS dataset",
+            study_id,
+            study_id=study_id,
+            timeout=app.config["GRADCORRECT_TIMEOUT"],
+        )
+        return
+    correctable_args = {
+        "extension": "nii.gz",
+        "datatype": ["anat", "func", "fmap", "dwi", "asl"],
+    }
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as derivatives_dir, RiaDataset(
+        derivatives_dir,
+        derived_dataset.ria_alias,
+        ria_url=derived_dataset.custom_ria_url,
+    ) as path_dataset_derived:
+        gradcorrect_path = path_dataset_derived / "gradcorrect"
+        gradcorrect_path.mkdir(exist_ok=True)
+        derived_layout = BIDSLayout(
+            gradcorrect_path,
+            validate=False,
+        )
+        corrected_files = {
+            str(
+                pathlib.Path(img.path).relative_to(
+                    path_dataset_derived / "gradcorrect",
+                ),
+            )
+            for img in derived_layout.get(**correctable_args)
+        }
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as bids_dir, RiaDataset(
+        bids_dir,
+        raw_dataset.ria_alias,
+        ria_url=raw_dataset.custom_ria_url,
+    ) as path_dataset_raw:
+        raw_layout = BIDSLayout(path_dataset_raw, validate=False)
+        subjects = {
+            img.get_entities()["subject"]
+            for img in raw_layout.get(**correctable_args)
+            if str(pathlib.Path(img.path).relative_to(path_dataset_raw))
+            not in corrected_files
+        }
+
+    if not subjects:
+        return
+    Task.launch_task(
+        "gradcorrect_study",
+        f"gradcorrect run for subjects {subjects}",
+        study_id,
+        study_id=study_id,
+        timeout=app.config["GRADCORRECT_TIMEOUT"],
+        subject_labels=subjects,
+    )
+
+
+def run_gradcorrect(
+    path_dataset_raw: PathLike[str] | str,
+    path_out: PathLike[str] | str,
+    subject_ids: Iterable[str] | None,
+) -> None:
+    """Run gradcorrect on a BIDS dataset, optionally on a subset of subjects."""
+    participant_label = (
+        ["--participant_label", *subject_ids] if subject_ids else []
+    )
+    apptainer_exec(
+        [
+            "/gradcorrect/run.sh",
+            str(path_dataset_raw),
+            str(path_out),
+            "participant",
+            "--grad_coeff_file",
+            app.config["GRADCORRECT_COEFF_FILE"],
+            *participant_label,
+        ],
+        app.config["GRADCORRECT_PATH"],
+        app.config["GRADCORRECT_BINDS"].split(","),
+    )
+
+
+@ensure_complete("gradcorrect failed with an uncaught exception.")
+def gradcorrect_study(
+    study_id: int,
+    subject_labels: Iterable[str] | None = None,
+) -> None:
+    """Run gradcorrect on a set of subjects in a study."""
+    _set_task_progress(0)
+    dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
+    dataset_derivatives = ensure_dataset_exists(
+        study_id,
+        DatasetType.DERIVED_DATA,
+    )
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as bids_dir, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as derivatives_dir, RiaDataset(
+        derivatives_dir,
+        dataset_derivatives.ria_alias,
+        ria_url=dataset_derivatives.custom_ria_url,
+    ) as path_dataset_derivatives:
+        with RiaDataset(
+            bids_dir,
+            dataset_bids.ria_alias,
+            ria_url=dataset_bids.custom_ria_url,
+        ) as path_dataset_bids:
+            if subject_labels:
+                for subject_label in subject_labels:
+                    get_tar_file_from_dataset(
+                        f"sub-{subject_label}",
+                        path_dataset_bids,
+                    )
+            else:
+                get_all_dataset_content(path_dataset_bids)
+            run_gradcorrect(
+                path_dataset_bids,
+                path_dataset_derivatives / "gradcorrect",
+                subject_labels,
+            )
+        rmtree(
+            path_dataset_derivatives
+            / "gradcorrect"
+            / "sourcedata"
+            / "scratch",
+        )
+        sub_string = (
+            ",".join(subject_labels) if subject_labels else "all subjects"
+        )
+        finalize_dataset_changes(
+            str(path_dataset_derivatives),
+            f"Run gradcorrect on subjects {sub_string}",
+        )
+    _set_task_progress(100)
+
+
+@ensure_complete(
+    "derivative dataset archival failed with an uncaught exception.",
+)
+def archive_derivative_data(study_id):
+    """Clone a study dataset and archive it if necessary."""
+    _set_task_progress(0)
+    study = Study.query.get(study_id)
+    if study.custom_ria_url is not None:
+        _set_task_progress(100)
+        return
+    dataset_derived = ensure_dataset_exists(study_id, DatasetType.DERIVED_DATA)
+    with tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as dir_derived_data, RiaDataset(
+        dir_derived_data,
+        dataset_derived.ria_alias,
+        ria_url=dataset_derived.custom_ria_url,
+    ) as path_dataset_derived, tempfile.TemporaryDirectory(
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+    ) as dir_archive:
+        latest_archive = max(
+            dataset_derived.dataset_archives,
+            default=None,
+            key=lambda archive: archive.commit_datetime,
+        )
+        repo = GitRepo(str(path_dataset_derived))
+        if (latest_archive) and (
+            latest_archive.dataset_hexsha == repo.get_hexsha()
+        ):
+            app.logger.info("Archive for study %s up to date", study_id)
+            _set_task_progress(100)
+            return
+
+        commit_datetime = datetime.fromtimestamp(
+            repo.get_commit_date(date="committed"),
+            tz=TIME_ZONE,
+        )
+        path_archive = pathlib.Path(dir_archive) / (
+            f"{dataset_derived.ria_alias}_"
+            f"{commit_datetime.isoformat().replace(':', '.')}_"
+            f"{repo.get_hexsha()[:6]}.zip"
+        )
+        archive = (
+            archive_entire_dataset(
+                path_dataset_derived,
+                path_archive,
+                dataset_derived.id,
+                repo,
+            )
+            if not latest_archive
+            else archive_partial_dataset(
+                repo,
+                latest_archive,
+                path_archive,
+                path_dataset_derived,
+                dataset_derived.id,
+            )
+        )
+        make_remote_dir(
+            app.config["ARCHIVE_BASE_URL"].split(":")[0],
+            app.config["ARCHIVE_BASE_URL"].split(":")[1]
+            + f"/{dataset_derived.ria_alias}",
+        )
+        copy_file(
+            app.config["ARCHIVE_BASE_URL"],
+            str(path_archive),
+            f"/{dataset_derived.ria_alias}",
+        )
+    db.session.add(archive)
+    db.session.commit()
     _set_task_progress(100)

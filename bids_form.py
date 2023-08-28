@@ -1,20 +1,21 @@
 """Flask entry point with extra CLI commands."""
 
 from autobidsportal.app import create_app
-from autobidsportal.dcm4cheutils import gen_utils, Dcm4cheError
+from autobidsportal.dcm4cheutils import Dcm4cheError, gen_utils
 from autobidsportal.models import (
-    db,
-    User,
-    Study,
-    Principal,
-    Notification,
-    Task,
     Cfmm2tarOutput,
-    Tar2bidsOutput,
+    DataladDataset,
+    DatasetType,
     ExplicitPatient,
+    Notification,
+    Principal,
+    Study,
+    Tar2bidsOutput,
+    Task,
+    User,
+    db,
 )
 from autobidsportal.tasks import update_heuristics
-
 
 app = create_app()
 
@@ -56,7 +57,6 @@ def run_update_heuristics():
 
     The point of this wrapper function is to expose the task to the CLI.
     """
-
     update_heuristics()
 
 
@@ -74,14 +74,15 @@ def run_all_cfmm2tar():
                     study_id=study.id,
                     name="run_cfmm2tar",
                     complete=False,
-                ).all()
+                ).all(),
             )
             > 0
         ) or (not study.active):
             print(f"Skipping study {study.id}. Active: {study.active}")
             continue
         app.task_queue.enqueue(
-            "autobidsportal.tasks.check_tar_files", study.id
+            "autobidsportal.tasks.check_tar_files",
+            study.id,
         )
 
 
@@ -95,14 +96,15 @@ def run_all_tar2bids():
                     study_id=study.id,
                     name="run_tar2bids",
                     complete=False,
-                ).all()
+                ).all(),
             )
             > 0
         ) or not study.active:
             print(f"Skipping study {study.id}. Active: {study.active}")
             continue
         app.task_queue.enqueue(
-            "autobidsportal.tasks.find_unprocessed_tar_files", study.id
+            "autobidsportal.tasks.find_unprocessed_tar_files",
+            study.id,
         )
 
 
@@ -114,14 +116,13 @@ def run_all_archive():
     progress.
     """
     for study in Study.query.all():
-        print(f"study: {study.id}")
         if (
             len(
                 Task.query.filter_by(
                     study_id=study.id,
                     name="get_info_from_tar2bids",
                     complete=False,
-                ).all()
+                ).all(),
             )
             > 0
         ) or (not study.active):
@@ -132,4 +133,54 @@ def run_all_archive():
             study.id,
             study_id=study.id,
             timeout=app.config["ARCHIVE_TIMEOUT"],
+        )
+
+
+@app.cli.command()
+def run_all_archive_derivative():
+    """Archive all active studies' raw datasets.
+
+    This won't archive studies that currently have tar2bids runs in
+    progress.
+    """
+    for study in Study.query.all():
+        if (
+            not DataladDataset.query.filter_by(
+                study_id=study.id,
+                dataset_type=DatasetType.DERIVED_DATA,
+            ).one_or_none()
+        ) or (not study.active):
+            continue
+        Task.launch_task(
+            "archive_derivative_data",
+            "automatic archive task",
+            study.id,
+            study_id=study.id,
+            timeout=app.config["ARCHIVE_TIMEOUT"],
+        )
+
+
+@app.cli.command()
+def run_all_gradcorrect():
+    """Run tar2bids on all active studies."""
+    for study in Study.query.all():
+        if (
+            (study.scanner != "type2")
+            or (
+                len(
+                    Task.query.filter_by(
+                        study_id=study.id,
+                        name="gradcorrect_study",
+                        complete=False,
+                    ).all(),
+                )
+                > 0
+            )
+            or not study.active
+        ):
+            print(f"Skipping study {study.id}. Active: {study.active}")
+            continue
+        app.task_queue.enqueue(
+            "autobidsportal.tasks.find_uncorrected_images",
+            study.id,
         )
