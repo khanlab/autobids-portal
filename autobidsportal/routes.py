@@ -991,10 +991,7 @@ def dicom_verify(study_id, method):
 def logout():
     """Log out current user."""
     if current_user.is_authenticated:
-        # pylint doesn't like werkzeug proxies
-        # pylint: disable=assigning-non-slot
         current_user.last_seen = datetime.now(tz=TIME_ZONE)
-        # pylint: enable=assigning-non-slot
         db.session.commit()
     logout_user()
     return redirect(url_for("portal_blueprint.index"))
@@ -1003,27 +1000,21 @@ def logout():
 @portal_blueprint.route("/api/globus_users", methods=["GET"])
 def list_globus_users():
     """Return a JSON list of users."""
+    path_base = current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
     return jsonify(
         [
             {
-                "id": study.id,
-                "path": current_app.config["ARCHIVE_BASE_URL"].split(":")[1]
-                + "/"
-                + DataladDataset.query.filter_by(
-                    study_id=study.id,
-                    dataset_type=DatasetType.RAW_DATA,
-                )
-                .one()
-                .ria_alias,
+                "id": dataset.study_id,
+                "path": f"{path_base}/{dataset.ria_alias}",
                 "users": [
-                    username.username for username in study.globus_usernames
+                    username.username
+                    for username in dataset.study.globus_usernames
                 ],
             }
-            for study in Study.query.all()
-            if DataladDataset.query.filter_by(
-                study_id=study.id,
-                dataset_type=DatasetType.RAW_DATA,
-            ).one_or_none()
-            is not None
+            for dataset in DataladDataset.query.filter(
+                DataladDataset.dataset_type.in_(
+                    [DatasetType.RAW_DATA, DatasetType.DERIVED_DATA],
+                ),
+            ).all()
         ],
     )
