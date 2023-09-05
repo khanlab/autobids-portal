@@ -19,6 +19,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
+from typing import Any, TypedDict
 
 from defusedxml.ElementTree import parse
 from flask import current_app
@@ -152,7 +153,15 @@ class Tar2bidsArgs:
     deface: bool = False
 
 
-def parse_findscu_xml(element_tree, output_fields):
+class DicomAttribute(TypedDict):
+    """Dict representing one DICOM attribute."""
+
+    tag_code: str
+    tag_name: str
+    tag_value: Any
+
+
+def parse_findscu_xml(element_tree, output_fields) -> list[DicomAttribute]:
     """Find the relevant output from findscu output XML.
 
     Parameters
@@ -311,7 +320,7 @@ class Dcm4cheUtils:
         output_fields,
         attributes,
         retrieve_level="STUDY",
-    ):
+    ) -> list[list[DicomAttribute]]:
         """Query a DICOM server for specified tags from one study.
 
         Parameters

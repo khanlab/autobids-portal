@@ -932,16 +932,16 @@ def dicom_verify(study_id, method):
 
     sorted_responses = sorted(
         responses,
-        key=lambda attr_dict: f'{attr_dict["PatientName"]}',
+        key=lambda metadata: f"{metadata.patient_name}",
     )
     form_exclude = ExcludeScansForm()
     form_exclude.choices_to_exclude.choices = [
         (
             dumps(
                 {
-                    "StudyInstanceUID": response["StudyInstanceUID"],
-                    "PatientName": response["PatientName"],
-                    "StudyID": response["StudyID"],
+                    "StudyInstanceUID": response.study_uid,
+                    "PatientName": response.patient_name,
+                    "StudyID": response.study_id,
                 },
             ),
             "Exclude",
@@ -953,9 +953,9 @@ def dicom_verify(study_id, method):
         (
             dumps(
                 {
-                    "StudyInstanceUID": response["StudyInstanceUID"],
-                    "PatientName": response["PatientName"],
-                    "StudyID": response["StudyID"],
+                    "StudyInstanceUID": response.study_uid,
+                    "PatientName": response.patient_name,
+                    "StudyID": response.study_id,
                 },
             ),
             "Include",
@@ -967,8 +967,8 @@ def dicom_verify(study_id, method):
         (
             dumps(
                 {
-                    "StudyInstanceUID": response["StudyInstanceUID"],
-                    "PatientName": response["PatientName"],
+                    "StudyInstanceUID": response.study_uid,
+                    "PatientName": response.patient_name,
                 },
             ),
             "Include in cfmm2tar",

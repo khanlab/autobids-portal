@@ -1688,13 +1688,13 @@ pyexcel = ">=0.5.6"
 
 [[package]]
 name = "pyright"
-version = "1.1.324"
+version = "1.1.325"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.324-py3-none-any.whl", hash = "sha256:0edb712afbbad474e347de12ca1bd9368aa85d3365a1c7b795012e48e6a65111"},
-    {file = "pyright-1.1.324.tar.gz", hash = "sha256:0c48e3bca3d081bba0dddd0c1f075aaa965c59bba691f7b9bd9d73a98e44e0cf"},
+    {file = "pyright-1.1.325-py3-none-any.whl", hash = "sha256:8f3ab88ba4843f053ab5b5c886d676161aba6f446776bfb57cc0434ed4d88672"},
+    {file = "pyright-1.1.325.tar.gz", hash = "sha256:879a3f66944ffd59d3facd54872fed814830fed64daf3e8eb71b146ddd83bb67"},
 ]
 
 [package.dependencies]
@@ -2439,4 +2439,4 @@ deploy = ["pyuwsgi"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4"
-content-hash = "0efbf34107557d592da671ae975aca9f14b4b8bcae7f6882c13dbb83c86c0659"
+content-hash = "2b359842d1a51c60478b37529fc395e0e8511702dad88e299575a75658d5be66"

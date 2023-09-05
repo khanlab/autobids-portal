@@ -1,8 +1,15 @@
 """Handle qureyng DICOM server for records related to specific studies."""
 
-import re
+from __future__ import annotations
 
-from autobidsportal.dcm4cheutils import DicomQueryAttributes, gen_utils
+import re
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass
+from datetime import date
+from typing import Any
+
+from autobidsportal.dcm4cheutils import DicomAttribute, DicomQueryAttributes, gen_utils
+from autobidsportal.models import Study
 
 ATTRIBUTES_QUERIED = [
     "0020000D",  # StudyInstanceUID
@@ -13,6 +20,26 @@ ATTRIBUTES_QUERIED = [
     "00100020",  # PatientID
     "00100040",  # PatientSex
 ]
+
+
+@dataclass
+class SeriesMetadata:
+    """Metadata describing a DICOM series."""
+
+    description: str
+    number: int
+
+
+@dataclass
+class StudyMetadata:
+    """Metadata describing a scan session."""
+
+    patient_name: str
+    patient_id: str
+    patient_sex: str
+    study_id: str
+    study_uid: str
+    series_metadata: list[SeriesMetadata]
 
 
 def get_inclusion_records(uids_included):
@@ -52,7 +79,9 @@ def get_inclusion_records(uids_included):
     return organize_flat_responses(responses_flat, patient_info)
 
 
-def get_description_records(study, date=None, description=None):
+def get_description_records(
+    study: Study, date: date | None = None, description: str | None = None,
+) -> list[StudyMetadata]:
     """Get DICOM records from a study's query parameters.
 
     Parameters
@@ -151,11 +180,13 @@ def get_study_records(study, date=None, description=None):
     return inclusion_records + [
         record
         for record in description_records
-        if record["StudyInstanceUID"] not in uids_included
+        if record.study_uid not in uids_included
     ]
 
 
-def rearrange_response(dicom_response):
+def rearrange_response(
+    dicom_response: Iterable[Iterable[DicomAttribute]],
+) -> list[dict[str, Any]]:
     """Rearrange a list of lists of dicts from dcm4cheutils.
 
     Parameters
@@ -178,7 +209,10 @@ def rearrange_response(dicom_response):
     ]
 
 
-def organize_flat_responses(responses, patient_info):
+def organize_flat_responses(
+    responses: Iterable[Mapping[str, Any]],
+    patient_info: Iterable[tuple[str, str, str, str, str]],
+) -> list[StudyMetadata]:
     """Organize a flat list of DICOM responses to a hierarchical structure.
 
     Parameters
@@ -195,24 +229,24 @@ def organize_flat_responses(responses, patient_info):
         list of sub-dictionaries with study-level attributes.
     """
     return [
-        {
-            "PatientName": patient_name,
-            "PatientID": patient_id,
-            "PatientSex": patient_sex,
-            "StudyID": study_id,
-            "StudyInstanceUID": study_uid,
-            "series": sorted(
+        StudyMetadata(
+            patient_name=patient_name,
+            patient_id=patient_id,
+            patient_sex=patient_sex,
+            study_id=study_id,
+            study_uid=study_uid,
+            series_metadata=sorted(
                 [
-                    {
-                        "SeriesNumber": response["SeriesNumber"],
-                        "SeriesDescription": response["SeriesDescription"],
-                    }
+                    SeriesMetadata(
+                        number=int(response["SeriesNumber"]),
+                        description=response["SeriesDescription"],
+                    )
                     for response in responses
                     if response["StudyInstanceUID"] == study_uid
                 ],
-                key=lambda series_dict: f'{int(series_dict["SeriesNumber"]):03d}',
+                key=lambda metadata: f"{metadata.number:03d}",
             ),
-        }
+        )
         for (
             patient_id,
             patient_name,
