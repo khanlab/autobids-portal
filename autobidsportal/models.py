@@ -381,6 +381,15 @@ class DatasetType(Enum):
     RAW_DATA = 2
     DERIVED_DATA = 3
 
+    def to_bids_str(self) -> str:
+        """Produce a BIDS-style string for serialization."""
+        map_ = {
+            DatasetType.SOURCE_DATA: "sourcedata",
+            DatasetType.RAW_DATA: "rawdata",
+            DatasetType.DERIVED_DATA: "deriveddata",
+        }
+        return map_[self]
+
 
 class DataladDataset(db.Model):
     """A datalad dataset relating to a study."""
