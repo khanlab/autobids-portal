@@ -1005,6 +1005,7 @@ def list_globus_users():
         [
             {
                 "id": dataset.study_id,
+                "type": dataset.dataset_type.to_bids_str(),
                 "path": f"{path_base}/{dataset.ria_alias}",
                 "users": [
                     username.username

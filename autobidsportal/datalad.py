@@ -9,12 +9,7 @@ from datalad import api as datalad_api
 from datalad.support.annexrepo import AnnexRepo
 from flask import current_app
 
-from autobidsportal.models import (
-    DataladDataset,
-    DatasetType,
-    Study,
-    db,
-)
+from autobidsportal.models import DataladDataset, DatasetType, Study, db
 
 
 class RiaDataset:
@@ -46,29 +41,17 @@ class RiaDataset:
         remove_finalized_dataset(self.path_dataset)
 
 
-def get_alias(study_id, dataset_type):
+def get_alias(study_id: int, dataset_type: DatasetType):
     """Generate an alias for a study in the RIA.
 
     Parameters
     ----------
-    study_id : int
+    study_id
         ID of the study.
-    dataset_type: DatasetType
+    dataset_type
         "tar2bids" or "cfmm2tar".
-
-    Raises
-    ------
-    TypeError
-        If dataset_type is not DatasetType
     """
-    if dataset_type is DatasetType.SOURCE_DATA:
-        text = "sourcedata"
-    elif dataset_type is DatasetType.RAW_DATA:
-        text = "rawdata"
-    elif dataset_type is DatasetType.DERIVED_DATA:
-        text = "deriveddata"
-    else:
-        raise TypeError
+    text = dataset_type.to_bids_str()
     return f"study-{study_id}_{text}"
 
 
