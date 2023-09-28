@@ -6,30 +6,42 @@ import subprocess
 from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import chain
+from os import PathLike
 from pathlib import Path
 
 
-def apptainer_exec(cmd_list, container_path, binds, **kwargs):
+def apptainer_exec(
+    cmd_list: list[str],
+    container_path: PathLike | str,
+    binds: list[str],
+    **kwargs,
+):
     """Assemble a singularity subprocess with given args.
 
     Parameters
     ----------
-    cmd_list : list of string
+    cmd_list
         Equivalent to "args" in subprocess.run. Passed to the singularity
         container.
-    container_path : Path or str
+
+    container_path
         Path to the singularity container to be executed.
-    binds : list of str
+
+    binds
         List of bind strings of the form src[:dest[:opts]]
+
     kwargs
-        keyword arguments to be passed to subprocess.run. "shell" will be
+        keyword arguments to be passed to ``subprocess.run``. "shell" will be
         overwritten to False and "check" will be overwritten to True, if
         present.
     """
     bind_list = list(chain(*[["-B", bind] for bind in binds]))
+
+    # Overwrite "shell" and "check"
     kwargs["shell"] = False
     if "check" in kwargs:
         del kwargs["check"]
+
     return subprocess.run(
         ["apptainer", "exec", *bind_list] + [str(container_path)] + cmd_list,
         check=True,
@@ -43,9 +55,10 @@ class ImageSpec:
 
     Attributes
     ----------
-    image_path : str or Path
+    image_path
         Path to the singularity container to be executed.
-    binds : list of str
+
+    binds
         List of bind strings of the form src[:dest[:opts]]
     """
 
