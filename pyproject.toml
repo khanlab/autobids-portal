@@ -40,7 +40,17 @@ ruff = "^0.0.265"
 
 [tool.ruff]
 select = ["ALL"]
-ignore = ["ANN", "TCH", "T20", "S603", "S607", "B905", "D203", "D213"]
+ignore = [
+    "ANN", 
+    "TCH", 
+    "T20", 
+    "S603", 
+    "S607", 
+    "B905", 
+    "D203", 
+    "D213", 
+    "PTH123"
+]
 unfixable = ["F841"]
 
 [tool.isort]

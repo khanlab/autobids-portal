@@ -1,18 +1,20 @@
 """Utilities for handling BIDS datasets."""
+from __future__ import annotations
 
 import csv
 import os
 import shutil
+from collections.abc import Iterable
 from pathlib import Path
 
 
 def _check_existing(
-    path_incoming: os.PathLike,
-    path_existing: os.PathLike,
-    dir_incoming: os.PathLike | str,
-    contents: List[os.PathLike | str],
-):
-    """Check if file already exists
+    path_incoming: Path,
+    path_existing: Path,
+    dir_incoming: str,
+    contents: Iterable[os.PathLike[str] | str],
+) -> list[str]:
+    """Check if file already exists.
 
     Parameters
     ----------
@@ -30,7 +32,7 @@ def _check_existing(
 
     Returns
     -------
-    list[Path]
+    list[str]
         List of paths to ignore as file already exists
     """
     # Files that already exists and should be ignored
@@ -50,10 +52,37 @@ def _check_existing(
     return ignore
 
 
-def merge_datasets(path_incoming, path_existing):
-    """Merge one BIDS dataset into another."""
+def merge_datasets(path_incoming: Path, path_existing: Path):
+    """Merge one BIDS dataset into another.
 
-    def _ignore(dir_incoming, contents):
+    Parameters
+    ----------
+    path_incoming
+        Path to incoming "new" BIDS dataset
+
+    path_existing
+        Path to existing BIDS dataset
+    """
+
+    def _ignore(
+        dir_incoming: str,
+        contents: Iterable[os.PathLike[str] | str],
+    ) -> list[str]:
+        """Check existance of existing entries (internal function).
+
+        Parameters
+        ----------
+        dir_incoming
+            Directory of incoming BIDS dataset
+
+        contents
+            List of files to check
+
+        Returns
+        -------
+        List[str]
+            List of existing files to ignore when merging
+        """
         return _check_existing(
             path_incoming,
             path_existing,
@@ -61,10 +90,16 @@ def merge_datasets(path_incoming, path_existing):
             contents,
         )
 
+    # Get names of items in existing dataset
     names_existing = {entry.name for entry in os.scandir(path_existing)}
+
+    # Loop through each item found in incoming dataset, acting only on
+    # directories and files
     for entry in os.scandir(path_incoming):
         if entry.name == "code":
             continue
+
+        # Copy entries to existing dataset and remove from source
         if entry.is_dir():
             shutil.copytree(
                 entry.path,
@@ -76,6 +111,8 @@ def merge_datasets(path_incoming, path_existing):
         elif entry.is_file() and (entry.name not in names_existing):
             shutil.copy2(entry.path, path_existing)
             Path(entry.path).unlink()
+
+    # Merge existing participants.tsv files
     if (path_incoming / "participants.tsv").exists():
         merge_participants_tsv(
             path_incoming / "participants.tsv",
@@ -83,7 +120,10 @@ def merge_datasets(path_incoming, path_existing):
         )
 
 
-def merge_participants_tsv(tsv_incoming, tsv_existing):
+def merge_participants_tsv(
+    tsv_incoming: os.PathLike[str] | str,
+    tsv_existing: os.PathLike[str] | str,
+):
     """Merge an incoming participants.tsv file with an existing one.
 
     Parameters
@@ -95,11 +135,13 @@ def merge_participants_tsv(tsv_incoming, tsv_existing):
         tsv file containing existing participants of a dataset
     """
     # Read incoming and existing participants into two separate lists
-    with tsv_incoming.open(
+    with open(
+        tsv_incoming,
         "r+",
         encoding="utf-8",
         newline="",
-    ) as file_incoming, tsv_existing.open(
+    ) as file_incoming, open(
+        tsv_existing,
         "r+",
         encoding="utf-8",
         newline="",
@@ -121,8 +163,10 @@ def merge_participants_tsv(tsv_incoming, tsv_existing):
     to_write = ["\t".join(row) + "\n" for row in list_existing]
     if not list_existing[0][0].startswith("participant_id"):
         to_write = ["participant_id\n", *to_write]
+
     # Write to file
-    with tsv_existing.open(
+    with open(
+        tsv_existing,
         "w",
         encoding="utf-8",
         newline="",
