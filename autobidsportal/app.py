@@ -30,6 +30,11 @@ def create_app(
 
     override_dict
         Dictionary of config vars to update.
+
+    Returns
+    -------
+    Flask
+        Flask-application with extensions and options configured
     """
     app = Flask(__name__)
     # Instantiate a config object

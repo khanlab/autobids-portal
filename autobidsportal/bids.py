@@ -6,15 +6,47 @@ import shutil
 from pathlib import Path
 
 
-def _check_existing(path_incoming, path_existing, dir_incoming, contents):
+def _check_existing(
+    path_incoming: os.PathLike,
+    path_existing: os.PathLike,
+    dir_incoming: os.PathLike | str,
+    contents: List[os.PathLike | str],
+):
+    """Check if file already exists
+
+    Parameters
+    ----------
+    path_incoming
+        ??
+
+    path_existing
+        Path containing existing files
+
+    dir_incoming
+        Directory containing "new", incoming files
+
+    contents
+        List of files to check
+
+    Returns
+    -------
+    list[Path]
+        List of paths to ignore as file already exists
+    """
+    # Files that already exists and should be ignored
     ignore = []
+
     for file_incoming in contents:
+        # Determine relative path
         path_relative = (Path(dir_incoming) / file_incoming).relative_to(
             path_incoming,
         )
         new_file = path_existing / path_relative
+
+        # Add to ignore list if new file already exists or is a symlink
         if (new_file.exists() and new_file.is_file()) or new_file.is_symlink():
             ignore.append(file_incoming)
+
     return ignore
 
 
@@ -52,7 +84,17 @@ def merge_datasets(path_incoming, path_existing):
 
 
 def merge_participants_tsv(tsv_incoming, tsv_existing):
-    """Merge an incoming participants.tsv file with an existing one."""
+    """Merge an incoming participants.tsv file with an existing one.
+
+    Parameters
+    ----------
+    tsv_incoming
+        tsv file containing "new" participants of a dataset
+
+    tsv_existing
+        tsv file containing existing participants of a dataset
+    """
+    # Read incoming and existing participants into two separate lists
     with tsv_incoming.open(
         "r+",
         encoding="utf-8",
@@ -64,17 +106,25 @@ def merge_participants_tsv(tsv_incoming, tsv_existing):
     ) as file_existing:
         list_incoming = list(csv.reader(file_incoming, delimiter="\t"))
         list_existing = list(csv.reader(file_existing, delimiter="\t"))
+
+    # Grab existing participant ids
     subjects_existing = {row[0] for row in list_existing}
+
+    # Grab incoming participant ids (skipping header row)
     for line_incoming in list_incoming[1:]:
+        # If participant id already exists, skip
         if line_incoming[0] in subjects_existing:
             continue
         list_existing.append(line_incoming)
-        to_write = ["\t".join(row) + "\n" for row in list_existing]
-        if not list_existing[0][0].startswith("participant_id"):
-            to_write = ["participant_id\n", *to_write]
-        with tsv_existing.open(
-            "w",
-            encoding="utf-8",
-            newline="",
-        ) as file_existing:
-            file_existing.writelines(to_write)
+
+    # Format lines and add header if necessary
+    to_write = ["\t".join(row) + "\n" for row in list_existing]
+    if not list_existing[0][0].startswith("participant_id"):
+        to_write = ["participant_id\n", *to_write]
+    # Write to file
+    with tsv_existing.open(
+        "w",
+        encoding="utf-8",
+        newline="",
+    ) as file_existing:
+        file_existing.writelines(to_write)
