@@ -8,14 +8,15 @@ from dataclasses import dataclass
 from itertools import chain
 from os import PathLike
 from pathlib import Path
+from typing import Iterable
 
 
 def apptainer_exec(
-    cmd_list: list[str],
+    cmd_list: Iterable[str] | None,
     container_path: PathLike | str,
-    binds: list[str],
+    binds: Iterable[str] | None,
     **kwargs,
-):
+) -> subprocess.CompletedProcess:
     """Assemble a singularity subprocess with given args.
 
     Parameters
