@@ -124,7 +124,7 @@ class Task(db.Model):
         name: str,
         description: str,
         *args,
-        user: str | None = None,
+        user: Any | None = None,
         timeout: int = 100000,
         study_id: int | None = None,
         **kwargs,

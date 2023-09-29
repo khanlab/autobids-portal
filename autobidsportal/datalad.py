@@ -266,7 +266,7 @@ def rename_tar_file(
         )
 
 
-def delete_all_content(path_dataset: str):
+def delete_all_content(path_dataset: Path):
     """Delete everything in a dataset and save.
 
     Parameters
