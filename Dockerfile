@@ -5,14 +5,14 @@ RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/s
         build-essential=12.9 \
         ca-certificates=20210119 \
         cryptsetup=2:2.3.7-1+deb11u1 \
-        curl=7.74.0-1.3+deb11u3 \
+        curl=7.74.0-1.3+deb11u7 \
         default-jre=2:1.11-72 \
         fakeroot=1.25.3-1.1 \
         fuse2fs=1.46.2-2 \
         fuse-overlayfs=1.4.0-1 \
-        git=1:2.30.2-1 \
+        git=1:2.30.2-1+deb11u2 \
         git-annex=8.20210223-2 \
-        libcurl4=7.74.0-1.3+deb11u3 \
+        libcurl4=7.74.0-1.3+deb11u7 \
         libseccomp-dev=2.5.1-1+deb11u1 \
         pkg-config=0.29.2-1 \
         python3=3.9.2-3 \
