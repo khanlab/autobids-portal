@@ -1,8 +1,11 @@
-"""Handle qureyng DICOM server for records related to specific studies."""
+"""Handle queryng DICOM server for records related to specific studies."""
 
 import re
+from datetime import date
+from typing import Any, Iterable
 
 from autobidsportal.dcm4cheutils import DicomQueryAttributes, gen_utils
+from autobidsportal.models import Study
 
 ATTRIBUTES_QUERIED = [
     "0020000D",  # StudyInstanceUID
@@ -15,18 +18,20 @@ ATTRIBUTES_QUERIED = [
 ]
 
 
-def get_inclusion_records(uids_included):
+def get_inclusion_records(
+    uids_included: list[str],
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Get DICOM records from a list of StudyInstanceUIDs.
 
     Parameters
     ----------
-    uids_included : list of str
+    uids_included
         A list of StudyInstanceUIDs corresponding to records to grab from
         the DICOM server.
 
     Returns
     -------
-    list of dict
+    list[dict[str, str | list[dict[str, str]]]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -52,27 +57,29 @@ def get_inclusion_records(uids_included):
     return organize_flat_responses(responses_flat, patient_info)
 
 
-def get_description_records(study, date=None, description=None):
+def get_description_records(
+    study: Study, date: date | None = None, description: str | None = None
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Get DICOM records from a study's query parameters.
 
     Parameters
     ----------
-    study : Study
+    study
         Study to take parameters from.
-    date : date, optional
+    date
         Date to grab studies from.
-    description : str, optional
+    description
         "{PI Name}^{Study Name}", StudyDescription to query.
 
     Returns
     -------
-    list of dict
+    list[dict[str, str | list[dict[str, str]]]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
     uids_excluded = [
         explicit_patient.study_instance_uid
-        for explicit_patient in study.explicit_patients
+        for explicit_patient in study.explicit_patients  # pyright: ignore
         if not explicit_patient.included
     ]
     if (date is None) and study.retrospective_data:
@@ -119,7 +126,11 @@ def get_description_records(study, date=None, description=None):
     )
 
 
-def get_study_records(study, date=None, description=None):
+def get_study_records(
+    study: Study,
+    date: date | None = None,
+    description: str | None = None,
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Get all records related to a study.
 
     This includes studies explicitly included by StudyInstanceUID and studies
@@ -127,23 +138,22 @@ def get_study_records(study, date=None, description=None):
 
     Parameters
     ----------
-    study : Study
+    study
         Study to draw included UIDs and search params from.
-    date : date
+    date
         Date to narrow down the search.
-    description : str
+    description
         "{PI Name}^{Study Name}", study description to narrow down the search.
-
 
     Returns
     -------
-    list of dict
+    list[dict[str, str | list[dict[str, str]]]]:
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
     uids_included = {
         explicit_patient.study_instance_uid
-        for explicit_patient in study.explicit_patients
+        for explicit_patient in study.explicit_patients  # pyright: ignore
         if explicit_patient.included
     }
     inclusion_records = get_inclusion_records(list(uids_included))
@@ -155,17 +165,19 @@ def get_study_records(study, date=None, description=None):
     ]
 
 
-def rearrange_response(dicom_response):
+def rearrange_response(
+    dicom_response: Iterable[Iterable[dict[str, str]]]
+) -> list[dict[str, str]]:
     """Rearrange a list of lists of dicts from dcm4cheutils.
 
     Parameters
     ----------
-    dicom_response : list of list of dicts
+    dicom_response
         DICOM query response from dcm4cheutils.
 
     Returns
     -------
-    list of dicts
+    list[dict[str, str]]
         Rearranged DICOM query response where each dict's key is an attribute
         and its corresponding value is the value of that attribute.
     """
@@ -178,19 +190,23 @@ def rearrange_response(dicom_response):
     ]
 
 
-def organize_flat_responses(responses, patient_info):
+def organize_flat_responses(
+    responses: Iterable[dict[str, str]],
+    patient_info: set[tuple[str, str, str, str, str]],
+) -> list[dict[str, Any]]:
     """Organize a flat list of DICOM responses to a hierarchical structure.
 
     Parameters
     ----------
-    responses : list of dict
+    responses
         Flat responses corresponding to every series
-    patient_info : set of tuple
+
+    patient_info
         Tuple of patient info for every StudyInstanceUID in the response.
 
     Returns
     -------
-    list of dict
+    list[dict[str, Any]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
