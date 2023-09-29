@@ -1,6 +1,8 @@
 """Utilities for processing the filesystem."""
 
 import os
+from collections.abc import Collection
+from typing import Any
 
 SPACE = "    "
 BRANCH = "│   "
@@ -8,14 +10,18 @@ TEE = "├── "
 LAST = "└── "
 
 
-def gen_dir_dict(path, ignore=frozenset()):
+def gen_dir_dict(
+    path: str,
+    ignore: Collection = frozenset(),
+) -> dict[str, list[str] | dict[str, dict[str, Any]]]:
     """Generate a dictionary representing a file tree.
 
     Parameters
     ----------
-    path : str
+    path
         The root path of the file tree to convert to dict.
-    ignore : Collection
+
+    ignore
         File/directory names to ignore.
 
     Returns
@@ -53,22 +59,36 @@ def gen_dir_dict(path, ignore=frozenset()):
     }
 
 
-def render_dir_dict(dir_dict, prefix=""):
+def render_dir_dict(
+    dir_dict: dict[str, Any],
+    prefix: str = "",
+) -> list[str]:
     """Render a dir_dict in the style of UNIX tree.
+
+    Parameters
+    ----------
+    dir_dict
+        The directory dictionary to render.
+
+    prefix
+        Prefix string to add to each line.
+
 
     Returns
     -------
-    list of str:
+    list[str]
         Strings that when joined by newlines will render the dir_dict.
     """
     all_contents = dir_dict["files"] + list(dir_dict["dirs"].keys())
     pointers = [TEE for _ in range(len(all_contents) - 1)] + [LAST]
     lines = []
+
     for pointer, file_ in zip(
         pointers[: len(dir_dict["files"])],
         dir_dict["files"],
     ):
         lines.append(f"{prefix}{pointer}{file_}")
+
     for pointer, (key, val) in zip(
         pointers[len(dir_dict["files"]) :],
         dir_dict["dirs"].items(),
@@ -76,4 +96,5 @@ def render_dir_dict(dir_dict, prefix=""):
         lines.append(f"{prefix}{pointer}{key}")
         extension = BRANCH if pointer == TEE else SPACE
         lines.extend(render_dir_dict(val, prefix=f"{prefix}{extension}"))
+
     return lines
