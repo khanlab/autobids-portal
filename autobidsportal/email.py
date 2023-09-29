@@ -11,11 +11,23 @@ mail = Mail()
 
 
 def send_email(
-    subject,
-    body,
+    subject: str,
+    body: str,
     additional_recipients: Collection[str] | None = None,
 ):
-    """Send an email to the configured recipients."""
+    """Send an email to the configured recipients.
+
+    Parameters
+    ----------
+    subject
+        Email subject
+
+    body
+        Main text (body) of email
+
+    additional_recipients
+        Additional addresses to send email to
+    """
     if not current_app.config["MAIL_ENABLED"]:
         return
     recipients = list(
