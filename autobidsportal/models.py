@@ -4,15 +4,17 @@
 # ruff: noqa: A003
 
 import json
+from collections.abc import Iterable
 from datetime import datetime
 from enum import Enum
 from time import time
+from typing import Any
 
-import redis
-import rq
 from flask import current_app
 from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
+from redis.exceptions import RedisError
+from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from sqlalchemy import MetaData
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -63,6 +65,144 @@ tar2bids_runs = db.Table(
 )
 
 
+class Notification(db.Model):
+    """An active notification for an active user."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    timestamp = db.Column(db.Float, index=True, default=time)
+    payload_json = db.Column(db.Text, nullable=False)
+
+    def get_data(self):
+        """Get the notification contents."""
+        return json.loads(str(self.payload_json))
+
+    def __repr__(self) -> str:
+        """Generate a str representation of this notification."""
+        return f"<Notification {self.name}, {self.timestamp}>"
+
+
+class Task(db.Model):
+    """A task deferred to the task queue."""
+
+    TASKS = (
+        "run_cfmm2tar",
+        "run_tar2bids",
+        "update_heuristics",
+        "archive_raw_data",
+        "gradcorrect_study",
+        "archive_derivative_data",
+    )
+
+    id = db.Column(db.String(36), primary_key=True)
+    name = db.Column(db.String(128), index=True, nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=True)
+    complete = db.Column(db.Boolean, default=False, nullable=False)
+    success = db.Column(db.Boolean, default=False, nullable=True)
+    error = db.Column(db.Text, nullable=True)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=True)
+    log = db.Column(db.Text, nullable=True)
+
+    def __repr__(self) -> str:
+        """Generate a string representation of this task."""
+        task_cols = (
+            self.user_id,
+            self.study_id,
+            self.complete,
+            self.success,
+            self.error,
+        )
+        return f"<Task {task_cols}>"
+
+    @classmethod
+    def launch_task(
+        cls,
+        name: str,
+        description: str,
+        *args,
+        user: str | None = None,
+        timeout: int = 100000,
+        study_id: int | None = None,
+        **kwargs,
+    ):
+        """Enqueue a task with rq and record it in the DB.
+
+        Parameters
+        ----------
+        name
+            Task name to complete
+
+        description
+            Description of task
+
+        *args
+            Variable positional arguments to be passed to task function
+
+        user
+            User associated with task
+
+        timeout
+            Time in milliseconds before task times out
+
+        study_id
+            Study id associated with task
+
+        **kwargs
+            Additional keyword arguments to be passed to task function
+
+        Returns
+        -------
+        Task
+            Object defining task to be completed
+        """
+        if name not in cls.TASKS:
+            msg = "Invalid task name"
+            raise ValueError(msg)
+
+        rq_job = Job.create(
+            f"autobidsportal.tasks.{name}",
+            args=args,
+            kwargs=kwargs,
+            timeout=timeout,
+            connection=current_app.redis,  # pyright: ignore
+        )
+
+        task = cls(
+            id=rq_job.get_id(),
+            name=name,
+            description=description,
+            user=user,
+            start_time=datetime.now(tz=TIME_ZONE),
+            study_id=study_id,
+        )
+
+        db.session.add(task)  # pyright: ignore
+        db.session.commit()  # pyright: ignore
+        current_app.task_queue.enqueue_job(rq_job)  # pyright: ignore
+
+        return task
+
+    def get_rq_job(self):
+        """Get the rq job associated with this task."""
+        try:
+            rq_job = Job.fetch(
+                self.id,
+                connection=current_app.redis,  # pyright: ignore
+            )
+        except (RedisError, NoSuchJobError):
+            return None
+        return rq_job
+
+    def get_progress(self):
+        """Get the progress of this task."""
+        job = self.get_rq_job()
+        return job.meta.get("progress", 0) if job is not None else 100
+
+
 class User(UserMixin, db.Model):
     """Information related to registered users."""
 
@@ -78,31 +218,87 @@ class User(UserMixin, db.Model):
         """Generate a nice str representation of this user."""
         return f"<User ID {self.id} {self.admin, self.email, self.last_seen}>"
 
-    def set_password(self, password):
-        """Generate a hash for a password and assign it to the user."""
+    def set_password(self, password: str):
+        """Generate a hash for a password and assign it to the user.
+
+        Parameters
+        ----------
+        password
+            User-set password to generate hash for
+        """
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
-        """Check whether the password matches this user's password."""
+    def check_password(self, password: str) -> bool:
+        """Check whether the password matches this user's password.
+
+        Parameters
+        ----------
+        password
+            User-provided password to check against hash
+
+        Returns
+        -------
+        bool
+            Indicator of whether password matches expected
+        """
         return check_password_hash(self.password_hash, password)
 
-    def add_notification(self, name, data):
-        """Set the user's active notification."""
+    def add_notification(
+        self,
+        name: str,
+        data: dict[str, Any],
+    ) -> Notification:
+        """Set the user's active notification.
+
+        Parameters
+        ----------
+        name
+            Notification name
+
+        data
+            Dictionary containing notification payload
+
+        Returns
+        -------
+        Notification
+            Notification object
+        """
         Notification.query.filter_by(name=name, user_id=self.id).delete()
+
         notification = Notification(
             name=name,
             payload_json=json.dumps(data),
             user=self,
         )
-        db.session.add(notification)
+
+        db.session.add(notification)  # pyright: ignore
+
         return notification
 
-    def get_completed_tasks(self):
-        """Get all completed tasks associated with this user."""
+    def get_completed_tasks(self) -> Iterable[Task]:
+        """Get all completed tasks.
+
+        Returns
+        -------
+        Iterable[Task]
+        All completed tasks associated with this user.
+        """
         return Task.query.filter_by(user=self, complete=True).all()
 
-    def get_task_in_progress(self, name):
-        """Get this user's active task with the given name."""
+    def get_task_in_progress(self, name: str):
+        """Get this user's active task with the given name.
+
+        Parameters
+        ----------
+        name
+            Notification name
+
+        Returns
+        -------
+        Task
+            Get first active task in-progress for user
+
+        """
         return Task.query.filter_by(
             name=name,
             user=self,
@@ -111,8 +307,19 @@ class User(UserMixin, db.Model):
 
 
 @login.user_loader
-def load_user(user_id):
-    """Get a user with a specific ID."""
+def load_user(user_id: str) -> User:
+    """Get a user with a specific ID.
+
+    Parameters
+    ----------
+    user_id
+        String representation of specific ID for given user
+
+    Returns
+    -------
+    User
+        User object
+    """
     return User.query.get(int(user_id))
 
 
@@ -219,119 +426,27 @@ class Study(db.Model):
         )
         return f"<Answer {answer_cols}>"
 
-    def get_tasks_in_progress(self):
-        """Return all active tasks associated with this study."""
+    def get_tasks_in_progress(self) -> Iterable[Task]:
+        """Return all active tasks associated with this study.
+
+        Returns
+        -------
+        Iterable[Task]
+            All active tasks in study
+        """
         return Task.query.filter_by(study=self, complete=False).all()
 
-    def update_custom_ria_url(self, new_url):
-        """Update the custom ria URL for this study and its associated datasets."""
+    def update_custom_ria_url(self, new_url: str):
+        """Update custom ria URL for this study and its associated datasets.
+
+        Parameters
+        ----------
+        new_url
+            New RIA url for study
+        """
         self.custom_ria_url = new_url
-        for (
-            dataset
-        ) in self.datalad_datasets:  # pylint: disable=not-an-iterable
+        for dataset in self.datalad_datasets:  # pyright: ignore
             dataset.custom_ria_url = new_url
-
-
-class Notification(db.Model):
-    """An active notification for an active user."""
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), index=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    timestamp = db.Column(db.Float, index=True, default=time)
-    payload_json = db.Column(db.Text, nullable=False)
-
-    def get_data(self):
-        """Get the notification contents."""
-        return json.loads(str(self.payload_json))
-
-    def __repr__(self) -> str:
-        """Generate a str representation of this notification."""
-        return f"<Notification {self.name}, {self.timestamp}>"
-
-
-class Task(db.Model):
-    """A task deferred to the task queue."""
-
-    TASKS = (
-        "run_cfmm2tar",
-        "run_tar2bids",
-        "update_heuristics",
-        "archive_raw_data",
-        "gradcorrect_study",
-        "archive_derivative_data",
-    )
-
-    id = db.Column(db.String(36), primary_key=True)
-    name = db.Column(db.String(128), index=True, nullable=False)
-    description = db.Column(db.Text, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
-    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=True)
-    complete = db.Column(db.Boolean, default=False, nullable=False)
-    success = db.Column(db.Boolean, default=False, nullable=True)
-    error = db.Column(db.Text, nullable=True)
-    start_time = db.Column(db.DateTime, nullable=False)
-    end_time = db.Column(db.DateTime, nullable=True)
-    log = db.Column(db.Text, nullable=True)
-
-    def __repr__(self) -> str:
-        """Generate a string representation of this task."""
-        task_cols = (
-            self.user_id,
-            self.study_id,
-            self.complete,
-            self.success,
-            self.error,
-        )
-        return f"<Task {task_cols}>"
-
-    @classmethod
-    def launch_task(
-        cls,
-        name,
-        description,
-        *args,
-        user=None,
-        timeout=100000,
-        study_id=None,
-        **kwargs,
-    ):
-        """Enqueue a task with rq and record it in the DB."""
-        if name not in cls.TASKS:
-            msg = "Invalid task name"
-            raise ValueError(msg)
-        rq_job = Job.create(
-            f"autobidsportal.tasks.{name}",
-            args=args,
-            kwargs=kwargs,
-            timeout=timeout,
-            connection=current_app.redis,
-        )
-        task = cls(
-            id=rq_job.get_id(),
-            name=name,
-            description=description,
-            user=user,
-            start_time=datetime.now(tz=TIME_ZONE),
-            study_id=study_id,
-        )
-        db.session.add(task)
-        db.session.commit()
-        current_app.task_queue.enqueue_job(rq_job)
-        return task
-
-    def get_rq_job(self):
-        """Get the rq job associated with this task."""
-        try:
-            rq_job = Job.fetch(self.id, connection=current_app.redis)
-        except (redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
-            return None
-        return rq_job
-
-    def get_progress(self):
-        """Get the progress of this task."""
-        job = self.get_rq_job()
-        return job.meta.get("progress", 0) if job is not None else 100
 
 
 class Cfmm2tarOutput(db.Model):
