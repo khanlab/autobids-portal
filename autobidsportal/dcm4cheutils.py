@@ -19,10 +19,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
+from xml.etree.ElementTree import ElementTree
 
 from defusedxml.ElementTree import parse
 from flask import current_app
-from xml.etree.ElementTree import ElementTree
 
 from autobidsportal.apptainer import ImageSpec, apptainer_exec
 
@@ -180,7 +180,8 @@ class Tar2bidsArgs:
 
 
 def parse_findscu_xml(
-    element_tree: ElementTree, output_fields: Iterable[str]
+    element_tree: ElementTree,
+    output_fields: Iterable[str],
 ) -> list[dict[str, str]]:
     """Find the relevant output from findscu output XML.
 
@@ -303,7 +304,8 @@ class Dcm4cheUtils:
             self._findscu_list.append("--tls-aes")
 
     def exec_cfmm2tar(
-        self, cmd_list: Iterable[str]
+        self,
+        cmd_list: Iterable[str],
     ) -> subprocess.CompletedProcess:
         """Execute the cfmm2tar container with the configured setup.
 
@@ -369,7 +371,7 @@ class Dcm4cheUtils:
 
         return all_pis
 
-    def query_single_study(
+    def query_single_study(  # noqa: disable=D417
         self,
         output_fields: Iterable[str],
         attributes: DicomQueryAttributes,
@@ -383,8 +385,8 @@ class Dcm4cheUtils:
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
 
-        attributes
-            A set of attributes to search for.
+        attributes  # noqa: disable=D405,D407
+            A set of attributes to search for.D417
 
         retrieve_level
             Level at which to retrieve records. Defaults to "STUDY", but can
@@ -443,7 +445,7 @@ class Dcm4cheUtils:
                     "-m",
                     "StudyInstanceUID={}".format(
                         "\\\\".join(
-                            attributes.study_instance_uids  # pyright: ignore
+                            attributes.study_instance_uids,  # pyright: ignore
                         ),  # Typecheck since join always expects input
                     ),
                 ],

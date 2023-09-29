@@ -1,8 +1,9 @@
 """Handle queryng DICOM server for records related to specific studies."""
 
 import re
+from collections.abc import Iterable
 from datetime import date
-from typing import Any, Iterable
+from typing import Any
 
 from autobidsportal.dcm4cheutils import DicomQueryAttributes, gen_utils
 from autobidsportal.models import Study
@@ -58,7 +59,9 @@ def get_inclusion_records(
 
 
 def get_description_records(
-    study: Study, date: date | None = None, description: str | None = None
+    study: Study,
+    date: date | None = None,
+    description: str | None = None,
 ) -> list[dict[str, str | list[dict[str, str]]]]:
     """Get DICOM records from a study's query parameters.
 
@@ -166,7 +169,7 @@ def get_study_records(
 
 
 def rearrange_response(
-    dicom_response: Iterable[Iterable[dict[str, str]]]
+    dicom_response: Iterable[Iterable[dict[str, str]]],
 ) -> list[dict[str, str]]:
     """Rearrange a list of lists of dicts from dcm4cheutils.
 
