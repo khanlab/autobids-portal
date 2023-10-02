@@ -8,13 +8,12 @@ from dataclasses import dataclass
 from itertools import chain
 from os import PathLike
 from pathlib import Path
-from typing import Iterable
 
 
 def apptainer_exec(
-    cmd_list: Iterable[str] | None,
+    cmd_list: Sequence[str],
     container_path: PathLike | str,
-    binds: Iterable[str] | None,
+    binds: Sequence[str],
     **kwargs,
 ) -> subprocess.CompletedProcess:
     """Assemble a singularity subprocess with given args.
@@ -44,7 +43,9 @@ def apptainer_exec(
         del kwargs["check"]
 
     return subprocess.run(
-        ["apptainer", "exec", *bind_list] + [str(container_path)] + cmd_list,
+        ["apptainer", "exec", *bind_list]
+        + [str(container_path)]
+        + list(cmd_list),
         check=True,
         **kwargs,
     )

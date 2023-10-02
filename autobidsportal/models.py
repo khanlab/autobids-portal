@@ -436,13 +436,13 @@ class Study(db.Model):
         """
         return Task.query.filter_by(study=self, complete=False).all()
 
-    def update_custom_ria_url(self, new_url: str):
+    def update_custom_ria_url(self, new_url: str | None):
         """Update custom ria URL for this study and its associated datasets.
 
         Parameters
         ----------
         new_url
-            New RIA url for study
+            New RIA url for study (Optional)
         """
         self.custom_ria_url = new_url
         for dataset in self.datalad_datasets:  # pyright: ignore

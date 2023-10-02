@@ -1,7 +1,7 @@
 """Handle queryng DICOM server for records related to specific studies."""
 
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date
 from typing import Any
 
@@ -21,7 +21,7 @@ ATTRIBUTES_QUERIED = [
 
 def get_inclusion_records(
     uids_included: list[str],
-) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
+) -> list[dict[str, Any]]:
     """Get DICOM records from a list of StudyInstanceUIDs.
 
     Parameters
@@ -32,7 +32,7 @@ def get_inclusion_records(
 
     Returns
     -------
-    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
+    list[dict[str, Any]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -62,7 +62,7 @@ def get_description_records(
     study: Study,
     date: date | None = None,
     description: str | None = None,
-) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
+) -> list[dict[str, Any]]:
     """Get DICOM records from a study's query parameters.
 
     Parameters
@@ -76,7 +76,7 @@ def get_description_records(
 
     Returns
     -------
-    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
+    list[dict[str, Any]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -161,6 +161,7 @@ def get_study_records(
     }
     inclusion_records = get_inclusion_records(list(uids_included))
     description_records = get_description_records(study, date, description)
+
     return inclusion_records + [
         record
         for record in description_records

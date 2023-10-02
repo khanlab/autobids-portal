@@ -67,7 +67,8 @@ def create_app(
     # Setup Redis connection + handling of tasks via queue and db operations
     # (Note: These are specific to this application - not Flask)
     app.redis = Redis.from_url(  # pyright: ignore
-        app.config["REDIS_URL"], decode_responses=True
+        app.config["REDIS_URL"],
+        decode_responses=True,
     )
     app.task_queue = rq.Queue(connection=app.redis)  # pyright: ignore
     Migrate(

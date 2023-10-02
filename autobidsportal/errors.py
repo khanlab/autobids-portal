@@ -17,5 +17,5 @@ def not_found_error(_):
 
 def internal_error(_):
     """500 error template."""
-    db.session.rollback()
+    db.session.rollback()  # pyright: ignore
     return render_template("500.html"), 500

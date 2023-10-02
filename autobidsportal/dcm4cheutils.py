@@ -15,10 +15,11 @@ import pipes
 import re
 import subprocess
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
+from os import PathLike
 from xml.etree.ElementTree import ElementTree
 
 from defusedxml.ElementTree import parse
@@ -305,7 +306,7 @@ class Dcm4cheUtils:
 
     def exec_cfmm2tar(
         self,
-        cmd_list: Iterable[str],
+        cmd_list: Sequence[str],
     ) -> subprocess.CompletedProcess:
         """Execute the cfmm2tar container with the configured setup.
 
@@ -551,7 +552,7 @@ class Dcm4cheUtils:
                 )
                 + project_query
                 + ["-s", current_app.config["DICOM_SERVER_URL"]]
-                + [args.out_dir]
+                + [str(args.out_dir)]
             )
 
             current_app.logger.info("Running cfmm2tar: %s", " ".join(arg_list))

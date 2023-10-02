@@ -21,7 +21,7 @@ class RiaDataset:
 
     def __init__(
         self,
-        parent: PathLike[str] | str,
+        parent: os.PathLike[str] | str,
         alias: str,
         ria_url: str | None = None,
     ):
@@ -297,7 +297,8 @@ def delete_all_content(path_dataset: Path):
 
 
 def get_tar_file_from_dataset(
-    tar_file: os.PathLike[str] | str, path_dataset: os.PathLike[str] | str
+    tar_file: os.PathLike[str] | str,
+    path_dataset: os.PathLike[str] | str,
 ):
     """Get a tar file from a dataset.
 
