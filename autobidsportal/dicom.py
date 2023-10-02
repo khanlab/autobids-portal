@@ -21,7 +21,7 @@ ATTRIBUTES_QUERIED = [
 
 def get_inclusion_records(
     uids_included: list[str],
-) -> list[dict[str, str | list[dict[str, str]]]]:
+) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
     """Get DICOM records from a list of StudyInstanceUIDs.
 
     Parameters
@@ -32,7 +32,7 @@ def get_inclusion_records(
 
     Returns
     -------
-    list[dict[str, str | list[dict[str, str]]]]
+    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -62,7 +62,7 @@ def get_description_records(
     study: Study,
     date: date | None = None,
     description: str | None = None,
-) -> list[dict[str, str | list[dict[str, str]]]]:
+) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
     """Get DICOM records from a study's query parameters.
 
     Parameters
@@ -76,7 +76,7 @@ def get_description_records(
 
     Returns
     -------
-    list[dict[str, str | list[dict[str, str]]]]
+    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -133,7 +133,7 @@ def get_study_records(
     study: Study,
     date: date | None = None,
     description: str | None = None,
-) -> list[dict[str, str | list[dict[str, str]]]]:
+) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
     """Get all records related to a study.
 
     This includes studies explicitly included by StudyInstanceUID and studies
@@ -150,7 +150,7 @@ def get_study_records(
 
     Returns
     -------
-    list[dict[str, str | list[dict[str, str]]]]:
+    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """

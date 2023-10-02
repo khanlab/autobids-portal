@@ -135,7 +135,7 @@ class Cfmm2tarArgs:
 
     """
 
-    out_dir: str
+    out_dir: PathLike[str] | str
     study_instance_uid: str | None = None
     date_str: str | None = None
     patient_name: str | None = None

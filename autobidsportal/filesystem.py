@@ -11,7 +11,7 @@ LAST = "└── "
 
 
 def gen_dir_dict(
-    path: str,
+    path: os.PathLike[str] | str,
     ignore: Collection = frozenset(),
 ) -> dict[str, list[str] | dict[str, dict[str, Any]]]:
     """Generate a dictionary representing a file tree.

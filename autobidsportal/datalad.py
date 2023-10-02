@@ -19,7 +19,12 @@ from autobidsportal.models import DataladDataset, DatasetType, Study, db
 class RiaDataset:
     """Context manager to clone/create a local RIA dataset."""
 
-    def __init__(self, parent: str, alias: str, ria_url: str | None = None):
+    def __init__(
+        self,
+        parent: PathLike[str] | str,
+        alias: str,
+        ria_url: str | None = None,
+    ):
         """Set up attrs for the dataset.
 
         Parameters
@@ -291,7 +296,9 @@ def delete_all_content(path_dataset: Path):
     finalize_dataset_changes(path_dataset, "Wipe dataset contents.")
 
 
-def get_tar_file_from_dataset(tar_file: str, path_dataset: str):
+def get_tar_file_from_dataset(
+    tar_file: os.PathLike[str] | str, path_dataset: os.PathLike[str] | str
+):
     """Get a tar file from a dataset.
 
     Parameters
@@ -311,7 +318,7 @@ def get_tar_file_from_dataset(tar_file: str, path_dataset: str):
     return full_path
 
 
-def get_all_dataset_content(path_dataset: str):
+def get_all_dataset_content(path_dataset: os.PathLike[str] | str):
     """Get all files (non-recursively) in a datalad dataset.
 
     Parameters
