@@ -19,13 +19,13 @@ def _check_existing(
     Parameters
     ----------
     path_incoming
-        ??
+        Directory containing "new", incoming files
 
     path_existing
         Path containing existing files
 
     dir_incoming
-        Directory containing "new", incoming files
+        Sub-directory of path_incoming to be copied
 
     contents
         List of files to check
