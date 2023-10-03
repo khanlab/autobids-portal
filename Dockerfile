@@ -2,29 +2,29 @@ FROM debian:bullseye-20230109 as requirements
 RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list \
     && apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
-        build-essential=12.9 \
-        ca-certificates=20210119 \
-        cryptsetup=2:2.3.7-1+deb11u1 \
-        curl=7.74.0-1.3+deb11u7 \
-        default-jre=2:1.11-72 \
-        fakeroot=1.25.3-1.1 \
-        fuse2fs=1.46.2-2 \
-        fuse-overlayfs=1.4.0-1 \
-        git=1:2.30.2-1+deb11u2 \
-        git-annex=8.20210223-2 \
-        libcurl4=7.74.0-1.3+deb11u7 \
-        libseccomp-dev=2.5.1-1+deb11u1 \
-        pkg-config=0.29.2-1 \
-        python3=3.9.2-3 \
-        python3-pip=20.3.4-4+deb11u1 \
-        python3-setuptools=52.0.0-4 \
-        python-is-python3=3.9.2-1 \
-        squashfs-tools=1:4.4-2+deb11u2 \
-        squashfuse=0.1.103-3 \
-        ssh=1:8.4p1-5+deb11u1 \
-        uidmap=1:4.8.1-1 \
-        unzip=6.0-26+deb11u1 \
-        wget=1.21-1+deb11u1 \
+    build-essential=12.9 \
+    ca-certificates=20210119 \
+    cryptsetup=2:2.3.7-1+deb11u1 \
+    curl=7.74.0-1.3+deb11u7 \
+    default-jre=2:1.11-72 \
+    fakeroot=1.25.3-1.1 \
+    fuse2fs=1.46.2-2 \
+    fuse-overlayfs=1.4.0-1 \
+    git=1:2.30.2-1+deb11u2 \
+    git-annex=8.20210223-2 \
+    libcurl4=7.74.0-1.3+deb11u7 \
+    libseccomp-dev=2.5.1-1+deb11u1 \
+    pkg-config=0.29.2-1 \
+    python3=3.9.2-3 \
+    python3-pip=20.3.4-4+deb11u1 \
+    python3-setuptools=52.0.0-4 \
+    python-is-python3=3.9.2-1 \
+    squashfs-tools=1:4.4-2+deb11u2 \
+    squashfuse=0.1.103-3 \
+    ssh=1:8.4p1-5+deb11u1 \
+    uidmap=1:4.8.1-1 \
+    unzip=6.0-26+deb11u1 \
+    wget=1.21-1+deb11u1 \
     && apt-get install -y -q --no-install-recommends -t bullseye-backports golang=2:1.19~1~bpo11+1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -67,18 +67,19 @@ COPY --from=apptainer-builds /opt/apptainer-images /opt/apptainer-images/
 
 ENV OTHER_OPTIONS='--tls-aes'
 WORKDIR /opt/autobidsportal
+COPY ./entrypoint.sh /opt/autobidsportal/entrypoint.sh
 COPY ./autobidsportal.ini.example autobidsportal.ini
-COPY ./compose/known_hosts /etc/ssh/ssh_known_hosts
 COPY ./bids_form.py .
 
 RUN git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com" \
     && WHEEL=$(ls /opt/wheels | grep whl) \
     && pip install --no-cache-dir "/opt/wheels/${WHEEL}[deploy]" \
-    && rm -r /opt/wheels
+    && rm -r /opt/wheels \
+    && chmod +x /opt/autobidsportal/entrypoint.sh
 
 ENV DCM4CHE_VERSION=5.24.1
 ENV PATH=/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:/opt/apptainer/bin:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
 
-CMD ["uwsgi", "--ini=autobidsportal.ini"]
+ENTRYPOINT ["/opt/autobidsportal/entrypoint.sh"]
