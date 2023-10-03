@@ -15,7 +15,7 @@ import pipes
 import re
 import subprocess
 import tempfile
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
@@ -75,7 +75,7 @@ class DicomQueryAttributes:
     study_description: str | None = None
     study_date: date | None = None
     patient_name: str | None = None
-    study_instance_uids: Iterable[str] | None = None
+    study_instance_uids: Sequence[str] | None = None
     date_range_start: date | None = None
     date_range_end: date | None = None
 
@@ -171,7 +171,7 @@ class Tar2bidsArgs:
         Boolean flag indicating whether data should be defaced
     """
 
-    tar_files: Iterable[str]
+    tar_files: Sequence[str]
     output_dir: str
     patient_str: str | None = None
     heuristic: str | None = None
@@ -182,7 +182,7 @@ class Tar2bidsArgs:
 
 def parse_findscu_xml(
     element_tree: ElementTree,
-    output_fields: Iterable[str],
+    output_fields: Sequence[str],
 ) -> list[dict[str, str]]:
     """Find the relevant output from findscu output XML.
 
@@ -325,7 +325,7 @@ class Dcm4cheUtils:
             text=True,
         )
 
-    def get_all_pi_names(self) -> Iterable[str]:
+    def get_all_pi_names(self) -> list[str]:
         """Find all PIs the user has access to (by StudyDescription).
 
         Specifically, find all StudyDescriptions, take the portion before
@@ -333,7 +333,7 @@ class Dcm4cheUtils:
 
         Returns
         -------
-        Iterable[str]
+        list[str]
             List of all PIs
         """
         cmd = [*self._findscu_list, "-r", "StudyDescription"]
@@ -374,10 +374,10 @@ class Dcm4cheUtils:
 
     def query_single_study(  # noqa: disable=D417
         self,
-        output_fields: Iterable[str],
+        output_fields: Sequence[str],
         attributes: DicomQueryAttributes,
         retrieve_level: str = "STUDY",
-    ) -> Iterable[Iterable[dict[str, str]]]:
+    ) -> list[list[dict[str, str]]]:
         """Query a DICOM server for specified tags from one study.
 
         Parameters
@@ -395,7 +395,7 @@ class Dcm4cheUtils:
 
         Returns
         -------
-        Iterable[Iterable[dict[str, str]]]
+        list[list[dict[str, str]]]
             A list containing one value for each result, where each result
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
@@ -489,7 +489,7 @@ class Dcm4cheUtils:
     def run_cfmm2tar(
         self,
         args: Cfmm2tarArgs,
-    ) -> tuple[Iterable[Iterable[str]], str]:
+    ) -> tuple[list[list[str]], str]:
         """Run cfmm2tar with the given options.
 
         At least one of the optional search arguments must be provided.
@@ -501,7 +501,7 @@ class Dcm4cheUtils:
 
         Returns
         -------
-        tuple[Iterable[Iterable[str]], str]]
+        tuple[list[list[str]], str]]
             A list containing the tar file name and uid file name (in that
             order) for each result.
 

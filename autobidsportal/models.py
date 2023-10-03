@@ -2,9 +2,10 @@
 
 # id is needed for these models
 # ruff: noqa: A003
+from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Sequence
 from datetime import datetime
 from enum import Enum
 from time import time
@@ -275,13 +276,13 @@ class User(UserMixin, db.Model):
 
         return notification
 
-    def get_completed_tasks(self) -> Iterable[Task]:
+    def get_completed_tasks(self) -> Sequence[Task]:
         """Get all completed tasks.
 
         Returns
         -------
-        Iterable[Task]
-        All completed tasks associated with this user.
+        Sequence[Task]
+            All completed tasks associated with this user.
         """
         return Task.query.filter_by(user=self, complete=True).all()
 
@@ -426,12 +427,12 @@ class Study(db.Model):
         )
         return f"<Answer {answer_cols}>"
 
-    def get_tasks_in_progress(self) -> Iterable[Task]:
+    def get_tasks_in_progress(self) -> Sequence[Task]:
         """Return all active tasks associated with this study.
 
         Returns
         -------
-        Iterable[Task]
+        Sequence[Task]
             All active tasks in study
         """
         return Task.query.filter_by(study=self, complete=False).all()

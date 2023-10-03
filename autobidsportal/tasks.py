@@ -5,7 +5,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from os import PathLike
 from shutil import copy2, rmtree
@@ -132,7 +132,7 @@ def _append_task_log(log: str):
 def run_cfmm2tar_with_retries(
     out_dir: PathLike[str] | str,
     study_instance_uid: str,
-) -> tuple[Iterable[Iterable[str]], str]:
+) -> tuple[list[list[str]], str]:
     """Run cfmm2tar, retrying multiple times if it times out.
 
     Parameters
@@ -253,9 +253,8 @@ def process_uid_file(uid_path: PathLike[str] | str) -> str:
 def find_studies_to_download(
     study: Study,
     study_description: str,
-    explicit_scans: Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
-    | None = None,
-) -> list[Study] | Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
+    explicit_scans: list[dict[str, str | list[dict[str, str]]]] | None = None,
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Find the studies to download, or override them with explicit scans.
 
     Parameters
@@ -271,7 +270,7 @@ def find_studies_to_download(
 
     Returns
     -------
-    list[Study] | Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
+    list[dict[str, str | list[dict[str, str]]]]
         List of studies if explicit scans are provided or list of study
         records matching study_description
     """
@@ -294,8 +293,7 @@ def find_studies_to_download(
 
 def check_tar_files(
     study_id: int,
-    explicit_scans: Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]
-    | None = None,
+    explicit_scans: list[dict[str, str | list[dict[str, str]]]] | None = None,
     user_id: int | None = None,
 ):
     """Launch cfmm2tar if there are any new tar files.
@@ -551,7 +549,7 @@ def find_unprocessed_tar_files(study_id: int):
 
 
 @ensure_complete("tar2bids failed with an uncaught exception.")
-def run_tar2bids(study_id: int, tar_file_ids: list[int]):
+def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
     """Run tar2bids for a specific study.
 
     Parameters
@@ -1016,7 +1014,7 @@ def find_uncorrected_images(study_id: int):
 def run_gradcorrect(
     path_dataset_raw: PathLike[str] | str,
     path_out: PathLike[str] | str,
-    subject_ids: Iterable[str] | None,
+    subject_ids: Sequence[str] | None,
 ):
     """Run gradcorrect on a BIDS dataset, optionally on a subset of subjects.
 
@@ -1052,7 +1050,7 @@ def run_gradcorrect(
 @ensure_complete("gradcorrect failed with an uncaught exception.")
 def gradcorrect_study(
     study_id: int,
-    subject_labels: Iterable[str] | None = None,
+    subject_labels: Sequence[str] | None = None,
 ) -> None:
     """Run gradcorrect on a set of subjects in a study.
 

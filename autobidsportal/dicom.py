@@ -1,7 +1,8 @@
 """Handle queryng DICOM server for records related to specific studies."""
+from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
@@ -20,7 +21,7 @@ ATTRIBUTES_QUERIED = [
 
 
 def get_inclusion_records(
-    uids_included: list[str],
+    uids_included: Sequence[str],
 ) -> list[dict[str, Any]]:
     """Get DICOM records from a list of StudyInstanceUIDs.
 
@@ -133,7 +134,7 @@ def get_study_records(
     study: Study,
     date: date | None = None,
     description: str | None = None,
-) -> Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
+) -> list[dict[str, str | list[dict[str, str]]]]:
     """Get all records related to a study.
 
     This includes studies explicitly included by StudyInstanceUID and studies
@@ -150,7 +151,7 @@ def get_study_records(
 
     Returns
     -------
-    Sequence[Mapping[str, str | Sequence[Mapping[str, str]]]]:
+    list[dict[str, str | list[dict[str, str]]]]
         A list of dictionaries with patient-level attributes and a
         list of sub-dictionaries with study-level attributes.
     """
@@ -170,7 +171,7 @@ def get_study_records(
 
 
 def rearrange_response(
-    dicom_response: Iterable[Iterable[dict[str, str]]],
+    dicom_response: Sequence[Sequence[dict[str, str]]],
 ) -> list[dict[str, str]]:
     """Rearrange a list of lists of dicts from dcm4cheutils.
 
@@ -195,7 +196,7 @@ def rearrange_response(
 
 
 def organize_flat_responses(
-    responses: Iterable[dict[str, str]],
+    responses: Sequence[dict[str, str]],
     patient_info: set[tuple[str, str, str, str, str]],
 ) -> list[dict[str, Any]]:
     """Organize a flat list of DICOM responses to a hierarchical structure.

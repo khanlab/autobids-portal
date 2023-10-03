@@ -1,4 +1,5 @@
 """All routes in the portal are defined here."""
+from __future__ import annotations
 
 import tempfile
 import uuid

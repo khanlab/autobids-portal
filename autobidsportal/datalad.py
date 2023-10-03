@@ -3,6 +3,7 @@
 Dev note: datalad does not ship with type information, causing pyright to fail
 This is actively being on (see: https://github.com/datalad/datalad/issues/6884)
 """
+from __future__ import annotations
 
 import os
 import shutil
@@ -72,7 +73,7 @@ class RiaDataset:
         remove_finalized_dataset(self.path_dataset)
 
 
-def get_alias(study_id: int, dataset_type: DatasetType):
+def get_alias(study_id: int, dataset_type: DatasetType) -> str:
     """Generate an alias for a study in the RIA.
 
     Parameters
@@ -82,13 +83,21 @@ def get_alias(study_id: int, dataset_type: DatasetType):
 
     dataset_type
         "tar2bids" or "cfmm2tar"
+
+    Returns
+    -------
+    str
+        Alias for study in RIA
     """
     text = dataset_type.to_bids_str()
 
     return f"study-{study_id}_{text}"
 
 
-def ensure_dataset_exists(study_id: int, dataset_type: DatasetType):
+def ensure_dataset_exists(
+    study_id: int,
+    dataset_type: DatasetType,
+) -> DataladDataset:
     """Check whether a dataset is in the RIA store, and create it if not.
 
     Parameters
@@ -98,6 +107,11 @@ def ensure_dataset_exists(study_id: int, dataset_type: DatasetType):
 
     dataset_type
         "tar2bids" or "cfmm2tar"
+
+    Returns
+    -------
+    DataladDataset
+        Object containing dataset in RIA store
     """
     # Get study by ID
     study = Study.query.get(study_id)

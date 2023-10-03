@@ -4,7 +4,7 @@ from __future__ import annotations
 import csv
 import os
 import shutil
-from collections.abc import Iterable
+from collections.abc import Sequence
 from pathlib import Path
 
 
@@ -12,7 +12,7 @@ def _check_existing(
     path_incoming: Path,
     path_existing: Path,
     dir_incoming: str,
-    contents: Iterable[os.PathLike[str] | str],
+    contents: Sequence[os.PathLike[str] | str],
 ) -> list[str]:
     """Check if file already exists.
 
@@ -66,7 +66,7 @@ def merge_datasets(path_incoming: Path, path_existing: Path):
 
     def _ignore(
         dir_incoming: str,
-        contents: Iterable[os.PathLike[str] | str],
+        contents: Sequence[os.PathLike[str] | str],
     ) -> list[str]:
         """Check existance of existing entries (internal function).
 

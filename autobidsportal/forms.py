@@ -1,4 +1,5 @@
 """Forms to be used in some views."""
+from __future__ import annotations
 
 from functools import lru_cache
 from json import dumps
