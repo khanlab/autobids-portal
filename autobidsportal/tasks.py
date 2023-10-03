@@ -145,7 +145,7 @@ def run_cfmm2tar_with_retries(
 
     Returns
     -------
-    tuple[Iterable[Iterable[str]], str]
+    tuple[list[list[str]], str]
         List of tar files associated with study id processed and log
 
     Raises
