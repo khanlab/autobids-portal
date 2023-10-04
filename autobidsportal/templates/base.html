@@ -1,58 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Metadata -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width-device-width, initial-scale=1" />
     <meta name="description" content="Autobids web portal" />
     <meta name="keywords" content="bids,neuroimaging,dicom,nifti" />
+
+    <title> {% block title %}{% endblock title %} - Autobids Portal</title>
+
+    <!-- Bootstrap Core CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
           rel="stylesheet"
           integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
           crossorigin="anonymous" />
+    
+    <!-- Custom CSS-->
     <link rel="stylesheet"
           type="text/css"
           href="{{ url_for('static',filename='styles/survey.css') }}" />
+
+    <!-- Google fonts -->
     <link href="https://fonts.googleapis.com/css?family=Merriweather+Sans"
           rel="stylesheet" />
-    <title>
-      {% block title %}
-      {% endblock title %}
-    - Autobids Portal</title>
   </head>
+
   <body>
+    <!-- Navigation-->
     <nav class="navbar navbar-default navbar-expand-md navbar-light bg-light">
       <div class="container-fluid">
+        <!-- Navigation toggler -->
         <button type="button" class="navbar-toggler" data-bs-toggle="collapse">
           <span class="navbar-toggler-icon"></span>
         </button>
-        <a class="navbar-brand" href="{{ url_for("portal_blueprint.index") }}">Home</a>
+        <!-- Navigation options -->
+        <a class="navbar-brand" href="{{ url_for('portal_blueprint.index') }}">Home</a>
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
           <ul class="navbar-nav navbar-right">
             <li class="nav-item">
-              <a class="nav-link" href="{{ url_for("portal_blueprint.new_study") }}">New Study</a>
+              <a class="nav-link" href="{{ url_for('portal_blueprint.new_study') }}">New Study</a>
             </li>
+            <!-- Non-logged in user -->
             {% if current_user.is_anonymous %}
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for("portal_blueprint.login") }}">Login</a>
+                <a class="nav-link" href="{{ url_for('portal_blueprint.login') }}">Login</a>
               </li>
             {% else %}
+            <!-- Logged in user, additional admin option -->
               {% if current_user.admin == True %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{{ url_for("portal_blueprint.user_list") }}">Admin</a>
+                  <a class="nav-link" href="{{ url_for('portal_blueprint.user_list') }}">Admin</a>
                 </li>
               {% endif %}
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for("portal_blueprint.results") }}">Studies</a>
+                <a class="nav-link" href="{{ url_for('portal_blueprint.results') }}">Studies</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="{{ url_for("portal_blueprint.logout") }}">Logout</a>
+                <a class="nav-link" href="{{ url_for('portal_blueprint.logout') }}">Logout</a>
               </li>
             {% endif %}
           </ul>
         </div>
       </div>
     </nav>
+    
     {% block content %}
+      <!-- Pop-up notifications-->
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           {% for message in messages %}
@@ -66,19 +79,25 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
-      {% block app_content %}
-      {% endblock app_content %}
+      
+      <!-- Main application content -->
+      {% block app_content %}{% endblock app_content %}
+
       <div class="modal fade" id="autobidsModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-scrollable modal-xl">
           <div class="modal-content" id="autobidsModalContent"></div>
         </div>
       </div>
     {% endblock content %}
+
+    <!-- Bootstrap javascript -->
     {% block scripts %}
       <script type="text/javascript" src={{url_for("static", filename="lib/autobids-react/dist/index.js") }}></script>
-      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-              integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-              crossorigin="anonymous"></script>
+      <script 
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"
+      ></script>
     {% endblock scripts %}
   </body>
 </html>
