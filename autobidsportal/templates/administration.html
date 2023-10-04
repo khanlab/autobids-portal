@@ -61,67 +61,38 @@ title %}
                   {% endfor %}
                 </fieldset>
                 <br />
-                <input
-                  type="submit"
-                  name="access-{{"
-                  user.id
-                  }}
-                  value="Grant Access"
-                  class="btn btn-primary"
-                  {%
-                  if
-                  user.admin
-                  %}disabled="disabled"
-                  {%
-                  endif
-                  %}
-                  />
-                </form>
-              </td>
-              <!-- Studies to remove access -->
-              <td>
-                <form id="survey-form"
-                      method="post"
-                      action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                  <fieldset class="form-group">
-                    {{ removal_form.csrf_token }}
-                    {% for choice in
-                      removal_form.choices_to_remove %}
-                      {% if choice not in
-                        user.studies %}
-                        <div class="form-check">
-                          {{ choice(class="form-check-input") }} {{ choice.label(class="form-check-label") }}
-                        </div>
-                      {% endif %}
-                    {% endfor %}
-                  </fieldset>
-                  <br />
-                  <!-- If admin, disallow removal of access -->
-                  {% if user.admin == True %}
-                    <input
-                      type="submit"
-                      name="remove-{{"
-                      user.id
-                      }}
-                      value="Remove Access"
-                      class="btn btn-primary"
-                      disabled="disabled"
-                      />
-                    {% else %}
-                      <input
-                        type="submit"
-                        name="remove-{{"
-                        user.id
-                        }}
-                        value="Remove Access"
-                        class="btn btn-primary"
-                        />
-                      {% endif %}
-                    </form>
-                  </td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-      {% endblock app_content %}
+                <input type="submit" name=access-{{ user.id }} value="Grant Access" class="btn btn-primary" {% if user.admin %}disabled="disabled"{% endif %} />
+              </form>
+            </td>
+            <!-- Studies to remove access -->
+            <td>
+              <form id="survey-form"
+                    method="post"
+                    action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                <fieldset class="form-group">
+                  {{ removal_form.csrf_token }}
+                  {% for choice in
+                    removal_form.choices_to_remove %}
+                    {% if choice not in
+                      user.studies %}
+                      <div class="form-check">
+                        {{ choice(class="form-check-input") }} {{ choice.label(class="form-check-label") }}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                </fieldset>
+                <br />
+                <!-- If admin, disallow removal of access -->
+                {% if user.admin == True %}
+                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" disabled="disabled" />
+                {% else %}
+                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" />
+                {% endif %}
+              </form>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock app_content %}
