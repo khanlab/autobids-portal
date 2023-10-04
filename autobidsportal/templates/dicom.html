@@ -6,6 +6,7 @@
   <div class="container">
     <div class="row my-3">
       <div class="col">
+        <!-- Table of patients to include / exclude from study -->
         <form action={{ url_for("portal_blueprint.process_dicom_form", study_id=submitter_answer.id) }} method="post">
           <table class="table table-light table-hover align-middle">
             <thead>
@@ -19,6 +20,7 @@
                 <th scope="col">Include in this cfmm2tar run?</th>
               </tr>
             </thead>
+            <!-- Populate rows from query -->
             <tbody>
               {% for response in dicom_response %}
                 <tr>
@@ -37,6 +39,7 @@
                   </td>
                   <td>{{ response["PatientSex"] }}</td>
                   <td>{{ response["StudyID"] }}</td>
+                  <!-- Create checkboxes for inclusion / exclusion in study, as well as subjects to run cfmm2tar for -->
                   <td>
                     {% for choice in form_exclude.choices_to_exclude %}
                       {% if response["StudyInstanceUID"] in choice._value() %}
