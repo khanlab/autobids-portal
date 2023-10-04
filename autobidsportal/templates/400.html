@@ -1,5 +1,9 @@
 <!-- Bad request page -->
-{% extends "base.html" %} {% block title %} Error 400 {% endblock title %} {%
+{% extends "base.html" %}
+{% block title %}
+  Error 400
+{% endblock title %}
+{%
 block app_content %}
 <div class="container">
   <div class="row my-3">
@@ -7,9 +11,7 @@ block app_content %}
       <div class="card">
         <div class="card-body">
           <h1 class="card-title">Bad Request</h1>
-          <a class="card-link" href="{{ url_for('portal_blueprint.index') }}"
-            >Back</a
-          >
+          <a class="card-link" href="{{ url_for("portal_blueprint.index") }}">Back</a>
         </div>
       </div>
     </div>

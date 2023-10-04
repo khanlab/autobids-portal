@@ -1,88 +1,92 @@
-{% extends "base.html" %} {% block title %} Admin {% endblock title %} {% block
-app_content %}
-<div class="container">
-  <div class="row my-3">
-    <div class="col">
-      <div class="card">
-        <div class="card-body">
-          <!-- User table -->
-          <h3 class="card-title">Users</h3>
-          <table class="table table-light caption-top">
-            <thead>
-              <tr>
-                <th scope="col"></th>
-                <th scope="col">Admin</th>
-                <th scope="col">Name</th>
-                <th scope="col">Email</th>
-                <th scope="col">Has access to the following studies</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for u in users %}
-              <tr>
-                <td>
-                  <a
-                    class="btn btn-primary"
-                    href="{{ url_for('portal_blueprint.admin', user_id=u.id) }}"
-                    role="button"
-                    >View more</a
-                  >
-                </td>
-                <td>{% if u.admin==True %} Yes {% else %} No {% endif %}</td>
-                <td>{{ u.email }}</td>
-                <td>{{ u.email }}</td>
-                <td>
-                  {% for a in u.access_to %}
-                  <div>{{ a.desc.replace(' ', '^') }}</div>
-                  {% endfor %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+<!-- Main admin page -->
+{% extends "base.html" %}
+{% block title %}
+  Admin
+{% endblock title %}
+{% block
+  app_content %}
+  <div class="container">
+    <div class="row my-3">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <!-- User table -->
+            <h3 class="card-title">Users</h3>
+            <table class="table table-light caption-top">
+              <thead>
+                <tr>
+                  <th scope="col"></th>
+                  <th scope="col">Admin</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Has access to the following studies</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users %}
+                  <tr>
+                    <td>
+                      <a class="btn btn-primary"
+                         href="{{ url_for('portal_blueprint.admin', user_id=u.id) }}"
+                         role="button">View more</a>
+                    </td>
+                    <td>
+                      {% if u.admin==True %}
+                        Yes
+                      {% else %}
+                        No
+                      {% endif %}
+                    </td>
+                    <td>{{ u.email }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                      {% for a in u.access_to %}
+                        <div>{{ a.desc.replace(' ', '^') }}</div>
+                      {% endfor %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Actions -->
+    <div class="row my-3">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">Actions</h3>
+            <form method="post"
+                  action="{{ url_for("portal_blueprint.update_heuristics") }}">
+              <input type="submit"
+                     name="update-heuristics"
+                     value="Update custom heuristics"
+                     class="btn btn-primary" />
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Storage locations -->
+    <div class="row my-3">
+      <div class="col">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">Storage Locations</h3>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item">
+                RIA (Tar files and BIDS datasets in DataLad):
+                <code>{{ ria_url }}</code>
+              </li>
+              <li class="list-group-item">
+                BIDS dataset archives: <code>{{ archive_url }}</code>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   </div>
-  <!-- Actions -->
-  <div class="row my-3">
-    <div class="col">
-      <div class="card">
-        <div class="card-body">
-          <h3 class="card-title">Actions</h3>
-          <form
-            method="post"
-            action="{{ url_for('portal_blueprint.update_heuristics') }}"
-          >
-            <input
-              type="submit"
-              name="update-heuristics"
-              value="Update custom heuristics"
-              class="btn btn-primary"
-            />
-          </form>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Storage locations -->
-  <div class="row my-3">
-    <div class="col">
-      <div class="card">
-        <div class="card-body">
-          <h3 class="card-title">Storage Locations</h3>
-          <ul class="list-group list-group-flush">
-            <li class="list-group-item">
-              RIA (Tar files and BIDS datasets in DataLad):
-              <code>{{ ria_url }}</code>
-            </li>
-            <li class="list-group-item">
-              BIDS dataset archives: <code>{{ archive_url }}</code>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 {% endblock app_content %}

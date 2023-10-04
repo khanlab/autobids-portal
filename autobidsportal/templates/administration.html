@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %}
   User {{ user.email }}
-{% endblock title %}
+{% endblock
+title %}
 {% block app_content %}
   <div class="container">
     <div class="row my-3">
@@ -16,6 +17,7 @@
           </tr>
           <tr>
             <td>
+              <!-- Toggle admin privileges -->
               {% if user.admin == True %}
                 <div>Yes</div>
                 <br />
@@ -39,11 +41,13 @@
               {% endif %}
             </td>
             <td>{{ user.email }}</td>
+            <!-- Available studies -->
             <td>
               {% for study in user.studies %}
                 <div>{{ study.principal }}^{{ study.project_name }}</div>
               {% endfor %}
             </td>
+            <!-- Studies to grant access -->
             <td>
               <form id="survey-form"
                     method="post"
@@ -52,41 +56,72 @@
                   {{ form.csrf_token }}
                   {% for choice in form.choices %}
                     <div class="form-check">
-                      {{ choice(class="form-check-input") }}
-                      {{ choice.label(class="form-check-label") }}
+                      {{ choice(class="form-check-input") }} {{ choice.label(class="form-check-label") }}
                     </div>
                   {% endfor %}
                 </fieldset>
                 <br />
-                <input type="submit" name=access-{{ user.id }} value="Grant Access" class="btn btn-primary" {% if user.admin %}disabled="disabled"{% endif %} />
-              </form>
-            </td>
-            <td>
-              <form id="survey-form"
-                    method="post"
-                    action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
-                <fieldset class="form-group">
-                  {{ removal_form.csrf_token }}
-                  {% for choice in removal_form.choices_to_remove %}
-                    {% if choice not in user.studies %}
-                      <div class="form-check">
-                        {{ choice(class="form-check-input") }}
-                        {{ choice.label(class="form-check-label") }}
-                      </div>
-                    {% endif %}
-                  {% endfor %}
-                </fieldset>
-                <br />
-                {% if user.admin == True %}
-                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" disabled="disabled" />
-                {% else %}
-                  <input type="submit" name=remove-{{ user.id }} value="Remove Access" class="btn btn-primary" />
-                {% endif %}
-              </form>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  </div>
-{% endblock app_content %}
+                <input
+                  type="submit"
+                  name="access-{{"
+                  user.id
+                  }}
+                  value="Grant Access"
+                  class="btn btn-primary"
+                  {%
+                  if
+                  user.admin
+                  %}disabled="disabled"
+                  {%
+                  endif
+                  %}
+                  />
+                </form>
+              </td>
+              <!-- Studies to remove access -->
+              <td>
+                <form id="survey-form"
+                      method="post"
+                      action="{{ url_for('portal_blueprint.admin', user_id=user.id) }}">
+                  <fieldset class="form-group">
+                    {{ removal_form.csrf_token }}
+                    {% for choice in
+                      removal_form.choices_to_remove %}
+                      {% if choice not in
+                        user.studies %}
+                        <div class="form-check">
+                          {{ choice(class="form-check-input") }} {{ choice.label(class="form-check-label") }}
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </fieldset>
+                  <br />
+                  <!-- If admin, disallow removal of access -->
+                  {% if user.admin == True %}
+                    <input
+                      type="submit"
+                      name="remove-{{"
+                      user.id
+                      }}
+                      value="Remove Access"
+                      class="btn btn-primary"
+                      disabled="disabled"
+                      />
+                    {% else %}
+                      <input
+                        type="submit"
+                        name="remove-{{"
+                        user.id
+                        }}
+                        value="Remove Access"
+                        class="btn btn-primary"
+                        />
+                      {% endif %}
+                    </form>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      {% endblock app_content %}
