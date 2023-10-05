@@ -11,7 +11,6 @@ services:
       AUTOBIDS_LOG_LEVEL: INFO
       AUTOBIDS_ROOT_URL: autobidsportal
       AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /cfmm2tar-download
-      AUTOBIDS_CFMM2TAR_STORAGE_DIR: /tar-files
       AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
       AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
       AUTOBIDS_HEURISTIC_REPO_PATH: /home
@@ -37,10 +36,6 @@ services:
       AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
       AUTOBIDS_DICOM_SERVER_TLS: "true"
       AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: "false"
-      AUTOBIDS_GITLAB_ACTIVE: "true"
-      AUTOBIDS_GITLAB_URL: "http://127.0.0.1:8080"
-      AUTOBIDS_GITLAB_TOKEN: "BFavxxb7gAodznnorhv7"
-      AUTOBIDS_GITHUB_ACTIVE: "false"
       GIT_AUTHOR_NAME: "Autobids Portal"
       GIT_AUTHOR_EMAIL: "autobids@example.com"
       GIT_COMMITER_NAME: "Autobids Portal"
