@@ -1,0 +1,15 @@
+---
+name: Release package
+on:
+  workflow_dispatch:
+    inputs:
+      comments:
+        description: Comments
+        required: false
+jobs:
+  release_package:
+    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@v0.2.1
+    with:
+      comments: ${{ github.event.inputs.comments }}
+    secrets:
+      BP-PAT: ${{ secrets.BP_PAT_TOKEN }}
