@@ -15,10 +15,12 @@ import pipes
 import re
 import subprocess
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from itertools import chain
+from os import PathLike
+from xml.etree.ElementTree import ElementTree
 
 from defusedxml.ElementTree import parse
 from flask import current_app
@@ -50,25 +52,30 @@ class DicomQueryAttributes:
 
     Attributes
     ----------
-    study_description : str, optional
+    study_description
         The StudyDescription to query. Passed to `findscu -m {}`.
-    study_date : date, optional
+
+    study_date
         The date of the study to query. Converted to "YYYYMMDD" format and
         queries the "StudyDate" tag.
-    patient_name : str, optional
+
+    patient_name
         Search string for the patient names to retrieve.
-    study_instance_uids : list of str
+
+    study_instance_uids
         Specific StudyInstanceUIDs to match.
-    date_range_start : date, optional
+
+    date_range_start
         The start, inclusive, of a range of dates to query.
-    date_range_end : date, optional
+
+    date_range_end
         The end, inclusive, of a range of dates to query.
     """
 
     study_description: str | None = None
     study_date: date | None = None
     patient_name: str | None = None
-    study_instance_uids: Iterable[str] | None = None
+    study_instance_uids: Sequence[str] | None = None
     date_range_start: date | None = None
     date_range_end: date | None = None
 
@@ -91,6 +98,7 @@ class DicomQueryAttributes:
             raise Dcm4cheError(
                 msg,
             )
+
         if (self.study_date is not None) and (
             (self.date_range_start is not None)
             or (self.date_range_end is not None)
@@ -112,19 +120,23 @@ class Cfmm2tarArgs:
     ----------
     out_dir
         Directory to which to download tar files.
+
     study_instance_uid
         String specifying the StudyInstanceUid to download
+
     date_str
         String specifying the date(s) to download. Can include up to two
         dates and a "-" to indicate an open or closed interval of dates.
+
     patient_name
         PatientName string.
+
     project
         "Principal^Project" to search for.
 
     """
 
-    out_dir: str
+    out_dir: PathLike[str] | str
     study_instance_uid: str | None = None
     date_str: str | None = None
     patient_name: str | None = None
@@ -139,11 +151,27 @@ class Tar2bidsArgs:
     ----------
     tar_files
         Tar files on which to run tar2bids
+
     output_dir
         Directory for the output BIDS dataset
+
+    patient_str
+        Patient to convert to BIDS
+
+    heuristic
+        Path to heuristic file containing mapping of entities
+
+    temp_dir
+        Path to temporary directory to use for tar2bids
+
+    bidsignore
+        Path to .bidsignore file
+
+    deface
+        Boolean flag indicating whether data should be defaced
     """
 
-    tar_files: Iterable[str]
+    tar_files: Sequence[str]
     output_dir: str
     patient_str: str | None = None
     heuristic: str | None = None
@@ -152,14 +180,18 @@ class Tar2bidsArgs:
     deface: bool = False
 
 
-def parse_findscu_xml(element_tree, output_fields):
+def parse_findscu_xml(
+    element_tree: ElementTree,
+    output_fields: Sequence[str],
+) -> list[dict[str, str]]:
     """Find the relevant output from findscu output XML.
 
     Parameters
     ----------
-    element_tree : ElementTree
+    element_tree
         One XML document produced by findscu.
-    output_fields : list of str
+
+    output_fields
         List of output fields we're interested in (passed to findscu)
 
     Raises
@@ -191,6 +223,7 @@ def parse_findscu_xml(element_tree, output_fields):
             raise Dcm4cheError(
                 msg,
             )
+
         tag_code = attribute.attrib["tag"]
         out_dict = {
             "tag_code": f"{tag_code[0:4]},{tag_code[4:8]}",
@@ -214,8 +247,10 @@ def parse_findscu_xml(element_tree, output_fields):
                 if (value_attr := attribute.find("./Value")) is not None
                 else ""
             )
+
         out_dict["tag_value"] = value
         out_list.append(out_dict)
+
     return out_list
 
 
@@ -224,12 +259,27 @@ class Dcm4cheUtils:
 
     def __init__(
         self,
-        connection_details,
-        credentials,
-        cfmm2tar_spec,
-        tar2bids_spec,
-    ) -> None:
-        """Set up the attrs for this utils instance."""
+        connection_details: DicomConnectionDetails,
+        credentials: DicomCredentials,
+        cfmm2tar_spec: ImageSpec,
+        tar2bids_spec: ImageSpec,
+    ):
+        """Set up the attrs for this utils instance.
+
+        Parameters
+        ----------
+        connection_details
+            Details for connecting to DICOM server
+
+        credentials
+            User credentials to DICOM server
+
+        cfmm2tar_spec
+            Container image location and binds for cfmm2tar
+
+        tar2bids_spec
+            Container image location and binds for tar2bids
+        """
         self.logger = logging.getLogger(__name__)
         self.connect = connection_details.connect
         self.username = credentials.username
@@ -254,8 +304,19 @@ class Dcm4cheUtils:
         if connection_details.use_tls:
             self._findscu_list.append("--tls-aes")
 
-    def exec_cfmm2tar(self, cmd_list):
-        """Execute the cfmm2tar container with the configured setup."""
+    def exec_cfmm2tar(
+        self,
+        cmd_list: Sequence[str],
+    ) -> subprocess.CompletedProcess:
+        """Execute the cfmm2tar container with the configured setup.
+
+        Parameters
+        ----------
+        cmd_list
+            Equivalent to "args" in subprocess.run. Passed to the singularity
+            container.
+
+        """
         return apptainer_exec(
             cmd_list,
             self.cfmm2tar_spec.image_path,
@@ -264,11 +325,16 @@ class Dcm4cheUtils:
             text=True,
         )
 
-    def get_all_pi_names(self):
+    def get_all_pi_names(self) -> list[str]:
         """Find all PIs the user has access to (by StudyDescription).
 
         Specifically, find all StudyDescriptions, take the portion before
         the caret, and return each unique value.
+
+        Returns
+        -------
+        list[str]
+            List of all PIs
         """
         cmd = [*self._findscu_list, "-r", "StudyDescription"]
 
@@ -306,28 +372,30 @@ class Dcm4cheUtils:
 
         return all_pis
 
-    def query_single_study(
+    def query_single_study(  # noqa: disable=D417
         self,
-        output_fields,
-        attributes,
-        retrieve_level="STUDY",
-    ):
+        output_fields: Sequence[str],
+        attributes: DicomQueryAttributes,
+        retrieve_level: str = "STUDY",
+    ) -> list[list[dict[str, str]]]:
         """Query a DICOM server for specified tags from one study.
 
         Parameters
         ----------
-        output_fields : list of str
+        output_fields
             A list of DICOM tags to query (e.g. PatientName). Passed to
             `findscu -r {}`.
-        attributes : DicomQueryAttributes
-            A set of attributes to search for.
-        retrieve_level : str
+
+        attributes  # noqa: disable=D405,D407
+            A set of attributes to search for.D417
+
+        retrieve_level
             Level at which to retrieve records. Defaults to "STUDY", but can
             also be "PATIENT", "SERIES", or "IMAGE".
 
         Returns
         -------
-        list of list of dict
+        list[list[dict[str, str]]]
             A list containing one value for each result, where each result
             contains a list of dicts, where each dict contains the code, name,
             and value of each requested tag.
@@ -346,6 +414,7 @@ class Dcm4cheUtils:
                     f"StudyDescription={attributes.study_description}",
                 ],
             )
+
         if attributes.study_date is not None:
             cmd.extend(
                 [
@@ -367,14 +436,18 @@ class Dcm4cheUtils:
                 else ""
             )
             cmd.extend(["-m", f"StudyDate={start}-{end}"])
+
         if attributes.patient_name is not None:
             cmd.extend(["-m", f"PatientName={attributes.patient_name}"])
+
         if attributes.study_instance_uids not in [None, []]:
             cmd.extend(
                 [
                     "-m",
                     "StudyInstanceUID={}".format(
-                        "\\\\".join(attributes.study_instance_uids),
+                        "\\\\".join(
+                            attributes.study_instance_uids,  # pyright: ignore
+                        ),  # Typecheck since join always expects input
                     ),
                 ],
             )
@@ -390,6 +463,7 @@ class Dcm4cheUtils:
             cmd.extend(
                 ["--out-dir", f"{tmpdir}", "--out-file", "000.xml", "-X"],
             )
+
             current_app.logger.info("Querying study with findscu.")
             try:
                 completed_proc = self.exec_cfmm2tar(cmd)
@@ -401,9 +475,11 @@ class Dcm4cheUtils:
                 raise Dcm4cheError(
                     msg,
                 ) from error
+
             trees_xml = [
                 parse(child) for child in pathlib.Path(tmpdir).iterdir()
             ]
+
         err = completed_proc.stderr
         if err and err != "Picked up _JAVA_OPTIONS: -Xmx2048m\n":
             self.logger.error(err)
@@ -425,6 +501,7 @@ class Dcm4cheUtils:
 
         Returns
         -------
+        tuple[list[list[str]], str]]
             A list containing the tar file name and uid file name (in that
             order) for each result.
 
@@ -432,6 +509,7 @@ class Dcm4cheUtils:
         ------
         Cfmm2tarError
             If the arguments are malformed.
+
         Cfmm2tarTimeoutError
             If cfmm2tar times out.
         """
@@ -448,6 +526,7 @@ class Dcm4cheUtils:
             raise Cfmm2tarError(
                 msg,
             )
+
         uid_query = [
             "-u",
             args.study_instance_uid
@@ -473,7 +552,7 @@ class Dcm4cheUtils:
                 )
                 + project_query
                 + ["-s", current_app.config["DICOM_SERVER_URL"]]
-                + [args.out_dir]
+                + [str(args.out_dir)]
             )
 
             current_app.logger.info("Running cfmm2tar: %s", " ".join(arg_list))
@@ -514,15 +593,18 @@ class Dcm4cheUtils:
 
             return tar_files, all_out
 
-    def run_tar2bids(
-        self,
-        args,
-    ):
+    def run_tar2bids(self, args: Tar2bidsArgs) -> str:
         """Run tar2bids with the given arguments.
+
+        Parameters
+        ----------
+        args
+            Arguments to be passed to tar2bids
 
         Returns
         -------
-        The given output_dir, if successful.
+        str
+            The given output_dir, if successful.
 
         Raises
         ------
@@ -562,8 +644,14 @@ class Dcm4cheUtils:
         return out
 
 
-def gen_utils():
-    """Generate a Dcm4cheUtils with values from the current_app config."""
+def gen_utils() -> Dcm4cheUtils:
+    """Generate a Dcm4cheUtils with values from the current_app config.
+
+    Returns
+    -------
+    Dcm4cheUtils
+        Utilites for interacting via dcm4che
+    """
     return Dcm4cheUtils(
         DicomConnectionDetails(
             connect=current_app.config["DICOM_SERVER_URL"],

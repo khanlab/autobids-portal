@@ -21,37 +21,28 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - name: Checkout pull request branch
-        uses: actions/checkout@master
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Select Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Setup environment
+        uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.2.0
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.3.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+      - name: Run ruff
+        run: poetry run ruff autobidsportal
 
-      - name: Set up environment
-        shell: bash
-        run: |
-          poetry install --no-interaction --no-root --with dev
+      - name: Run isort
+        run: poetry run isort --check autobidsportal
 
       - name: Run black
         run: poetry run black --check autobidsportal
-      - name: Run ruff
-        run: |
-          poetry run ruff autobidsportal
+
+      - name: Run pyright
+        run: poetry run pyright autobidsportal
+
       - name: run djLint
         run: |
           poetry run djlint --lint autobidsportal/templates
           poetry run djlint --check autobidsportal/templates
+
   test:
     name: Set up environment and run tests
     if: github.event.pull_request.draft == false
@@ -62,27 +53,10 @@ jobs:
         redis-version: [6]
 
     steps:
-      - name: Check out PR branch
-        uses: actions/checkout@master
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Select Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+      - name: Setup environment
+        uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.2.0
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.3.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
-      - name: Set up environment
-        shell: bash
-        run: |
-          poetry install --no-interaction --with dev
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.1.0

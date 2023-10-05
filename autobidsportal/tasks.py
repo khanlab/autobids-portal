@@ -5,7 +5,7 @@ import pathlib
 import re
 import subprocess
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
 from os import PathLike
 from shutil import copy2, rmtree
@@ -58,9 +58,19 @@ COMPLETION_PROGRESS = 100
 MAX_CFMM2TAR_ATTEMPTS = 5
 
 
-def _set_task_progress(progress):
+def _set_task_progress(progress: int):
+    """Set progress of current task.
+
+    Parameters
+    ----------
+    progress
+        Integer value (between 0 and 100) to set progress of current task to
+
+    """
+    # If no current job in progress
     if not (job := get_current_job()):
         return
+
     job.meta["progress"] = progress
     job.save_meta()
     task = Task.query.get(job.id)
@@ -69,35 +79,58 @@ def _set_task_progress(progress):
             "task_progress",
             {"task_id": job.id, "progress": progress},
         )
+
+    # If task completed
     if progress == COMPLETION_PROGRESS:
         task.complete = True
         task.success = True
         task.error = None
         task.end_time = datetime.now(tz=TIME_ZONE)
-    db.session.commit()
+
+    db.session.commit()  # pyright: ignore
 
 
-def _set_task_error(msg):
+def _set_task_error(msg: str):
+    """Set error message of a given task.
+
+    Parameters
+    ----------
+    msg
+        Error message to provide / log
+    """
+    # If no jobs in progress
     if not (job := get_current_job()):
         return
+
     task = Task.query.get(job.id)
     task.complete = True
     task.success = False
     task.error = msg[:128] if msg else ""
     task.end_time = datetime.now(tz=TIME_ZONE)
-    db.session.commit()
+
+    db.session.commit()  # pyright: ignore
 
 
-def _append_task_log(log):
+def _append_task_log(log: str):
+    """Append to task log.
+
+    Parameters
+    ----------
+    log
+        Message to append to log of task
+    """
+    # If no jobs in progress
     if not (job := get_current_job()):
         return
+
     task = Task.query.get(job.id)
     task.log = "".join([task.log if task.log is not None else "", log])
-    db.session.commit()
+
+    db.session.commit()  # pyright: ignore
 
 
 def run_cfmm2tar_with_retries(
-    out_dir: str,
+    out_dir: PathLike[str] | str,
     study_instance_uid: str,
 ) -> tuple[list[list[str]], str]:
     """Run cfmm2tar, retrying multiple times if it times out.
@@ -106,8 +139,14 @@ def run_cfmm2tar_with_retries(
     ----------
     out_dir
         Directory to which to download tar files.
+
     study_instance_uid
         StudyInstanceUid to download
+
+    Returns
+    -------
+    tuple[list[list[str]], str]
+        List of tar files associated with study id processed and log
 
     Raises
     ------
@@ -115,6 +154,7 @@ def run_cfmm2tar_with_retries(
         If cfmm2tar times out too many times.
     """
     cfmm2tar_result, log = [], ""
+    # Attempt 5 times before timing out
     for attempt in range(1, 6):
         try:
             cfmm2tar_result, log = gen_utils().run_cfmm2tar(
@@ -133,21 +173,30 @@ def run_cfmm2tar_with_retries(
                 continue
             raise
         break
+
     return cfmm2tar_result, log
 
 
-def record_cfmm2tar(tar_file, uid, study_id, attached_tar_file=None):
+def record_cfmm2tar(
+    tar_file: str,
+    uid: str,
+    study_id: int,
+    attached_tar_file: str | None = None,
+):
     """Parse cfmm2tar output files and record them in the db.
 
     Parameters
     ----------
-    tar_file : str
+    tar_file
         Name of the downloaded tar file.
-    uid : str
+
+    uid
         StudyInstanceUID of the tar file..
-    study_id : int
+
+    study_id
         ID of the study associated with this cfmm2tar output.
-    attached_tar_file : str, optional
+
+    attached_tar_file
         Name of the attached tar file.
 
     Raises
@@ -176,21 +225,55 @@ def record_cfmm2tar(tar_file, uid, study_id, attached_tar_file=None):
         ),
         attached_tar_file=attached_tar_file,
     )
-    db.session.add(cfmm2tar)
-    db.session.commit()
+    db.session.add(cfmm2tar)  # pyright: ignore
+    db.session.commit()  # pyright: ignore
 
 
-def process_uid_file(uid_path: PathLike[str] | str):
-    """Read a UID file, delete it, and return the UID."""
+def process_uid_file(uid_path: PathLike[str] | str) -> str:
+    """Read a UID file, delete it, and return the UID.
+
+    Parameters
+    ----------
+    uid_path
+        Path to UID file to be read
+
+    Returns
+    -------
+    str
+        Associated file UID
+    """
     path = pathlib.Path(uid_path)
     with path.open(encoding="utf-8") as uid_file:
         uid = uid_file.read()
     path.unlink()
+
     return uid
 
 
-def find_studies_to_download(study, study_description, explicit_scans=None):
-    """Find the studies to download, or override them with explicit scans."""
+def find_studies_to_download(
+    study: Study,
+    study_description: str,
+    explicit_scans: list[dict[str, str | list[dict[str, str]]]] | None = None,
+) -> list[dict[str, str | list[dict[str, str]]]]:
+    """Find the studies to download, or override them with explicit scans.
+
+    Parameters
+    ----------
+    study
+        Study to return scan / record information from
+
+    study_description
+        Description to search by
+
+    explicit_scans
+        Scans, explicitly defined to override with
+
+    Returns
+    -------
+    list[dict[str, str | list[dict[str, str]]]]
+        List of studies if explicit scans are provided or list of study
+        records matching study_description
+    """
     existing_outputs = Cfmm2tarOutput.query.filter_by(study_id=study.id).all()
     if explicit_scans is not None:
         return [
@@ -199,6 +282,7 @@ def find_studies_to_download(study, study_description, explicit_scans=None):
             if scan["StudyInstanceUID"]
             not in {output.uid.strip() for output in existing_outputs}
         ]
+
     return [
         record
         for record in get_study_records(study, description=study_description)
@@ -207,8 +291,24 @@ def find_studies_to_download(study, study_description, explicit_scans=None):
     ]
 
 
-def check_tar_files(study_id, explicit_scans=None, user_id=None):
-    """Launch cfmm2tar if there are any new tar files."""
+def check_tar_files(
+    study_id: int,
+    explicit_scans: list[dict[str, str | list[dict[str, str]]]] | None = None,
+    user_id: int | None = None,
+):
+    """Launch cfmm2tar if there are any new tar files.
+
+    Parameters
+    ----------
+    study_id
+        Associated study id to check for tar files from
+
+    explicit_scans
+        Scans to explicitly defined to download
+
+    user_id
+        ID of the user to associate task with
+    """
     study = Study.query.get(study_id)
     user = User.query.get(user_id) if user_id is not None else None
     studies_to_download = find_studies_to_download(
@@ -218,8 +318,12 @@ def check_tar_files(study_id, explicit_scans=None, user_id=None):
     )
     if not studies_to_download:
         return
+
     new_studies = ", ".join(
-        [new_study["PatientName"] for new_study in studies_to_download],
+        [
+            new_study["PatientName"]
+            for new_study in studies_to_download  # pyright: ignore
+        ],
     )
     Task.launch_task(
         "run_cfmm2tar",
@@ -232,10 +336,26 @@ def check_tar_files(study_id, explicit_scans=None, user_id=None):
     )
 
 
-def ensure_complete(error_log):
-    """Ensure a cfmm2tar job is complete."""
+def ensure_complete(error_log: str) -> Callable:
+    """Ensure a cfmm2tar job is complete (decorator function).
 
-    def decorate(task):
+    Example:
+    @ensure_complete("Task did not complete successfully")
+    def some_task(*args):
+        # Task implemenetation
+
+    Parameters
+    ----------
+    error_log
+        Error message to log if task does not complete
+
+    Returns
+    -------
+    Callable
+        Wrapped task function to ensure completion and logs errors
+    """
+
+    def decorate(task: Callable) -> Callable:
         def wrapped_task(*args):
             try:
                 task(*args)
@@ -251,7 +371,12 @@ def ensure_complete(error_log):
     return decorate
 
 
-def handle_cfmm2tar(download_dir, study, target, dataset):
+def handle_cfmm2tar(
+    download_dir: PathLike[str] | str,
+    study: Study,
+    target: Mapping[str, str],
+    dataset: DataladDataset,
+):
     """Run cfmm2tar on one target."""
     _, log = run_cfmm2tar_with_retries(
         str(download_dir),
@@ -284,9 +409,11 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
             tar = file_.name
         else:
             app.logger.warning("Unknown cfmm2tar output: %s", file_)
+
     if not tar:
         msg = "No tar file produced."
         raise Cfmm2tarError(msg)
+
     if not uid_file:
         msg = "No uid file produced."
         raise Cfmm2tarError(msg)
@@ -302,6 +429,7 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
         for file_ in created_files:
             copy2(file_, path_dataset / file_.name)
         finalize_dataset_changes(str(path_dataset), "Add new tar file.")
+
     record_cfmm2tar(
         tar,
         uid,
@@ -311,7 +439,10 @@ def handle_cfmm2tar(download_dir, study, target, dataset):
 
 
 @ensure_complete("Cfmm2tar failed for an unknown reason.")
-def run_cfmm2tar(study_id: int, studies_to_download: dict):
+def run_cfmm2tar(
+    study_id: int,
+    studies_to_download: Sequence[Mapping[str, str]],
+):
     """Run cfmm2tar for a given study.
 
     This will check which patients have already been downloaded, download any
@@ -319,9 +450,10 @@ def run_cfmm2tar(study_id: int, studies_to_download: dict):
 
     Parameters
     ----------
-    study_id : int
+    study_id
         ID of the study for which to run cfmm2tar.
-    studies_to_download : list of dict, optional
+
+    studies_to_download
         List of scans to get with cfmm2tar, where each scan is represented by
         a dict with keys "StudyInstanceUID" and "PatientName".
     """
@@ -329,13 +461,16 @@ def run_cfmm2tar(study_id: int, studies_to_download: dict):
     study = Study.query.get(study_id)
     app.logger.info(
         "Running cfmm2tar for patients %s in study %i",
-        [record["PatientName"] for record in studies_to_download],
+        [
+            record["PatientName"]
+            for record in studies_to_download  # pyright: ignore
+        ],
         study.id,
     )
 
     dataset = ensure_dataset_exists(study.id, DatasetType.SOURCE_DATA)
     error_msgs = []
-    for target in studies_to_download:
+    for target in studies_to_download:  # pyright: ignore
         with tempfile.TemporaryDirectory(
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"],
         ) as download_dir:
@@ -346,6 +481,7 @@ def run_cfmm2tar(study_id: int, studies_to_download: dict):
                 _append_task_log(str(err))
                 error_msgs.append(str(err))
                 continue
+
     if len(studies_to_download) > 0:
         send_email(
             "New cfmm2tar run",
@@ -376,8 +512,14 @@ def run_cfmm2tar(study_id: int, studies_to_download: dict):
         _set_task_progress(100)
 
 
-def find_unprocessed_tar_files(study_id):
-    """Check for tar files that aren't in the dataset and add them."""
+def find_unprocessed_tar_files(study_id: int):
+    """Check for tar files that aren't in the dataset and add them.
+
+    Parameters
+    ----------
+    study_id
+        Id of study to query
+    """
     study = Study.query.get(study_id)
     dataset = DataladDataset.query.filter_by(
         study_id=study.id,
@@ -391,8 +533,11 @@ def find_unprocessed_tar_files(study_id):
     new_tar_file_ids = {
         tar_file.id for tar_file in study.cfmm2tar_outputs
     } - existing_tar_file_ids
+
+    # If no new unprocessed tars
     if not new_tar_file_ids:
         return
+
     Task.launch_task(
         "run_tar2bids",
         "tar2bids run for all new tar files",
@@ -404,15 +549,15 @@ def find_unprocessed_tar_files(study_id):
 
 
 @ensure_complete("tar2bids failed with an uncaught exception.")
-def run_tar2bids(study_id, tar_file_ids):
+def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
     """Run tar2bids for a specific study.
 
     Parameters
     ----------
-    study_id : int
+    study_id
         ID of the study the tar files are associated with.
 
-    tar_file_ids : list of int
+    tar_file_ids
         IDs of the tar files to be included in the tar2bids run.
 
     Raises
@@ -427,6 +572,7 @@ def run_tar2bids(study_id, tar_file_ids):
     ]
     dataset_tar = ensure_dataset_exists(study_id, DatasetType.SOURCE_DATA)
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
+
     with tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
     ) as bids_dir, tempfile.TemporaryDirectory(
@@ -441,6 +587,7 @@ def run_tar2bids(study_id, tar_file_ids):
         app.logger.info("Running tar2bids for study %i", study.id)
         if study.custom_bidsignore is not None:
             bidsignore.write(study.custom_bidsignore)
+
         for tar_out in cfmm2tar_outputs:
             with RiaDataset(
                 download_dir,
@@ -472,7 +619,7 @@ def run_tar2bids(study_id, tar_file_ids):
                 except Tar2bidsError as err:
                     app.logger.exception("tar2bids failed")
                     _set_task_error(
-                        err.__cause__.stderr
+                        err.__cause__.stderr  # pyright: ignore
                         if err.__cause__ is not None
                         else str(err),
                     )
@@ -509,6 +656,7 @@ def run_tar2bids(study_id, tar_file_ids):
                         ],
                     )
                     raise
+
             with RiaDataset(
                 pathlib.Path(bids_dir) / "existing",
                 dataset_bids.ria_alias,
@@ -527,8 +675,9 @@ def run_tar2bids(study_id, tar_file_ids):
                     frozenset({".git", ".datalad"}),
                 )
                 tar_out.datalad_dataset = dataset_bids
-                db.session.commit()
-        db.session.add(
+                db.session.commit()  # pyright: ignore
+
+        db.session.add(  # pyright: ignore
             Tar2bidsOutput(
                 study_id=study_id,
                 cfmm2tar_outputs=cfmm2tar_outputs,
@@ -536,7 +685,7 @@ def run_tar2bids(study_id, tar_file_ids):
                 heuristic=study.heuristic,
             ),
         )
-        db.session.commit()
+        db.session.commit()  # pyright: ignore
     _set_task_progress(100)
     if len(tar_file_ids) > 0:
         send_email(
@@ -551,22 +700,43 @@ def run_tar2bids(study_id, tar_file_ids):
 
 
 def archive_entire_dataset(
-    path_dataset_raw,
-    path_archive,
+    path_dataset_raw: PathLike[str] | str,
+    path_archive: PathLike[str] | str,
     dataset_id: int,
     repo: GitRepo,
-):
-    """Make a new archive of an entire dataset."""
+) -> DatasetArchive:
+    """Make a new archive of an entire dataset.
+
+    Parameters
+    ----------
+    path_dataset_raw
+        Path of raw datalad dataset
+
+    path_archive
+        Path where archive should be saved
+
+    dataset_id
+        Associated dataset id
+
+    repo
+        Object representation of github repository
+
+    Returns
+    -------
+    DatasetArchive
+        Archive containing dataset content
+    """
     get_all_dataset_content(path_dataset_raw)
     archive_dataset(
         path_dataset_raw,
         path_archive,
     )
+
     return DatasetArchive(
         dataset_id=dataset_id,
         dataset_hexsha=repo.get_hexsha(),
         commit_datetime=datetime.fromtimestamp(
-            repo.get_commit_date(date="committed"),
+            repo.get_commit_date(date="committed"),  # pyright: ignore
             tz=TIME_ZONE,
         ),
     )
@@ -574,12 +744,35 @@ def archive_entire_dataset(
 
 def archive_partial_dataset(
     repo: GitRepo,
-    latest_archive,
-    path_archive,
-    path_dataset_raw,
-    dataset_id,
-):
-    """Make an archive of changed files since the latest archive."""
+    latest_archive: DataladDataset,
+    path_archive: PathLike[str] | str,
+    path_dataset_raw: PathLike[str] | str,
+    dataset_id: int,
+) -> DatasetArchive:
+    """Make an archive of changed files since the latest archive.
+
+    Parameters
+    ----------
+    repo
+        Object representation of github repository
+
+    latest_archive
+        Datadlad dataset of latest archive
+
+    path_archive
+        Path where archive should be saved
+
+    path_dataset_raw
+        Path of raw datalad dataset
+
+    dataset_id
+        Associated dataset id
+
+    Returns
+    -------
+    DatasetArchive
+        Archive containing dataset content
+    """
     updated_files = [
         path
         for path, entry in GitRepo(str(path_dataset_raw))
@@ -595,25 +788,35 @@ def archive_partial_dataset(
                 path_dataset_raw,
             )
             zip_file.write(file_, archive_path)
+
     return DatasetArchive(
         dataset_id=dataset_id,
         parent_id=latest_archive.id,
         dataset_hexsha=repo.get_hexsha(),
         commit_datetime=datetime.fromtimestamp(
-            repo.get_commit_date(date="committed"),
+            repo.get_commit_date(date="committed"),  # pyright: ignore
             tz=TIME_ZONE,
         ),
     )
 
 
 @ensure_complete("raw dataset archival failed with an uncaught exception.")
-def archive_raw_data(study_id):
-    """Clone a study dataset and archive it if necessary."""
+def archive_raw_data(study_id: int):
+    """Clone a study dataset and archive it if necessary.
+
+    Parameters
+    ----------
+    study_id
+        Associated study id to clone and archive
+    """
     _set_task_progress(0)
     study = Study.query.get(study_id)
+
+    # If study cannot be found or no content
     if (study.custom_ria_url is not None) or (study.dataset_content is None):
         _set_task_progress(100)
         return
+
     dataset_raw = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
     with tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
@@ -622,14 +825,16 @@ def archive_raw_data(study_id):
         dataset_raw.ria_alias,
         ria_url=dataset_raw.custom_ria_url,
     ) as path_dataset_raw, tempfile.TemporaryDirectory(
-        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
+        dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],  # pyright: ignore
     ) as dir_archive:
         latest_archive = max(
-            dataset_raw.dataset_archives,
+            dataset_raw.dataset_archives,  # pyright: ignore
             default=None,
-            key=lambda archive: archive.commit_datetime,
+            key=lambda archive: archive.commit_datetime,  # pyright: ignore
         )
         repo = GitRepo(str(path_dataset_raw))
+
+        # If archive is up-to-date
         if (latest_archive) and (
             latest_archive.dataset_hexsha == repo.get_hexsha()
         ):
@@ -637,14 +842,15 @@ def archive_raw_data(study_id):
             _set_task_progress(100)
             return
 
+        # Otherwise, update archive
         commit_datetime = datetime.fromtimestamp(
-            repo.get_commit_date(date="committed"),
+            repo.get_commit_date(date="committed"),  # pyright: ignore
             tz=TIME_ZONE,
         )
         path_archive = pathlib.Path(dir_archive) / (
             f"{dataset_raw.ria_alias}_"
             f"{commit_datetime.isoformat().replace(':', '.')}_"
-            f"{repo.get_hexsha()[:6]}.zip"
+            f"{repo.get_hexsha()[:6]}.zip"  # pyright: ignore
         )
         archive = (
             archive_entire_dataset(
@@ -672,8 +878,10 @@ def archive_raw_data(study_id):
             str(path_archive),
             f"/{dataset_raw.ria_alias}",
         )
-    db.session.add(archive)
-    db.session.commit()
+
+    # Update database
+    db.session.add(archive)  # pyright: ignore
+    db.session.commit()  # pyright: ignore
     _set_task_progress(100)
 
 
@@ -707,18 +915,30 @@ def update_heuristics():
     _set_task_progress(100)
 
 
-def find_uncorrected_images(study_id):
-    """Check for NIfTI images that haven't had gradcorrect applied."""
+def find_uncorrected_images(study_id: int):
+    """Check for NIfTI images that haven't had gradcorrect applied.
+
+    Parameters
+    ----------
+    study_id
+        Study ID to search for uncorrected images
+    """
     # anat,func,fmap,dwi,asl
     study = Study.query.get(study_id)
+
+    # If not 7T scanner, skip (no gradient coeffient file)
     if study.scanner != "type2":
         return
+
+    # If no raw datasets
     raw_dataset = DataladDataset.query.filter_by(
         study_id=study.id,
         dataset_type=DatasetType.RAW_DATA,
     ).one_or_none()
     if not raw_dataset:
         return
+
+    # If derived dataset does not exist, launch gradcorrect ask
     derived_dataset = DataladDataset.query.filter_by(
         study_id=study.id,
         dataset_type=DatasetType.DERIVED_DATA,
@@ -732,10 +952,14 @@ def find_uncorrected_images(study_id):
             timeout=app.config["GRADCORRECT_TIMEOUT"],
         )
         return
+
+    # Possible datatypes that gradcorrect can be performed on
     correctable_args = {
         "extension": "nii.gz",
         "datatype": ["anat", "func", "fmap", "dwi", "asl"],
     }
+
+    # Find already corrected files
     with tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
     ) as derivatives_dir, RiaDataset(
@@ -757,6 +981,7 @@ def find_uncorrected_images(study_id):
             )
             for img in derived_layout.get(**correctable_args)
         }
+    # Find subjects that correction still needs to be performed on
     with tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
     ) as bids_dir, RiaDataset(
@@ -774,6 +999,8 @@ def find_uncorrected_images(study_id):
 
     if not subjects:
         return
+
+    # Launch gradcorrect task for subjects with uncorrected data
     Task.launch_task(
         "gradcorrect_study",
         f"gradcorrect run for subjects {subjects}",
@@ -787,9 +1014,21 @@ def find_uncorrected_images(study_id):
 def run_gradcorrect(
     path_dataset_raw: PathLike[str] | str,
     path_out: PathLike[str] | str,
-    subject_ids: Iterable[str] | None,
-) -> None:
-    """Run gradcorrect on a BIDS dataset, optionally on a subset of subjects."""
+    subject_ids: Sequence[str] | None,
+):
+    """Run gradcorrect on a BIDS dataset, optionally on a subset of subjects.
+
+    Parameters
+    ----------
+    path_dataset_raw
+        Input bids directory to perform gradcorrect on
+
+    path_out
+        Output directory to save results to
+
+    subject_ids
+        List of subject ids to process (optional)
+    """
     participant_label = (
         ["--participant_label", *subject_ids] if subject_ids else []
     )
@@ -811,9 +1050,18 @@ def run_gradcorrect(
 @ensure_complete("gradcorrect failed with an uncaught exception.")
 def gradcorrect_study(
     study_id: int,
-    subject_labels: Iterable[str] | None = None,
+    subject_labels: Sequence[str] | None = None,
 ) -> None:
-    """Run gradcorrect on a set of subjects in a study."""
+    """Run gradcorrect on a set of subjects in a study.
+
+    Parameters
+    ----------
+    study_id
+        Associated study id to perform gradcorrect for
+
+    subject_labels
+        List of subject ids to run gradcorrect on (Optional)
+    """
     _set_task_progress(0)
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
     dataset_derivatives = ensure_dataset_exists(
@@ -834,6 +1082,7 @@ def gradcorrect_study(
             dataset_bids.ria_alias,
             ria_url=dataset_bids.custom_ria_url,
         ) as path_dataset_bids:
+            # Grab provided subjects' data, otherwise grab all
             if subject_labels:
                 for subject_label in subject_labels:
                     get_tar_file_from_dataset(
@@ -842,17 +1091,20 @@ def gradcorrect_study(
                     )
             else:
                 get_all_dataset_content(path_dataset_bids)
+
             run_gradcorrect(
                 path_dataset_bids,
                 path_dataset_derivatives / "gradcorrect",
                 subject_labels,
             )
+        # Remove intermediate data
         rmtree(
             path_dataset_derivatives
             / "gradcorrect"
             / "sourcedata"
             / "scratch",
         )
+
         sub_string = (
             ",".join(subject_labels) if subject_labels else "all subjects"
         )
@@ -866,13 +1118,22 @@ def gradcorrect_study(
 @ensure_complete(
     "derivative dataset archival failed with an uncaught exception.",
 )
-def archive_derivative_data(study_id):
-    """Clone a study dataset and archive it if necessary."""
+def archive_derivative_data(study_id: int):
+    """Clone a study dataset and archive it if necessary.
+
+    Parameters
+    ----------
+    study_id
+        Associated id of study to clone and archive
+    """
     _set_task_progress(0)
     study = Study.query.get(study_id)
+
+    # If RIA already exists
     if study.custom_ria_url is not None:
         _set_task_progress(100)
         return
+
     dataset_derived = ensure_dataset_exists(study_id, DatasetType.DERIVED_DATA)
     with tempfile.TemporaryDirectory(
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
@@ -884,11 +1145,12 @@ def archive_derivative_data(study_id):
         dir=app.config["TAR2BIDS_DOWNLOAD_DIR"],
     ) as dir_archive:
         latest_archive = max(
-            dataset_derived.dataset_archives,
+            dataset_derived.dataset_archives,  # pyright: ignore
             default=None,
-            key=lambda archive: archive.commit_datetime,
+            key=lambda archive: archive.commit_datetime,  # pyright: ignore
         )
         repo = GitRepo(str(path_dataset_derived))
+        # If archive is already up-to-date
         if (latest_archive) and (
             latest_archive.dataset_hexsha == repo.get_hexsha()
         ):
@@ -896,14 +1158,15 @@ def archive_derivative_data(study_id):
             _set_task_progress(100)
             return
 
+        # If no archive exists, archive entire dataset, otherwise partial
         commit_datetime = datetime.fromtimestamp(
-            repo.get_commit_date(date="committed"),
+            repo.get_commit_date(date="committed"),  # pyright: ignore
             tz=TIME_ZONE,
         )
         path_archive = pathlib.Path(dir_archive) / (
             f"{dataset_derived.ria_alias}_"
             f"{commit_datetime.isoformat().replace(':', '.')}_"
-            f"{repo.get_hexsha()[:6]}.zip"
+            f"{repo.get_hexsha()[:6]}.zip"  # pyright: ignore
         )
         archive = (
             archive_entire_dataset(
@@ -921,6 +1184,8 @@ def archive_derivative_data(study_id):
                 dataset_derived.id,
             )
         )
+
+        # Copy archive to RIA
         make_remote_dir(
             app.config["ARCHIVE_BASE_URL"].split(":")[0],
             app.config["ARCHIVE_BASE_URL"].split(":")[1]
@@ -931,6 +1196,8 @@ def archive_derivative_data(study_id):
             str(path_archive),
             f"/{dataset_derived.ria_alias}",
         )
-    db.session.add(archive)
-    db.session.commit()
+
+    # Update database
+    db.session.add(archive)  # pyright: ignore
+    db.session.commit()  # pyright: ignore
     _set_task_progress(100)

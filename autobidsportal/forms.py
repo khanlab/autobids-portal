@@ -1,4 +1,5 @@
 """Forms to be used in some views."""
+from __future__ import annotations
 
 from functools import lru_cache
 from json import dumps
@@ -53,15 +54,33 @@ CHOICES_FAMILIARITY = [
 
 
 @lru_cache
-def get_default_bidsignore():
-    """Read the default bidsignore file."""
+def get_default_bidsignore() -> str:
+    """Read the default bidsignore file.
+
+    Returns
+    -------
+    str
+        Contents of bidsignore file
+    """
     with (Path(__file__).parent / "resources" / "bidsignore.default").open(
         encoding="utf-8",
     ) as bidsignore_file:
         return bidsignore_file.read()
 
 
-def _gen_familiarity_field(label):
+def _gen_familiarity_field(label: str) -> SelectField:
+    """Generate familiarty selections.
+
+    Parameters
+    ----------
+    label
+        String representation of choice
+
+    Returns
+    -------
+    SelectField
+        User selection field
+    """
     return SelectField(
         label,
         choices=CHOICES_FAMILIARITY,
@@ -85,12 +104,27 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Sign In")
 
 
-def unique_email(_, email):
-    """Check that no user with this email address exists."""
-    if User.query.filter_by(email=email.data).one_or_none() is not None:
+def unique_email(_, email: str):
+    """Check that no user with this email address exists.
+
+    Parameters
+    ----------
+    email
+        User email address
+
+    Raises
+    ------
+    ValidationError
+        If email address is already registered to an account
+
+    """
+    if (
+        User.query.filter_by(email=email.data).one_or_none()  # pyright: ignore
+        is not None
+    ):
         msg = (
-            "There is already an account using this email address. Please use a "
-            "different email address."
+            "There is already an account using this email address. Please use "
+            "a different email address."
         )
         raise ValidationError(
             msg,
@@ -243,8 +277,14 @@ class BidsForm(FlaskForm):
 
     submit = SubmitField("Submit")
 
-    def gen_study(self):
-        """Generate a study from this form."""
+    def gen_study(self) -> Study:
+        """Generate a study from this form.
+
+        Returns
+        -------
+        Study
+            Study object containing project and user metadata information
+        """
         principal = (
             self.principal_other.data
             if self.principal.data == "Other"
@@ -319,14 +359,23 @@ class StudyConfigForm(FlaskForm):
         "Included Patient StudyInstanceUIDs",
     )
     newly_included = StringField("New StudyInstanceUID to include")
-    users_authorized = MultiCheckboxField("Users With Access", coerce=int)
+    users_authorized = MultiCheckboxField(
+        "Users With Access",
+        coerce=int,  # pyright: ignore
+    )
     custom_ria_url = StringField("Custom RIA URL")
     globus_usernames = MultiCheckboxField(
         "Globus identities with access to dataset archives",
     )
     new_globus_username = StringField("New Globus identity to grant access")
 
-    def defaults_from_study(self, study, principals, heuristics, users):
+    def defaults_from_study(
+        self,
+        study: Study,
+        principals: list[tuple[str, str]],
+        heuristics: list[tuple[str, str]],
+        users: list[User],
+    ):
         """Set up form defaults given options from the DB."""
         self.active.default = study.active
         self.pi_name.choices = principals
@@ -363,12 +412,12 @@ class StudyConfigForm(FlaskForm):
                     f"Study ID: {patient.dicom_study_id}"
                 ),
             )
-            for patient in study.explicit_patients
+            for patient in study.explicit_patients  # pyright: ignore
             if not patient.included
         ]
         self.excluded_patients.default = [
             patient.study_instance_uid
-            for patient in study.explicit_patients
+            for patient in study.explicit_patients  # pyright: ignore
             if not patient.included
         ]
         self.newly_excluded.default = ""
@@ -380,12 +429,12 @@ class StudyConfigForm(FlaskForm):
                     f"Study ID: {patient.dicom_study_id}"
                 ),
             )
-            for patient in study.explicit_patients
+            for patient in study.explicit_patients  # pyright: ignore
             if patient.included
         ]
         self.included_patients.default = [
             patient.study_instance_uid
-            for patient in study.explicit_patients
+            for patient in study.explicit_patients  # pyright: ignore
             if patient.included
         ]
         self.newly_included.default = ""
@@ -393,50 +442,65 @@ class StudyConfigForm(FlaskForm):
             (user.id, user.email) for user in users
         ]
         self.users_authorized.default = [
-            user.id for user in study.users_authorized
+            user.id for user in study.users_authorized  # pyright: ignore
         ]
         self.custom_ria_url.default = (
             study.custom_ria_url if study.custom_ria_url is not None else ""
         )
         self.globus_usernames.choices = [
             (username.id, username.username)
-            for username in study.globus_usernames
+            for username in study.globus_usernames  # pyright: ignore
         ]
         self.globus_usernames.default = [
-            username.id for username in study.globus_usernames
+            username.id
+            for username in study.globus_usernames  # pyright: ignore
         ]
         self.new_globus_username.default = ""
-        if study.custom_bidsignore is None:
-            self.bidsignore.default = get_default_bidsignore()
-        else:
-            self.bidsignore.default = study.custom_bidsignore
+        self.bidsignore.default = (
+            get_default_bidsignore()
+            if study.custom_bidsignore is None
+            else study.custom_bidsignore
+        )
 
-        self.process()
+        self.process()  # pyright: ignore
 
-    def update_study(self, study, *, user_is_admin=False):
+    def update_study(
+        self,
+        study: Study,
+        *,
+        user_is_admin: bool = False,
+    ) -> tuple[
+        Study,
+        list[ExplicitPatient],
+        list[ExplicitPatient],
+        list[int | None],
+    ]:
         """Process updates to a study from this form.
 
         Parameters
         ----------
-        study : Study
+        study
             The study to update
-        user_is_admin : bool
+
+        user_is_admin
             True if the user updating is an administrator.
 
         Returns
         -------
-        study : Study
-            The updated study.
-        to_add : list of ExplicitPatient
-            New ExplicitPatients to add.
-        to_delete : list of ExplicitPatient
-            Existing ExplicitPatients to delete.
-        ids_authorized : list of int
-            IDs of users to add to the authorized list.
+        tuple[Study, list[ExplicitPatient], list[ExplicitPatient], list[int | None]]
+            A tuple containing the updated study, a list of new
+            ExplicitPatients to add, a list of existing ExplicitPatients to
+            delete, and a list of IDs of users to add to the authorized list.
         """
-        to_add = []
-        to_delete = []
-        ids_authorized = self.users_authorized.data
+        to_add: list[ExplicitPatient] = []
+        to_delete: list[ExplicitPatient] = []
+        ids_authorized: list[int | None] = (
+            [int(user) for user in self.users_authorized.data]
+            if self.users_authorized.data
+            else []
+        )
+
+        # If new globus user
         if self.new_globus_username.data:
             to_add.append(
                 GlobusUsername(
@@ -447,6 +511,8 @@ class StudyConfigForm(FlaskForm):
         study.sample = (
             self.example_date.data if self.example_date.data else None
         )
+
+        # If retrospective study
         if self.retrospective_data.data:
             study.retrospective_data = True
             study.retrospective_start = self.retrospective_start.data
@@ -455,6 +521,8 @@ class StudyConfigForm(FlaskForm):
             study.retrospective_data = False
             study.retrospective_start = None
             study.retrospective_end = None
+
+        # If user not admin
         if not user_is_admin:
             return study, to_add, to_delete, ids_authorized
 
@@ -467,7 +535,7 @@ class StudyConfigForm(FlaskForm):
         study.patient_str = self.patient_str.data
         study.patient_name_re = self.patient_re.data
         study.custom_bidsignore = self.bidsignore.data
-        for explicit_patient in study.explicit_patients:
+        for explicit_patient in study.explicit_patients:  # pyright: ignore
             if (
                 explicit_patient.included
                 and (
@@ -482,6 +550,8 @@ class StudyConfigForm(FlaskForm):
                 )
             ):
                 to_delete.append(explicit_patient)
+
+        # "New" participants to exclude
         if self.newly_excluded.data:
             to_add.append(
                 ExplicitPatient(
@@ -490,6 +560,8 @@ class StudyConfigForm(FlaskForm):
                     included=False,
                 ),
             )
+
+        # Include new participant to study
         if self.newly_included.data:
             to_add.append(
                 ExplicitPatient(
@@ -498,12 +570,17 @@ class StudyConfigForm(FlaskForm):
                     included=True,
                 ),
             )
+
         study.active = self.active.data
         study.update_custom_ria_url(
             self.custom_ria_url.data if self.custom_ria_url.data else None,
         )
-        for username in study.globus_usernames:
-            if str(username.id) not in self.globus_usernames.data:
+
+        for username in study.globus_usernames:  # pyright: ignore
+            if (
+                str(username.id)
+                not in self.globus_usernames.data  # pyright: ignore
+            ):
                 to_delete.append(username)
 
         return study, to_add, to_delete, ids_authorized
@@ -512,31 +589,43 @@ class StudyConfigForm(FlaskForm):
 class Tar2bidsRunForm(FlaskForm):
     """Form for choosing which tar files to BIDSify."""
 
-    tar_files = MultiCheckboxField("Tar files to use", coerce=int)
+    tar_files = MultiCheckboxField(
+        "Tar files to use",
+        coerce=int,  # pyright: ignore
+    )
 
 
 class AccessForm(FlaskForm):
     """A field to pick new studies for access."""
 
-    choices = MultiCheckboxField("Access", coerce=int)
+    choices = MultiCheckboxField("Access", coerce=int)  # pyright: ignore
 
 
 class RemoveAccessForm(FlaskForm):
     """A field to pick studies for which to remove access."""
 
-    choices_to_remove = MultiCheckboxField("Remove access", coerce=int)
+    choices_to_remove = MultiCheckboxField(
+        "Remove access",
+        coerce=int,  # pyright: ignore
+    )
 
 
 class ExcludeScansForm(FlaskForm):
     """A form for picking specific scans to exclude from a study."""
 
-    choices_to_exclude = MultiCheckboxField("Exclude from study", coerce=dumps)
+    choices_to_exclude = MultiCheckboxField(
+        "Exclude from study",
+        coerce=dumps,  # pyright: ignore
+    )
 
 
 class IncludeScansForm(FlaskForm):
     """A form for picking specific scans to include from a study."""
 
-    choices_to_include = MultiCheckboxField("Include in study", coerce=dumps)
+    choices_to_include = MultiCheckboxField(
+        "Include in study",
+        coerce=dumps,  # pyright: ignore
+    )
 
 
 class ExplicitCfmm2tarForm(FlaskForm):
@@ -544,5 +633,5 @@ class ExplicitCfmm2tarForm(FlaskForm):
 
     choices_to_run = MultiCheckboxField(
         "Include in cfmm2tar run",
-        coerce=dumps,
+        coerce=dumps,  # pyright: ignore
     )
