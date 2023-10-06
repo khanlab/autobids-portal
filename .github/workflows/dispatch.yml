@@ -1,0 +1,27 @@
+# Create a dispatch event to trigger workflows in associated repos
+on:
+  workflow_dispatch:
+  push: # Trigger event on new tagged versions
+    tags: [v*]
+
+jobs:
+  dispatch:
+    runs-on: ubutun-latest
+
+    steps:
+      - name: Get latest release tag
+        run: |
+          echo "LATEST_TAG=$(git describe --tags `git rev-list --tags --max-count=1`)" >> $GITHUB_ENV
+
+      - name: Create dispatch event for autobids-docs
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.BP_PAT_TOKEN }}
+          script: |
+            const result = await github.rest.repos.createDispatchEvent({
+              owner: 'khanlab',
+              repo: 'autobids-docs',
+              event_type: 'autobidsportal_release'
+              client_payload:{"version": "${{ env.LATEST_TAG}}"}
+            })
+            console.log(result)
