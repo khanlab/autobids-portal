@@ -4,6 +4,7 @@
 {% endblock title %}
 {% block app_content %}
   <div class="container">
+    <!-- Pop-up alerts for errors in form -->
     {% if form %}
       {% if form.email %}
         {% for error in form.email.errors %}
@@ -33,6 +34,7 @@
         {% endfor %}
       {% endif %}
     {% endif %}
+    <!--  Create form with repeated password entry -->
     <div class="row my-3">
       <div class="col-md-5">
         <form id="register-form" action="" method="post">

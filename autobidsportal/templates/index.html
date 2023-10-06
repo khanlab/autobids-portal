@@ -1,8 +1,10 @@
+<!-- Home page -->
 {% extends "base.html" %}
 {% block title %}
   Home
 {% endblock title %}
-{% block app_content %}
+{% block
+  app_content %}
   <div class="container">
     <div class="row">
       <div class="col">
@@ -10,17 +12,17 @@
           <div class="card-body">
             <h1 class="card-title">Welcome to Autobids!</h1>
             <p class="card-text">
-              Autobids is a tool for automatically downloading your MR data
-              from the CFMM scanner and converting them to
-              <a href="https://bids.neuroimaging.io/">BIDS</a>
+              Autobids is a tool for automatically downloading your MR data from
+              the CFMM scanner and converting them to
+              <a href="https://bids.neuroimaging.io/" target="_blank" rel="noopener">BIDS</a>
               format.
             </p>
             <p>
               Request a new study from the
               <a href="{{ url_for("portal_blueprint.new_study") }}">"New Study"</a>
-              tab. To interact with your study, you'll need to create an
-              account and log in. An admin will review the new study, enable
-              it, and grant you access if there are no issues.
+              tab. To interact with your study, you'll need to create an account
+              and log in. An admin will review the new study, enable it, and grant
+              you access if there are no issues.
             </p>
           </div>
         </div>

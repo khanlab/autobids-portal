@@ -1,13 +1,16 @@
+<!-- Main admin page -->
 {% extends "base.html" %}
 {% block title %}
   Admin
 {% endblock title %}
-{% block app_content %}
+{% block
+  app_content %}
   <div class="container">
     <div class="row my-3">
       <div class="col">
         <div class="card">
           <div class="card-body">
+            <!-- User table -->
             <h3 class="card-title">Users</h3>
             <table class="table table-light caption-top">
               <thead>
@@ -49,6 +52,7 @@
         </div>
       </div>
     </div>
+    <!-- Actions -->
     <div class="row my-3">
       <div class="col">
         <div class="card">
@@ -60,11 +64,12 @@
                      name="update-heuristics"
                      value="Update custom heuristics"
                      class="btn btn-primary" />
-            </input>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </div>
+    <!-- Storage locations -->
     <div class="row my-3">
       <div class="col">
         <div class="card">
@@ -72,7 +77,8 @@
             <h3 class="card-title">Storage Locations</h3>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
-                RIA (Tar files and BIDS datasets in DataLad): <code>{{ ria_url }}</code>
+                RIA (Tar files and BIDS datasets in DataLad):
+                <code>{{ ria_url }}</code>
               </li>
               <li class="list-group-item">
                 BIDS dataset archives: <code>{{ archive_url }}</code>
@@ -83,5 +89,4 @@
       </div>
     </div>
   </div>
-</div>
 {% endblock app_content %}

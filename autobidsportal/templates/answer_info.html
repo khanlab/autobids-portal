@@ -1,10 +1,13 @@
 {% extends "base.html" %}
+<!-- Study info page -->
 {% block title %}
   Study {{ submitter_answer.id }}
 {% endblock title %}
 {% block app_content %}
   <div class="container">
+    <!-- If user is authenticated -->
     {% if current_user.is_authenticated %}
+      <!-- In progress tasks - show each task (including current failures) -->
       {% with current_tasks_in_progress = submitter_answer.get_tasks_in_progress() %}
         {% if current_tasks_in_progress %}
           {% for task in current_tasks_in_progress %}
@@ -28,10 +31,12 @@
           {% endfor %}
         {% endif %}
       {% endwith %}
+      <!-- Completed tasks - show each task (including completed failures) -->
       {% with completed_tasks = current_user.get_completed_tasks() %}
         {% if completed_tasks %}
           {% for task in completed_tasks %}
             {% if task.task_button_id == button_id %}
+              <!-- Only show new completed tasks since user last seen -->
               {% if task.end_time>=current_user.last_seen %}
                 <div class="row my-3">
                   <div class="col">
@@ -54,6 +59,7 @@
         {% endif %}
       {% endwith %}
     {% endif %}
+    <!-- Study information (PI^Project) -->
     <div class="row">
       <div class="col-12">
         <h2 class="sub-header">
@@ -76,10 +82,13 @@
                 <div class="card">
                   <h5 class="card-header">Query DICOM Server</h5>
                   <div class="list-group list-group-flush">
+                    <!-- SCans that match description to query -->
                     <a class="list-group-item list-group-item-primary list-group-item-action"
                        href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='description') }}">All matching scans</a>
+                    <!-- Scans that match query for given example date, if provided -->
                     <a class="list-group-item list-group-item-primary list-group-item-action  {{ "disabled" if not submitter_answer.sample }}"
                        href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='both') if submitter_answer.sample }}">Matching scans on example date</a>
+                    <!-- All scans for a given example date, if provided -->
                     <a class="list-group-item list-group-item-primary list-group-item-action {{ "disabled" if not submitter_answer.sample }}"
                        href="{{ url_for('portal_blueprint.dicom_verify', study_id=submitter_answer.id, method='date') if submitter_answer.sample }}">All scans on example date</a>
                   </div>
@@ -109,6 +118,7 @@
         </div>
       </div>
     </div>
+    <!-- Buttons to bring to study config (from survey) and submitted demographics -->
     <div class="row mb-2">
       <div class="col text-center">
         <a href="{{ url_for('portal_blueprint.study_config', study_id=submitter_answer.id) }}"
@@ -119,6 +129,7 @@
            role="button">Submitter Demographics</a>
       </div>
     </div>
+    <!-- Button to run cfmm2tar, if applicable -->
     <div class="row mb-2">
       <div class="col text-center">
         <form method="post"
@@ -127,6 +138,7 @@
         </form>
       </div>
     </div>
+    <!-- Card providing information to user for accessing processed data, if applicable -->
     <div class="row mb-2">
       <div class="col">
         <div class="card">
@@ -164,24 +176,29 @@
         </div>
       </div>
     </div>
+    <!-- Cfmm2tar -->
     <div class="row">
       <div class="col-6">
         <h2 class="sub-header">Cfmm2tar Runs</h2>
         <div id="cfmm2tar-table-mount"></div>
       </div>
+      <!-- Generated files -->
       <div class="col-6">
         <h2 class="sub-header">Tar Files</h2>
         <div id="tar-table-mount"></div>
       </div>
     </div>
+    <!-- Tar2bids -->
     <div class="row">
       <div class="col-6">
         <h2 class="sub-header">Tar2bids Runs</h2>
         <div id="tar2bids-table-mount"></div>
       </div>
+      <!-- Output datasets -->
       <div class="col-6">
         <h2 class="sub-header">BIDS Dataset</h2>
         <div id="filetree-mount"></div>
+        <!-- Options to archive or delete BIDS dataset -->
         <a class="btn btn-primary my-2 {{ "disabled" if not submitter_answer.active }}"
            href="{{ url_for('portal_blueprint.archive_tar2bids', study_id=submitter_answer.id) if submitter_answer.active }}"
            role="button">Archive BIDS dataset</a>
@@ -192,6 +209,7 @@
     </div>
   </div>
 {% endblock app_content %}
+<!-- Scripts used to query cfmm2tar runs and setup run_tar2bids -->
 {% block scripts %}
   {{ super() }}
   <script type="text/javascript">

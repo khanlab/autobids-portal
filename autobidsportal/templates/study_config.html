@@ -15,6 +15,7 @@
             <div class="card-body">
               <h4 class="card-title">Study Administration</h4>
             </div>
+            <!-- List of users with authorization -->
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
                 {{ form.users_authorized.label(class="form-label") }}
@@ -29,6 +30,7 @@
                   config, and launch cfmm2tar and tar2bids tasks.
                 </div>
               </li>
+              <!-- Activate / deactivate study -->
               <li class="list-group-item">
                 <label class="form-label" for="active">Study activation</label>
                 <div class="form-check">
@@ -40,6 +42,7 @@
                   Only admins can activate or deactivate a study.
                 </div>
               </li>
+              <!-- Custom RIA storage -->
               <li class="list-group-item">
                 {{ form.custom_ria_url.label(class="form-label") }}
                 {{ form.custom_ria_url(class="form-control", disabled=admin_disable) }}
@@ -49,6 +52,8 @@
                 </div>
               </li>
             </ul>
+            <!-- Dicom/cfmm2tar settings (retrospective, PI, project,
+              PatientNames, inclusion / exclusion IDs) -->
             <div class="card-body">
               <h4 class="card-title">DICOM/Cfmm2tar Settings</h4>
             </div>
@@ -147,6 +152,8 @@
                 </div>
               </li>
             </ul>
+            <!-- Tar2bids settings (Dataset Name, heuristic, search string,
+              .bidignore, optional defacing) -->
             <div class="card-body">
               <h4 class="card-title">Tar2bids Settings</h4>
             </div>
@@ -189,6 +196,7 @@
                 </div>
               </li>
             </ul>
+            <!-- Globus identity -->
             <div class="card-body">
               <h4 class="card-title">Globus Settings</h4>
             </div>
@@ -216,6 +224,7 @@
                 </div>
               </li>
             </ul>
+            <!-- Buttons to update study / return to study -->
             <div class="card-body">
               <input type="submit"
                      name="study-config"

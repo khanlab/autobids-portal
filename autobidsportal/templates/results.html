@@ -9,6 +9,7 @@
         <div class="card">
           <div class="card-body">
             <h1>Studies</h1>
+            <!-- Download spreadsheet with study access -->
             <p>
               <a class="download" href="{{ url_for("portal_blueprint.download") }}">Click here</a> to download a table of studies to which you have access.
             </p>
@@ -18,6 +19,7 @@
     </div>
     <div class="row my-3">
       <div class="col">
+        <!-- Table with study information -->
         <table class="table table-light">
           <thead>
             <tr>
@@ -46,6 +48,7 @@
                 <td>{{ "3T" if r.scanner == 'type1' else "7T" }}</td>
                 <td>{{ "Yes" if r.study_type == True else "No" }}</td>
                 <td>{{ "Yes" if r.retrospective_data == True else "No" }}</td>
+                <!-- Conditionals generate date if provided else blank -->
                 <td>
                   {% if r.retrospective_start != None %}
                     {{ r.retrospective_start.date() }}

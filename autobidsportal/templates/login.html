@@ -11,10 +11,12 @@
           <div class="card my-3">
             <div class="card-body">
               <h1>Sign In</h1>
+              <!-- Sign in form -->
               {{ form.email.label }}
               {{ form.email(class="form-control") }}
               {{ form.password.label }}
               {{ form.password(class="form-control") }}
+              <!-- Remember me checkbox -->
               <div class="form-check">
                 {{ form.remember_me(class="form-check-input") }}
                 <label class="form-check-label">Remember Me</label>
@@ -22,6 +24,7 @@
               <br />
               {{ form.submit(class="btn btn-primary") }}
               <br />
+              <!-- Registraton / forgot password options -->
               <p>
                 New User? <a class="download" href="{{ url_for("portal_blueprint.register") }}">Click to Register!</a>
               </p>
