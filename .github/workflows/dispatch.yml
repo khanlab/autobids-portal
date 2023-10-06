@@ -1,4 +1,5 @@
 # Create a dispatch event to trigger workflows in associated repos
+name: Trigger remote repository jobs
 on:
   workflow_dispatch:
   push: # Trigger event on new tagged versions
