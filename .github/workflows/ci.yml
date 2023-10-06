@@ -16,9 +16,6 @@ jobs:
     name: Lint code
     if: github.event.pull_request.merged == false
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
-      contents: read
     strategy:
       matrix:
         python-version: [3.8]
@@ -28,7 +25,6 @@ jobs:
         uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.2.1
         with:
           python-version: ${{ matrix.python-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run ruff
         run: poetry run ruff autobidsportal
@@ -55,16 +51,12 @@ jobs:
       matrix:
         python-version: [3.8]
         redis-version: [6]
-    permissions:
-      actions: write
-      contents: read
 
     steps:
       - name: Setup environment
         uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.2.1
         with:
           python-version: ${{ matrix.python-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.1.0

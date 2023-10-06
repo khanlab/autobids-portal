@@ -67,7 +67,6 @@ COPY --from=apptainer-builds /opt/apptainer-images /opt/apptainer-images/
 
 ENV OTHER_OPTIONS='--tls-aes'
 WORKDIR /opt/autobidsportal
-COPY ./entrypoint.sh /opt/autobidsportal/entrypoint.sh
 COPY ./autobidsportal.ini.example autobidsportal.ini
 COPY ./bids_form.py .
 
@@ -75,11 +74,10 @@ RUN git config --system user.name "Autobids Portal" \
     && git config --system user.email "autobids@dummy.com" \
     && WHEEL=$(ls /opt/wheels | grep whl) \
     && pip install --no-cache-dir "/opt/wheels/${WHEEL}[deploy]" \
-    && rm -r /opt/wheels \
-    && chmod +x /opt/autobidsportal/entrypoint.sh
+    && rm -r /opt/wheels 
 
 ENV DCM4CHE_VERSION=5.24.1
 ENV PATH=/apps/dcm4che/dcm4che-${DCM4CHE_VERSION}/bin:/apps/DicomRaw:/apps/cfmm2tar:/opt/apptainer/bin:$PATH
 ENV _JAVA_OPTIONS="-Xmx2048m"
 
-ENTRYPOINT ["/opt/autobidsportal/entrypoint.sh"]
+CMD ["uwsgi", "--ini=autobidsportal.ini"]
