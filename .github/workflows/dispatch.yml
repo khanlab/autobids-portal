@@ -6,7 +6,7 @@ on:
 
 jobs:
   dispatch:
-    runs-on: ubutun-latest
+    runs-on: ubuntu-latest
 
     steps:
       - name: Get latest release tag
@@ -26,7 +26,7 @@ jobs:
             })
             console.log(result);
 
-      - name: Create dispatch event for autobids-dglobus
+      - name: Create dispatch event for autobids-globus
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.BP_PAT_TOKEN }}
