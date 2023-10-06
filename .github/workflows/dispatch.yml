@@ -14,37 +14,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-        
-      - name: Get latest release tag
-        run: |
-          echo "LATEST_TAG=$(echo `git describe --tags $(git rev-list --tags --max-count=1)`)" >> $GITHUB_ENV
 
-      - name: Create dispatch event for autobids-docs
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.BP_PAT_TOKEN }}
-          script: |
-            const result = await github.rest.repos.createDispatchEvent({
-              owner: 'khanlab',
-              repo: 'autobids-docs',
-              event_type: 'autobidsportal_release',
-              client_payload: {
-                'version': '${{ env.LATEST_TAG }}'
-              }
-            })
-            console.log(result);
+      - name: Get latest release version
+        run: |
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "LATEST_TAG=$(echo ${LATEST_TAG:1})" >> $GITHUB_ENV
 
       - name: Create dispatch event for autobids-globus
-        uses: actions/github-script@v6
+        uses: peter-evans/repository-dispatch@v2
         with:
-          github-token: ${{ secrets.BP_PAT_TOKEN }}
-          script: |
-            const result = await github.rest.repos.createDispatchEvent({
-              owner: 'khanlab',
-              repo: 'autobids-globus',
-              event_type: 'autobidsportal_release',
-              client_payload: {
-                'version': '${{ env.LATEST_TAG }}'
-              }
-            })
-            console.log(result);
+          token: ${{ secrets.BP_PAT_TOKEN }}
+          repository: khanlab/autobids-globus
+          event-type: autobidsportal_release
+          client-payload: '{"version": "${{ env.LATEST_TAG }}"}'
