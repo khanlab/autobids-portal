@@ -26,7 +26,7 @@ jobs:
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
               repo: 'autobids-docs',
-              event_type: 'autobidsportal_release'
+              event_type: 'autobidsportal_release',
               client_payload:{"version": "${{ env.LATEST_TAG }}"}
             })
             console.log(result);
@@ -39,7 +39,7 @@ jobs:
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
               repo: 'autobids-globus',
-              event_type: 'autobidsportal_release'
+              event_type: 'autobidsportal_release',
               client_payload:{"version": "${{ env.LATEST_TAG }}"}
             })
             console.log(result);
