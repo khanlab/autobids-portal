@@ -21,25 +21,29 @@ jobs:
       - name: Create dispatch event for autobids-docs
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.BP_PAT_TOKEN }}
           script: |
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
               repo: 'autobids-docs',
               event_type: 'autobidsportal_release',
-              client_payload:{"version": "${{ env.LATEST_TAG }}"}
+              client_payload: {
+                'version': '${{ env.LATEST_TAG }}'
+              }
             })
             console.log(result);
 
       - name: Create dispatch event for autobids-globus
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.BP_PAT_TOKEN }}
           script: |
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
               repo: 'autobids-globus',
               event_type: 'autobidsportal_release',
-              client_payload:{"version": "${{ env.LATEST_TAG }}"}
+              client_payload: {
+                'version': '${{ env.LATEST_TAG }}'
+              }
             })
             console.log(result);
