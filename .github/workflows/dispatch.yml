@@ -21,7 +21,7 @@ jobs:
       - name: Create dispatch event for autobids-docs
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.BP_PAT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
@@ -34,7 +34,7 @@ jobs:
       - name: Create dispatch event for autobids-globus
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.BP_PAT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const result = await github.rest.repos.createDispatchEvent({
               owner: 'khanlab',
