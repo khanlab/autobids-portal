@@ -1,45 +1,8 @@
 services:
   autobidsportal:
     build: .
-    environment: &idautobidsenv
-      DATALAD_SSH_IDENTITYFILE: "/ssh/id_rsa"
-      SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://postgres:example@postgres:5432
-      SQLALCHEMY_TRACK_MODIFICATIONS: "false"
-      REDIS_URL: "redis://redis:6379"
-      FLASK_APP: bids_form.py
-      AUTOBIDS_SECRET_KEY: secret
-      AUTOBIDS_LOG_LEVEL: INFO
-      AUTOBIDS_ROOT_URL: autobidsportal
-      AUTOBIDS_CFMM2TAR_DOWNLOAD_DIR: /cfmm2tar-download
-      AUTOBIDS_TAR2BIDS_DOWNLOAD_DIR: /datasets
-      AUTOBIDS_TAR2BIDS_TEMP_DIR: /tmp
-      AUTOBIDS_HEURISTIC_REPO_PATH: /home
-      AUTOBIDS_CFMM2TAR_PATH: "/opt/apptainer-images/cfmm2tar_v1.1.1.sif"
-      AUTOBIDS_CFMM2TAR_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp"
-      AUTOBIDS_CFMM2TAR_TIMEOUT: "100000"
-      AUTOBIDS_TAR2BIDS_PATH: "/opt/apptainer-images/tar2bids_v0.2.0.sif"
-      AUTOBIDS_TAR2BIDS_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/datasets:/datasets,/tmp:/tmp,/home:/home"
-      AUTOBIDS_TAR2BIDS_TIMEOUT: "100000"
-      AUTOBIDS_GRADCORRECT_PATH: "/opt/apptainer-images/gradcorrect_v0.0.3a.sif"
-      AUTOBIDS_GRADCORRECT_BINDS: "/cfmm2tar-download:/cfmm2tar-download,/tmp:/tmp,/datasets:/datasets,/appdata:/appdata"
-      AUTOBIDS_GRADCORRECT_COEFF_FILE: '/appdata/coeff.grad'
-      AUTOBIDS_GRADCORRECT_TIMEOUT: '100000'
-      AUTOBIDS_HEURISTIC_DIR_PATH: /home
-      AUTOBIDS_DATALAD_RIA_URL: "ria+ssh://user@ria:2222/ria-store"
-      AUTOBIDS_ARCHIVE_BASE_URL: "user@archive:/archive"
-      AUTOBIDS_ARCHIVE_SSH_PORT: "2222"
-      AUTOBIDS_ARCHIVE_SSH_KEY: "/ssh/id_rsa"
-      AUTOBIDS_ARCHIVE_TIMEOUT: "100000"
-      AUTOBIDS_MAIL_ENABLED: "false"
-      AUTOBIDS_DICOM_SERVER_URL: "ORTHANC@orthanc:4242"
-      AUTOBIDS_DICOM_SERVER_USERNAME: "user"
-      AUTOBIDS_DICOM_SERVER_PASSWORD: "password"
-      AUTOBIDS_DICOM_SERVER_TLS: "true"
-      AUTOBIDS_DICOM_SERVER_STUDYINSTANCEUID_WILDCARD: "false"
-      GIT_AUTHOR_NAME: "Autobids Portal"
-      GIT_AUTHOR_EMAIL: "autobids@example.com"
-      GIT_COMMITER_NAME: "Autobids Portal"
-      GIT_COMMITER_EMAIL: "autobids@example.com"
+    env_file:
+      - .envtemplate
     ports: ["5000:5000"]
     volumes: &idautobidsvolumes
       - "./compose/cfmm2tar-download:/cfmm2tar-download"
@@ -60,7 +23,8 @@ services:
   rq:
     build: .
     command: rq worker
-    environment: *idautobidsenv
+    env_file:
+      - .envtemplate
     volumes: *idautobidsvolumes
     devices:
       - "/dev/fuse:/dev/fuse"
