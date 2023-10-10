@@ -20,6 +20,12 @@ services:
       - postgres
       - redis
       - rq
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   rq:
     build: .
     command: rq worker
@@ -35,9 +41,21 @@ services:
       - postgres
       - redis
     restart: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   redis:
     image: redis:5.0.14
     ports: ["6379:6379"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   postgres:
     image: postgres:11
     restart: unless-stopped
@@ -46,6 +64,12 @@ services:
     volumes:
       - "./compose/postgres-db:/var/lib/postgresql/data"
     ports: ["5432:5432"]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   orthanc:
     image: jodogne/orthanc:1.10.1
     command: /run/secrets/
@@ -57,6 +81,12 @@ services:
       - "./compose/orthanc-crt.pem:/certs/orthanc.crt"
       - "./compose/dcm4che-crt.pem:/certs/cert.pem"
       - "./compose/orthanc-db:/var/lib/orthanc/db"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   ria:
     image: lscr.io/linuxserver/openssh-server
     hostname: ria
@@ -72,6 +102,12 @@ services:
       - "./compose/ria-store-ssh:/ria-store"
       - "./compose/ria-store-custom:/ria-store-custom"
       - "./compose/ssh:/ssh"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   archive:
     image: lscr.io/linuxserver/openssh-server
     hostname: archive
@@ -84,6 +120,12 @@ services:
     volumes:
       - "./compose/archive:/archive"
       - "./compose/ssh:/ssh"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
   nginx:
     image: nginx:latest
     hostname: nginx
@@ -92,6 +134,12 @@ services:
     ports: ["5001:80"]
     depends_on:
       - autobidsportal
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "300k"   # Maximum 300kB file
+        max-file: "10"     # Rotate between a max of 10 log files
+
 secrets:
   orthanc.json:
     file: compose/orthanc.json
