@@ -1,3 +1,4 @@
+# Install requirements
 FROM debian:bullseye-20230109 as requirements
 RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list \
     && apt-get update -qq \
@@ -28,6 +29,7 @@ RUN echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/s
     && apt-get install -y -q --no-install-recommends -t bullseye-backports golang=2:1.19~1~bpo11+1 \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Install apptainer and apptainer images
 FROM requirements as apptainer
 ENV APPTAINER_VERSION "1.1.5"
 RUN mkdir /opt/download \
@@ -49,12 +51,14 @@ RUN mkdir /opt/apptainer-images \
     && apptainer build /opt/apptainer-images/tar2bids_v0.2.3.sif docker://khanlab/tar2bids:v0.2.3 \
     && apptainer build /opt/apptainer-images/gradcorrect_v0.0.3a.sif docker://khanlab/gradcorrect:v0.0.3a
 
+# Build wheel for autobidsportal
 FROM requirements as wheel
 WORKDIR /opt/autobidsportal
 COPY . .
 RUN pip install --no-cache-dir pip==22.2.2 poetry==1.3.0 \
     && poetry build -f wheel
 
+# Runtime autobidsportal
 FROM requirements as autobidsportal
 COPY --from=wheel /opt/autobidsportal/dist/*.whl /opt/wheels/
 COPY --from=apptainer /opt/apptainer /opt/apptainer/
