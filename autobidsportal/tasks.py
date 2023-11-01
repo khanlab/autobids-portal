@@ -427,6 +427,12 @@ def handle_cfmm2tar(
         ria_url=dataset.custom_ria_url,
     ) as path_dataset:
         for file_ in created_files:
+            app.logger.info("file_: %s", file_)
+            app.logger.info(
+                "tmp contents: %s", list(pathlib.Path(file_.parent).iterdir())
+            )
+            app.logger.info("path_dataset: %s", path_dataset)
+
             copy2(file_, path_dataset / file_.name)
         finalize_dataset_changes(str(path_dataset), "Add new tar file.")
 
@@ -1063,6 +1069,11 @@ def gradcorrect_study(
         List of subject ids to run gradcorrect on (Optional)
     """
     _set_task_progress(0)
+    if (not (study := Study.query.get(study_id))) or (
+        study.custom_ria_url is not None
+    ):
+        _set_task_progress(100)
+        return
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
     dataset_derivatives = ensure_dataset_exists(
         study_id,
