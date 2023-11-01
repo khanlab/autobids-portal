@@ -8,8 +8,8 @@ on:
         required: false
 jobs:
   release_package:
-    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@v0.2.1
+    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@v0.3.2
     with:
       comments: ${{ github.event.inputs.comments }}
     secrets:
-      BP-PAT: ${{ secrets.BP_PAT_TOKEN }}
+      BP_PAT: ${{ secrets.BP_PAT_TOKEN }}
