@@ -429,7 +429,8 @@ def handle_cfmm2tar(
         for file_ in created_files:
             app.logger.info("file_: %s", file_)
             app.logger.info(
-                "tmp contents: %s", list(pathlib.Path(file_.parent).iterdir())
+                "tmp contents: %s",
+                list(pathlib.Path(file_.parent).iterdir()),
             )
             app.logger.info("path_dataset: %s", path_dataset)
 
