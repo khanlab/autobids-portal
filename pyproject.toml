@@ -3,10 +3,11 @@ name = "autobidsportal"
 version = "2.2.0-pre.4"
 description = ""
 authors = ["Tristan Kuehn <tkuehn@uwo.ca>"]
+maintainers = ["Jason Kai <tkai@uwo.ca>"]
 readme = "README.md"
 packages = [
     { include = "autobidsportal" },
-    { include = "autobidsportal_migrations" }
+    { include = "autobidsportal_migrations" },
 ]
 
 [tool.poetry.dependencies]
@@ -41,16 +42,16 @@ ruff = "^0.0.265"
 [tool.ruff]
 select = ["ALL"]
 ignore = [
-    "ANN", 
-    "TCH", 
-    "T20", 
-    "S603", 
-    "S607", 
-    "B905", 
-    "D203", 
-    "D213", 
+    "ANN",
+    "TCH",
+    "T20",
+    "S603",
+    "S607",
+    "B905",
+    "D203",
+    "D213",
     "PGH003",
-    "PTH123"
+    "PTH123",
 ]
 unfixable = ["F841"]
 
