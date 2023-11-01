@@ -298,7 +298,7 @@ class Dcm4cheUtils:
             "--user",
             f"{pipes.quote(self.username)}",
             "--user-pass",
-            f"{pipes.quote(self.password)}",
+            f"{self.password}",
         ]
 
         if connection_details.use_tls:
