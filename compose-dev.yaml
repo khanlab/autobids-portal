@@ -1,11 +1,9 @@
 services:
   autobidsportal:
-    build: &idautobidsbuild 
-      dockerfile: Dockerfile-dev
+    build: &idautobidsbuild .
     env_file: &idautobidsenv .env
     ports: ["5000:5000"]
     volumes: &idautobidsvolumes
-      - ".:/opt/autobidsportal"
       - "./compose/cfmm2tar-download:/cfmm2tar-download"
       - "./compose/tar-files:/tar-files"
       - "./compose/ria-store:/ria-store"
@@ -21,6 +19,14 @@ services:
       - postgres
       - redis
       - rq
+    develop: &idautobidsdev
+      watch:
+        - action: rebuild
+          path: ./autobidsportal
+
+        - action: rebuild
+          path: .env
+
   rq:
     build: *idautobidsbuild
     command: rq worker
@@ -33,6 +39,7 @@ services:
       - postgres
       - redis
     restart: on-failure
+    develop: *idautobidsdev
     
   redis:
     image: redis:5.0.14

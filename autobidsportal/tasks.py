@@ -7,8 +7,7 @@ import subprocess
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
-from os import PathLike, unlink
-from os.path import islink
+from os import PathLike
 from shutil import copy2, rmtree
 from zipfile import ZipFile
 
@@ -22,7 +21,6 @@ from autobidsportal.bids import merge_datasets
 from autobidsportal.datalad import (
     RiaDataset,
     archive_dataset,
-    delete_tar_file,
     ensure_dataset_exists,
     finalize_dataset_changes,
     get_all_dataset_content,
@@ -437,9 +435,9 @@ def handle_cfmm2tar(
             app.logger.info("path_dataset: %s", path_dataset)
 
             # If an existing git annex symlink exists, copying will fail
-            if islink(path_dataset / file_.name):
+            if (path_dataset / file_.name).is_symlink():
                 app.logger.info("Unlinking existing tar file.")
-                unlink(path_dataset / file_.name)
+                (path_dataset / file_.name).unlink()
             copy2(file_, path_dataset / file_.name)
         finalize_dataset_changes(str(path_dataset), "Add new tar file.")
 
