@@ -434,6 +434,10 @@ def handle_cfmm2tar(
             )
             app.logger.info("path_dataset: %s", path_dataset)
 
+            # If an existing git annex symlink exists, copying will fail
+            if (path_dataset / file_.name).is_symlink():
+                app.logger.info("Unlinking existing tar file.")
+                (path_dataset / file_.name).unlink()
             copy2(file_, path_dataset / file_.name)
         finalize_dataset_changes(str(path_dataset), "Add new tar file.")
 

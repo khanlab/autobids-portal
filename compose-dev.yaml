@@ -1,0 +1,109 @@
+services:
+  autobidsportal:
+    build: &idautobidsbuild .
+    env_file: &idautobidsenv .env
+    ports: ["5000:5000"]
+    volumes: &idautobidsvolumes
+      - "./compose/cfmm2tar-download:/cfmm2tar-download"
+      - "./compose/tar-files:/tar-files"
+      - "./compose/ria-store:/ria-store"
+      - "./compose/datasets:/datasets"
+      - "./compose/ssh:/ssh"
+      - "./compose/appdata:/appdata"
+    devices: &idautobidsdevices
+      - "/dev/fuse:/dev/fuse"
+    cap_add: &idautobidscap
+      - SYS_ADMIN
+    privileged: &idautobidsprivileged true
+    depends_on:
+      - postgres
+      - redis
+      - rq
+    develop: &idautobidsdev
+      watch:
+        - action: rebuild
+          path: ./autobidsportal
+
+        - action: rebuild
+          path: .env
+
+  rq:
+    build: *idautobidsbuild
+    command: rq worker
+    env_file: *idautobidsenv
+    volumes: *idautobidsvolumes
+    devices: *idautobidsdevices
+    cap_add: *idautobidscap
+    privileged: *idautobidsprivileged 
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure
+    develop: *idautobidsdev
+    
+  redis:
+    image: redis:5.0.14
+    ports: ["6379:6379"]
+
+  postgres:
+    image: postgres:11
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: example
+    volumes:
+      - "./compose/postgres-db:/var/lib/postgresql/data"
+    ports: ["5432:5432"]
+
+  orthanc:
+    image: jodogne/orthanc:1.10.1
+    command: /run/secrets/
+    secrets:
+      - orthanc.json
+    ports: ["4242:4242", "8042:8042"]
+    volumes:
+      - "./compose/orthanc-key.pem:/certs/orthanc.key"
+      - "./compose/orthanc-crt.pem:/certs/orthanc.crt"
+      - "./compose/dcm4che-crt.pem:/certs/cert.pem"
+      - "./compose/orthanc-db:/var/lib/orthanc/db"
+
+  ria:
+    image: lscr.io/linuxserver/openssh-server
+    hostname: ria
+    environment:
+      PUBLIC_KEY_FILE: "/ssh/id_rsa.pub"
+      SUDO_ACCESS: "true"
+      USER_NAME: user
+      PUID: 1001
+      PGID: 1001
+      DOCKER_MODS: linuxserver/mods:openssh-server-git
+    ports: ["2222:2222"]
+    volumes:
+      - "./compose/ria-store-ssh:/ria-store"
+      - "./compose/ria-store-custom:/ria-store-custom"
+      - "./compose/ssh:/ssh"
+
+  archive:
+    image: lscr.io/linuxserver/openssh-server
+    hostname: archive
+    environment:
+      PUBLIC_KEY_FILE: "/ssh/id_rsa.pub"
+      SUDO_ACCESS: "true"
+      USER_NAME: user
+      PUID: 1001
+      PGID: 1001
+    volumes:
+      - "./compose/archive:/archive"
+      - "./compose/ssh:/ssh"
+
+  nginx:
+    image: nginx:latest
+    hostname: nginx
+    volumes:
+      - "./compose/nginx.conf:/etc/nginx/nginx.conf"
+    ports: ["5001:80"]
+    depends_on:
+      - autobidsportal
+
+secrets:
+  orthanc.json:
+    file: compose/orthanc.json
