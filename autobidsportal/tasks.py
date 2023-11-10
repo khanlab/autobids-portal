@@ -330,6 +330,7 @@ def check_tar_files(
         f"Get tar files {new_studies} in study {study_id}",
         study_id,
         studies_to_download,
+        True,
         user=user,
         study_id=study_id,
         timeout=app.config["CFMM2TAR_TIMEOUT"],
@@ -376,8 +377,27 @@ def handle_cfmm2tar(
     study: Study,
     target: Mapping[str, str],
     dataset: DataladDataset,
+    overwrite: bool,
 ):
-    """Run cfmm2tar on one target."""
+    """Run cfmm2tar on one target, optionally overwriting existing dataset.
+
+    Parameters
+    ----------
+    download_dir
+        Directory where downloaded DICOMs are located
+
+    study
+        Metadata associated with study
+
+    target
+        Mapping between DICOM metadata and output values
+
+    dataset
+        Associated datalad dataset
+
+    overwrite
+        Flag to indicate whether existing datasets should be overwritten
+    """
     _, log = run_cfmm2tar_with_retries(
         str(download_dir),
         target["StudyInstanceUID"],
@@ -434,9 +454,10 @@ def handle_cfmm2tar(
             )
             app.logger.info("path_dataset: %s", path_dataset)
 
-            # If an existing git annex symlink exists, copying will fail
-            if (path_dataset / file_.name).is_symlink():
-                app.logger.info("Unlinking existing tar file.")
+            # If a "new" tar file already exists in dataset, copying will fail
+            app.logger.info("Existing tar file found for target.")
+            if (path_dataset / file_.name).is_symlink() and overwrite:
+                app.logger.info("Removing existing target from dataset.")
                 (path_dataset / file_.name).unlink()
             copy2(file_, path_dataset / file_.name)
         finalize_dataset_changes(str(path_dataset), "Add new tar file.")
@@ -453,6 +474,7 @@ def handle_cfmm2tar(
 def run_cfmm2tar(
     study_id: int,
     studies_to_download: Sequence[Mapping[str, str]],
+    overwrite: bool = False,
 ):
     """Run cfmm2tar for a given study.
 
@@ -467,6 +489,9 @@ def run_cfmm2tar(
     studies_to_download
         List of scans to get with cfmm2tar, where each scan is represented by
         a dict with keys "StudyInstanceUID" and "PatientName".
+
+    overwrite
+        Flag to indicate whether existing datasets should be overwritten
     """
     _set_task_progress(0)
     study = Study.query.get(study_id)
@@ -486,7 +511,13 @@ def run_cfmm2tar(
             dir=app.config["CFMM2TAR_DOWNLOAD_DIR"],
         ) as download_dir:
             try:
-                handle_cfmm2tar(download_dir, study, target, dataset)
+                handle_cfmm2tar(
+                    download_dir,
+                    study,
+                    target,
+                    dataset,
+                    overwrite,
+                )
             except Cfmm2tarError as err:
                 app.logger.exception("cfmm2tar failed")
                 _append_task_log(str(err))
