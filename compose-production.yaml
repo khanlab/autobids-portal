@@ -1,18 +1,16 @@
 services:
   autobidsportal:
-    build:
+    build: &idautobidsbuild
       context: .
       dockerfile: Dockerfile-production
-    env_file:
-      - .env
+    env_file: &idautobidsenv .env
     ports: ["5000:5000"]
     volumes: &idautobidsvolumes
-      - "/home/ubuntu/opt/autobidsapp/cfmm2tar-download:/cfmm2tar-download"
-      - "/home/ubuntu/opt/autobidsapp/tar-files:/tar-files"
-      - "/home/ubuntu/opt/autobidsapp/datasets:/datasets"
-      - "/home/ubuntu/graham/akhanf/opt/grad:/appdata"
-      - "/home/ubuntu/graham/akhanf/cfmm-bids/ria-store:/ria-store"
-      - "/home/ubuntu/.ssh:/ssh"
+      - "/home/debian/mnt/cfmm2tar-tmp:/cfmm2tar-download"
+      - "/home/debian/mnt/tar2bids-tmp:/tar-files"
+      - "/home/debian/opt/autobidsapp/datasets:/datasets"
+      - "/home/debian/opt/autobidsapp/appdata:/appdata"
+      - "/home/debian/.ssh:/ssh"
     devices:
       - "/dev/fuse:/dev/fuse"
     cap_add:
@@ -22,19 +20,16 @@ services:
       - postgres
       - redis
       - rq
-    logging:
+    logging: &idautobidslog
       driver: "json-file"
       options:
         max-size: "300k" # Maximum 300kB file
         max-file: "10" # Rotate between a max of 10 log files
 
   rq:
-    build:
-      context: .
-      dockerfile: Dockerfile-production
+    build: *idautobidsbuild
     command: rq worker
-    env_file:
-      - .env
+    env_file: *idautobidsenv
     volumes: *idautobidsvolumes
     devices:
       - "/dev/fuse:/dev/fuse"
@@ -45,22 +40,14 @@ services:
       - postgres
       - redis
     restart: on-failure
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "300k" # Maximum 300kB file
-        max-file: "10" # Rotate between a max of 10 log files
+    logging: *idautobidslog
 
   redis:
     image: redis:5.0.14
     environment:
       TZ: "America/Toronto"
     ports: ["6379:6379"]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "300k" # Maximum 300kB file
-        max-file: "10" # Rotate between a max of 10 log files
+    logging: *idautobidslog
 
   postgres:
     image: postgres:11
@@ -69,13 +56,9 @@ services:
       POSTGRES_PASSWORD: UPDATEME
       TZ: "America/Toronto"
     volumes:
-      - "/home/ubuntu/opt/autobidsapp/postgres-db:/var/lib/postgresql/data"
+      - "/home/debian/opt/autobidsapp/postgres-db:/var/lib/postgresql/data"
     ports: ["5432:5432"]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "300k" # Maximum 300kB file
-        max-file: "10" # Rotate between a max of 10 log files
+    logging: *idautobidslog
 
   nginx:
     image: nginx:latest
@@ -87,8 +70,4 @@ services:
     ports: ["5001:80"]
     depends_on:
       - autobidsportal
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "300k" # Maximum 300kB file
-        max-file: "10" # Rotate between a max of 10 log files
+    logging: *idautobidslog
