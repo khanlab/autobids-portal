@@ -94,6 +94,24 @@ def get_alias(study_id: int, dataset_type: DatasetType) -> str:
     return f"study-{study_id}_{text}"
 
 
+def update_ria_url(ria_url: str) -> str:
+    """Update RIA url if necessary.
+
+    Parameters
+    ----------
+    ria_url
+        Existing RIA url to check
+
+    Returns
+    -------
+    str
+        New ria url
+    """
+    if ria_url == current_app.config["DATALAD_RIA_URL"]:
+        return ria_url
+    return current_app.config["DATALAD_RIA_URL"]  # pyright: ignore
+
+
 def ensure_dataset_exists(
     study_id: int,
     dataset_type: DatasetType,
@@ -115,6 +133,8 @@ def ensure_dataset_exists(
     """
     # Get study by ID
     study = Study.query.get(study_id)
+
+    study.custom_ria_url = update_ria_url(study.custom_ria_url)
 
     # Grab dataset
     dataset = DataladDataset.query.filter_by(
@@ -144,7 +164,10 @@ def ensure_dataset_exists(
 
         # Add dataset to db
         db.session.add(dataset)  # pyright: ignore
-        db.session.commit()  # pyright: ignore
+    else:
+        dataset.custom_ria_url = study.custom_ria_url
+
+    db.session.commit()  # pyright: ignore
 
     return dataset
 
@@ -194,7 +217,7 @@ def clone_ria_dataset(path: str, alias: str, ria_url: str | None = None):
     datalad_api.clone(  # pyright: ignore
         "".join(
             [
-                ria_url
+                update_ria_url(ria_url)
                 if ria_url is not None
                 else current_app.config["DATALAD_RIA_URL"],
                 "#~",
@@ -228,7 +251,7 @@ def delete_tar_file(study_id: int, tar_file: str):
     ) as download_dir, RiaDataset(
         download_dir,
         dataset.ria_alias,
-        ria_url=dataset.custom_ria_url,
+        ria_url=update_ria_url(dataset.custom_ria_url),
     ) as path_dataset:
         to_delete = str(path_dataset / tar_file)
         current_app.logger.info("Removing %s", to_delete)
@@ -269,7 +292,7 @@ def rename_tar_file(
     ) as download_dir, RiaDataset(
         download_dir,
         dataset.ria_alias,
-        ria_url=dataset.custom_ria_url,
+        ria_url=update_ria_url(dataset.custom_ria_url),
     ) as path_dataset:
         to_rename = path_dataset / tar_file
         new_name = path_dataset / Path(new_name).name
