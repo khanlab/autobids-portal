@@ -54,9 +54,10 @@ jobs:
 
     steps:
       - name: Setup environment
-        uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.3.2
+        uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.3.3
         with:
           python-version: ${{ matrix.python-version }}
+          install-library: true
 
       - name: Start Redis
         uses: supercharge/redis-github-action@1.1.0
