@@ -123,7 +123,11 @@ def new_study() -> str | Response:
         db.session.add(study)  # pyright: ignore
         db.session.commit()  # pyright: ignore
 
-        flash("Thanks, the survey has been submitted!")
+        flash(
+            "Thanks, the survey has been submitted!<br/>"
+            "If you haven't already, please add 'bidsdump' as an authorized user to "
+            "your study on the CFMM DICOM server.",
+        )
         send_email(
             "New study request",
             (
@@ -1268,7 +1272,7 @@ def dicom_verify(study_id: int, method: str):
         err_cause = (
             err.__cause__.stderr  # pyright: ignore
             if err.__cause__ is not None
-            else ""
+            else ""  # pyright: ignore
         )
         current_app.logger.warning(
             "Failed to get DICOM info for study %i: %s",

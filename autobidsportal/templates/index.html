@@ -18,10 +18,26 @@
               format.
             </p>
             <p>
-              Request a new study from the
-              <a href="{{ url_for("portal_blueprint.new_study") }}">"New Study"</a>
-              tab. To interact with your study, you'll need to create an account
-              and log in. An admin will review the new study, enable it, and grant
+              To create request CFMM autobids conversion:
+              <ol type="1">
+                <li>
+                  Request a new study from the
+                  <a href="{{ url_for("portal_blueprint.new_study") }}">"New Study"</a>
+                  tab. To interact with your study, you'll need to create an account
+                  and log in.
+                </li>
+                <li>
+                  Have the PI (or study manager) add "bidsdump" as an authorized user
+                  for the study on the CFMM DICOM study. A step-by-step guide can be found
+                  <a href="https://github.com/khanlab/autobids/wiki/Granting-access-to-bidsdump"
+                     target="_blank">here</a>.
+                </li>
+                <li>
+                  Sign up for a <a href="https://app.globus.org/" target="_blank">Globus</a> account and download
+                  <a href="https://www.globus.org/globus-connect-personal" target="_blank">Globus Connect Personal</a>.
+                </li>
+              </ol>
+              An admin will review the new study, enable it, and grant
               you access if there are no issues.
             </p>
           </div>
