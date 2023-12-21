@@ -361,9 +361,7 @@ def ensure_complete(error_log: str) -> Callable:
             try:
                 task(*args, **kwargs)
             finally:
-                if (job := get_current_job()) and (
-                    not Task.query.get(job.id).complete
-                ):
+                if (job := get_current_job()) and (not Task.query.get(job.id).complete):
                     app.logger.error(error_log)
                     _set_task_error("Unknown uncaught exception")
 
@@ -497,9 +495,7 @@ def run_cfmm2tar(
     study = Study.query.get(study_id)
     app.logger.info(
         "Running cfmm2tar for patients %s in study %i",
-        [
-            record["PatientName"] for record in studies_to_download
-        ],  # pyright: ignore
+        [record["PatientName"] for record in studies_to_download],  # pyright: ignore
         study.id,
     )
 
@@ -567,9 +563,7 @@ def find_unprocessed_tar_files(study_id: int):
         dataset_type=DatasetType.RAW_DATA,
     ).one_or_none()
     existing_tar_file_ids = (
-        set()
-        if dataset is None
-        else {out.id for out in dataset.cfmm2tar_outputs}
+        set() if dataset is None else {out.id for out in dataset.cfmm2tar_outputs}
     )
     new_tar_file_ids = {
         tar_file.id for tar_file in study.cfmm2tar_outputs
@@ -876,9 +870,7 @@ def archive_raw_data(study_id: int):
         repo = GitRepo(str(path_dataset_raw))
 
         # If archive is up-to-date
-        if (latest_archive) and (
-            latest_archive.dataset_hexsha == repo.get_hexsha()
-        ):
+        if (latest_archive) and (latest_archive.dataset_hexsha == repo.get_hexsha()):
             app.logger.info("Archive for study %s up to date", study_id)
             _set_task_progress(100)
             return
@@ -911,8 +903,7 @@ def archive_raw_data(study_id: int):
         )
         make_remote_dir(
             app.config["ARCHIVE_BASE_URL"].split(":")[0],
-            app.config["ARCHIVE_BASE_URL"].split(":")[1]
-            + f"/{dataset_raw.ria_alias}",
+            app.config["ARCHIVE_BASE_URL"].split(":")[1] + f"/{dataset_raw.ria_alias}",
         )
         copy_file(
             app.config["ARCHIVE_BASE_URL"],
@@ -1070,9 +1061,7 @@ def run_gradcorrect(
     subject_ids
         List of subject ids to process (optional)
     """
-    participant_label = (
-        ["--participant_label", *subject_ids] if subject_ids else []
-    )
+    participant_label = ["--participant_label", *subject_ids] if subject_ids else []
     apptainer_exec(
         [
             "/gradcorrect/run.sh",
@@ -1104,9 +1093,7 @@ def gradcorrect_study(
         List of subject ids to run gradcorrect on (Optional)
     """
     _set_task_progress(0)
-    if (not (study := Study.query.get(study_id))) or (
-        study.custom_ria_url is not None
-    ):
+    if (not (study := Study.query.get(study_id))) or (study.custom_ria_url is not None):
         _set_task_progress(100)
         return
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
@@ -1145,15 +1132,10 @@ def gradcorrect_study(
             )
         # Remove intermediate data
         rmtree(
-            path_dataset_derivatives
-            / "gradcorrect"
-            / "sourcedata"
-            / "scratch",
+            path_dataset_derivatives / "gradcorrect" / "sourcedata" / "scratch",
         )
 
-        sub_string = (
-            ",".join(subject_labels) if subject_labels else "all subjects"
-        )
+        sub_string = ",".join(subject_labels) if subject_labels else "all subjects"
         finalize_dataset_changes(
             str(path_dataset_derivatives),
             f"Run gradcorrect on subjects {sub_string}",
@@ -1197,9 +1179,7 @@ def archive_derivative_data(study_id: int):
         )
         repo = GitRepo(str(path_dataset_derived))
         # If archive is already up-to-date
-        if (latest_archive) and (
-            latest_archive.dataset_hexsha == repo.get_hexsha()
-        ):
+        if (latest_archive) and (latest_archive.dataset_hexsha == repo.get_hexsha()):
             app.logger.info("Archive for study %s up to date", study_id)
             _set_task_progress(100)
             return
