@@ -1093,7 +1093,7 @@ def gradcorrect_study(
         List of subject ids to run gradcorrect on (Optional)
     """
     _set_task_progress(0)
-    if (not (study := Study.query.get(study_id))) or (study.custom_ria_url is not None):
+    if not ((study := Study.query.get(study_id)) or (study.custom_ria_url is not None)):
         _set_task_progress(100)
         return
     dataset_bids = ensure_dataset_exists(study_id, DatasetType.RAW_DATA)
