@@ -854,7 +854,7 @@ def archive_raw_data(study_id: int):
     study = Study.query.get(study_id)
 
     # If study cannot be found or no content
-    if (study.custom_ria_url is not None) or (study.dataset_content is None):
+    if (study.custom_ria_url is None) or (study.dataset_content is None):
         _set_task_progress(100)
         return
 
@@ -1104,8 +1104,9 @@ def gradcorrect_study(
         List of subject ids to run gradcorrect on (Optional)
     """
     _set_task_progress(0)
-    if (not (study := Study.query.get(study_id))) or (
-        study.custom_ria_url is not None
+    if not (
+        (study := Study.query.get(study_id))
+        or (study.custom_ria_url is not None)
     ):
         _set_task_progress(100)
         return
@@ -1175,8 +1176,8 @@ def archive_derivative_data(study_id: int):
     _set_task_progress(0)
     study = Study.query.get(study_id)
 
-    # If RIA already exists
-    if study.custom_ria_url is not None:
+    # If study cannot be found
+    if study.custom_ria_url is None:
         _set_task_progress(100)
         return
 

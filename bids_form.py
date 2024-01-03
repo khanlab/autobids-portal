@@ -138,7 +138,7 @@ def run_all_archive():
 
 @app.cli.command()
 def run_all_archive_derivative():
-    """Archive all active studies' raw datasets.
+    """Archive all active studies' derivative datasets.
 
     This won't archive studies that currently have tar2bids runs in
     progress.
@@ -162,7 +162,7 @@ def run_all_archive_derivative():
 
 @app.cli.command()
 def run_all_gradcorrect():
-    """Run tar2bids on all active studies."""
+    """Run gradcorrect on all active studies."""
     for study in Study.query.all():
         if (
             (study.scanner != "type2")
