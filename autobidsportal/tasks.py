@@ -357,9 +357,9 @@ def ensure_complete(error_log: str) -> Callable:
     """
 
     def decorate(task: Callable) -> Callable:
-        def wrapped_task(*args):
+        def wrapped_task(*args, **kwargs):
             try:
-                task(*args)
+                task(*args, **kwargs)
             finally:
                 if (job := get_current_job()) and (
                     not Task.query.get(job.id).complete
@@ -498,9 +498,8 @@ def run_cfmm2tar(
     app.logger.info(
         "Running cfmm2tar for patients %s in study %i",
         [
-            record["PatientName"]
-            for record in studies_to_download  # pyright: ignore
-        ],
+            record["PatientName"] for record in studies_to_download
+        ],  # pyright: ignore
         study.id,
     )
 
