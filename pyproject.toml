@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "autobidsportal"
-version = "2.2.2-pre.3"
+version = "2.2.2-pre.4"
 description = ""
 authors = ["Tristan Kuehn <tkuehn@uwo.ca>"]
 maintainers = ["Jason Kai <tkai@uwo.ca>"]
