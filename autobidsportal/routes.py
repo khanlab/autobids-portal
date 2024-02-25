@@ -124,7 +124,7 @@ def new_study() -> str | Response:
         db.session.commit()  # pyright: ignore
 
         flash(
-            "Thanks, the survey has been submitted!<br/>"
+            "Thanks, the survey has been submitted! "
             "If you haven't already, please add 'bidsdump' as an authorized user to "
             "your study on the CFMM DICOM server.",
         )
