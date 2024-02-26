@@ -97,6 +97,18 @@ def index() -> str:
     return render_template("index.html")
 
 
+@portal_blueprint.route("/getting-started", methods=["GET"])
+def getting_started() -> str:
+    """Render a page with getting started instructions.
+
+    Returns
+    -------
+    str
+        Rendered path for getting staged page
+    """
+    return render_template("getting_started.html")
+
+
 @portal_blueprint.route("/new", methods=["GET", "POST"])
 def new_study() -> str | Response:
     """Provide users with a survey form to fill (new study page).

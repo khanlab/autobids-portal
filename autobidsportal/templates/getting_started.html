@@ -1,0 +1,203 @@
+<!-- Home page -->
+{% extends "base.html" %}
+{% block title %}
+  Home
+{% endblock title %}
+{% block
+  app_content %}
+  <div class="container">
+    <!-- Getting started -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h1 class="card-title">Getting started!</h1>
+            <p class="card-text">
+              This page provides some information to help you get started with autobids,
+              detailing the steps taken to convert data acquired from a CFMM scanner to
+              a <a href="https://bids.neuroimaging.io/" target="_blank" rel="noopener">BIDS</a>
+              dataset.
+            </p>
+            <p class="card-text">
+              If you haven't already, please
+              <a href="{{ url_for("portal_blueprint.register") }}"
+                 target="_blank"
+                 rel="noopener">create an account</a> in order to interact with and
+              manage your study.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- New study -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h2 class="card-title">New study</h2>
+            <p class="card-text">
+              After you have acquired some data from a CFMM scanner, a request can be
+              made for autobids conversion:
+              <ol type="1">
+                <li>
+                  Request a new study from the
+                  <a href="{{ url_for("portal_blueprint.new_study") }}">"New Study"</a>
+                  tab.
+                </li>
+                <li>
+                  Have the PI (or study manager) add "bidsdump" as an authorized user
+                  for the study on the CFMM DICOM server. A step-by-step guide can be found
+                  <a href="https://github.com/khanlab/autobids/wiki/Granting-access-to-bidsdump"
+                     target="_blank"
+                     rel="noopener">here</a>.
+                </li>
+                <li>
+                  Sign up for a <a href="https://app.globus.org/" target="_blank" rel="noopener">Globus</a>
+                  in order to download the converted data.
+                </li>
+              </ol>
+              An admin will review the new study, enable it, and grant you access if
+              there are no issues. Additional users can be granted access to the study.
+              For autobids to work on the study, the "Active" option needs to be checked
+              in the study config.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Cfmm2tar -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h2 class="card-title">DICOM retrieval</h2>
+            <p class="card-text">
+              <em>
+                (This step makes use of
+                <a href="https://github.com/khanlab/cfmm2tar"
+                   target="_blank"
+                   rel="noopener">cfmm2tar</a>)
+              </em>
+            </p>
+            <p class="card-text">
+              The first step of autobids queries the CFMM DICOM server for study data
+              based on information that was provided when creating a new study.
+              For each newly acquired scan that is found, a tarball file will be
+              created containing all of the associated DICOMS for a given participant.
+              This tarball file will be named based on a combination of values pulled
+              from the DICOM server and autobids database (which will be created if it
+              can't be found):
+              <br>
+              <br>
+              <code>PI_ProjectDescription_ScanDate_PatientName_StudyID.Hash.tar</code>
+            </p>
+            <p class="card-text">
+              All created tarballs can be found under the "Tar Files" table within a given
+              study. It is important that these tarballs are named consistently as
+              these names are used to organize the data in the next step. The easiest
+              way to ensure this is to have a consistent patient naming patterns when
+              acquiring the data. If renaming is necessary, it can be done by clicking
+              the "Rename" button for each tarball.
+            </p>
+            <p class="card-text">
+              <!-- Individual subjects -->
+              If you wish to manage individual participants (e.g. exclude from
+              conversion), you can do so by querying the DICOM server via autobids by
+              clicking "All matching scans" on the study page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tar2bids -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h2 class="card-title">BIDS-ify data</h2>
+            <p class="card-text">
+              <em>
+                (This step makes use of
+                <a href="https://github.com/khanlab/tar2bids"
+                   target="_blank"
+                   rel="noopener">tar2bids</a>)
+              </em>
+            </p>
+            <p class="card-text">
+              The next step of autobids uses the previously created tarballs and custom
+              heuristics to map the DICOMS to NifTIs organized according to BIDS. There
+              are two important settings under the study's config page:
+              <ol>
+                <li>
+                  Heuristic - study specific mapping of DICOM values (to add or update
+                  an existing heuristic, create a pull request to the
+                  <a href="https://github.com/khanlab/tar2bids-heuristics"
+                     target="_blank"
+                     rel="noopener">heuristics repository</a>)
+                </li>
+                <li>
+                  Tar2bids Patient Name Search String - extraction of patient names
+                  and session labels (if necessary)
+                </li>
+              </ol>
+              After the data has been converted, it will be validated according to the
+              BIDS specification. Any errors or warnings will appear here! If the files
+              you converted are not part of the specification, you can add the pattern
+              to the .bidsignore content under the study configuration to exclude them
+              from validation.
+            </p>
+            <p class="card-text">
+              If the study was acquired on the 7T scanner, distortion correction is
+              automatically performed on the converted data after validation.
+              Additionally, optional defacing can be performed by checking
+              the option under the study config.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Archiving -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h2 class="card-title">Accessing the data</h2>
+            <p class="card-text">
+              Ensure a globus identity has been granted access to the study under the
+              study config, as converted data is archived and shared via globus. Note
+              the study id, which will be in the name of the shared globus collection.
+              In each collection, one zip archive will be created containing the
+              converted data since the last time tar2bids has been run.
+            </p>
+            <p class="card-text">
+              Instructions for accessing the converted data can be found in the study
+              page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Notes -->
+    <div class="row">
+      <div class="col">
+        <div class="card my-3">
+          <div class="card-body">
+            <h2 class="card-title">Notes</h2>
+            <p class="card-text">
+              <li>
+                For any questions concerning autobids, please post them on the
+                <a href="https://cbs-discourse.uwo.ca" target="_blank" rel="noopener">
+                  CBS Discourse
+                </a>.
+              </li>
+              <li>
+                Each step noted is automatically run throughout the day,
+                but can also be triggered manually
+              </li>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock app_content %}
