@@ -96,6 +96,7 @@ def index() -> str:
     """
     return render_template("index.html")
 
+
 @portal_blueprint.route("/getting-started", methods=["GET"])
 def getting_started() -> str:
     """Render a page with getting started instructions.
@@ -407,7 +408,8 @@ def admin(user_id: int) -> str:
     # Get all available studies
     all_studies = db.session.query(Study).all()  # pyright: ignore
     form.choices.choices = [
-        (study.id, f"{study.principal}^{study.project_name}") for study in all_studies
+        (study.id, f"{study.principal}^{study.project_name}")
+        for study in all_studies
     ]
     removal_form.choices_to_remove.choices = form.choices.choices
 
@@ -437,7 +439,9 @@ def admin(user_id: int) -> str:
             db.session.commit()  # pyright: ignore
         # If valid form, remove user authorization from selected studies
         if removal_form.validate_on_submit():
-            for study_id in removal_form.choices_to_remove.data:  # pyright: ignore
+            for (
+                study_id
+            ) in removal_form.choices_to_remove.data:  # pyright: ignore
                 study = Study.query.get(study_id)
                 if user in study.users_authorized:
                     study.users_authorized.remove(user)
@@ -547,7 +551,9 @@ def answer_info(study_id: int):
 
     # Render form for running tar2bids and handle processing
     form = Tar2bidsRunForm()
-    form.tar_files.choices = [(tar_file.id, "Yes") for tar_file in cfmm2tar_files]
+    form.tar_files.choices = [
+        (tar_file.id, "Yes") for tar_file in cfmm2tar_files
+    ]
     form.tar_files.default = []
     form.process()  # pyright: ignore
 
@@ -639,7 +645,10 @@ def study_config(study_id: int) -> str:
                 / current_app.config["HEURISTIC_DIR_PATH"]
             ).iterdir()
         ]
-        + [(heuristic, f"{heuristic} (container)") for heuristic in DEFAULT_HEURISTICS],
+        + [
+            (heuristic, f"{heuristic} (container)")
+            for heuristic in DEFAULT_HEURISTICS
+        ],
         key=lambda option: option[1].lower(),
     )
 
@@ -751,7 +760,9 @@ def delete_cfmm2tar(study_id: int, cfmm2tar_id: int):
         return answer_info(study_id)
 
     cfmm2tar_output = Cfmm2tarOutput.query.get(cfmm2tar_id)
-    if (cfmm2tar_output is not None) and (cfmm2tar_output.study_id == study_id):
+    if (cfmm2tar_output is not None) and (
+        cfmm2tar_output.study_id == study_id
+    ):
         delete_tar_file(study_id, cfmm2tar_output.tar_file)
         db.session.delete(cfmm2tar_output)  # pyright: ignore
         db.session.commit()  # pyright: ignore
@@ -950,7 +961,9 @@ def run_tar2bids(study_id: int) -> str:
         Cfmm2tarOutput.query.get_or_404(tar_file_id)
         for tar_file_id in form.tar_files.data  # pyright: ignore
     ]
-    tar_files = [tar_file for tar_file in tar_files if tar_file.study_id == study_id]
+    tar_files = [
+        tar_file for tar_file in tar_files if tar_file.study_id == study_id
+    ]
 
     if (
         len(
@@ -1382,7 +1395,8 @@ def list_globus_users() -> Response:
                 "type": dataset.dataset_type.to_bids_str(),
                 "path": f"{path_base}/{dataset.ria_alias}",
                 "users": [
-                    username.username for username in dataset.study.globus_usernames
+                    username.username
+                    for username in dataset.study.globus_usernames
                 ],
             }
             for dataset in DataladDataset.query.filter(
