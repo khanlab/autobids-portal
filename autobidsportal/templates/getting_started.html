@@ -80,13 +80,13 @@
               </em>
             </p>
             <p class="card-text">
-              The first step of autobids queries the CFMM DICOM server to look for
-              the study data based on information that was provided when creating a
-              new study. For each newly acquired scan that is found, a tarball file will
-              be created containing all of the associated DICOMS for a given participant.
-              This tarball file will be named based on a combination of values pulled from
-              the DICOM server and autobids database (which will be created if it can't
-              be found):
+              The first step of autobids queries the CFMM DICOM server for study data
+              based on information that was provided when creating a new study.
+              For each newly acquired scan that is found, a tarball file will be
+              created containing all of the associated DICOMS for a given participant.
+              This tarball file will be named based on a combination of values pulled
+              from the DICOM server and autobids database (which will be created if it
+              can't be found):
               <br>
               <br>
               <code>PI_ProjectDescription_ScanDate_PatientName_StudyID.Hash.tar</code>
