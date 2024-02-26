@@ -17,8 +17,8 @@
               detailing the steps taken to convert data acquired from a CFMM scanner to
               a <a href="https://bids.neuroimaging.io/" target="_blank" rel="noopener">BIDS</a>
               dataset.
-              <br />
-              <br />
+            </p>
+            <p class="card-text">
               If you haven't already, please
               <a href="{{ url_for("portal_blueprint.register") }}"
                  target="_blank"
@@ -78,8 +78,8 @@
                    target="_blank"
                    rel="noopener">cfmm2tar</a>)
               </em>
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               The first step of autobids queries the CFMM DICOM server to look for
               the study data based on information that was provided when creating a
               new study. For each newly acquired scan that is found, a tarball file will
@@ -90,16 +90,16 @@
               <br>
               <br>
               <code>PI_ProjectDescription_ScanDate_PatientName_StudyID.Hash.tar</code>
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               All created tarballs can be found under the "Tar Files" table within a given
               study. It is important that these tarballs are named consistently as
               these names are used to organize the data in the next step. The easiest
               way to ensure this is to have a consistent patient naming patterns when
               acquiring the data. If renaming is necessary, it can be done by clicking
               the "Rename" button for each tarball.
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               <!-- Individual subjects -->
               If you wish to manage individual participants (e.g. exclude from
               conversion), you can do so by querying the DICOM server via autobids by
@@ -122,8 +122,8 @@
                    target="_blank"
                    rel="noopener">tar2bids</a>)
               </em>
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               The next step of autobids uses the previously created tarballs and custom
               heuristics to map the DICOMS to NifTIs organized according to BIDS. There
               are two important settings under the study's config page:
@@ -139,8 +139,8 @@
               you converted are not part of the specification, you can add the pattern
               to the .bidsignore content under the study configuration to exclude them
               from validation.
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               If the study was acquired on the 7T scanner, distortion correction is
               automatically performed on the converted data after validation.
               Additionally, optional defacing can be performed by checking
@@ -162,8 +162,8 @@
               the study id, which will be in the name of the shared globus collection.
               In each collection, one zip archive will be created containing the
               converted data since the last time tar2bids has been run.
-              <br>
-              <br>
+            </p>
+            <p class="card-text">
               Instructions for accessing the converted data can be found in the study
               page.
             </p>
