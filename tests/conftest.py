@@ -1,16 +1,15 @@
 """Test fixtures."""
 
-from dataclasses import dataclass
-import tempfile
-import pathlib
 import datetime
+import pathlib
+import tempfile
+from dataclasses import dataclass
 
 import pytest
 
 # import pydicom
-
 from autobidsportal.app import create_app
-from autobidsportal.models import db, User, Principal, Study
+from autobidsportal.models import Principal, Study, User, db
 
 # import testdicomserver
 
@@ -50,17 +49,12 @@ def test_client():
     """Make an app with the test config and yield a test client."""
 
     with tempfile.NamedTemporaryFile() as db_file:
-        with tempfile.TemporaryDirectory() as heuristic_dir_base:
-            heuristic_dir = pathlib.Path(heuristic_dir_base) / "heuristics"
-            heuristic_dir.mkdir()
-
+        with tempfile.TemporaryDirectory() as tar2bids_dir:
             app = create_app(
                 config_object=TestConfig(),
                 override_dict={
                     "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_file.name}",
-                    "HEURISTIC_REPO_PATH": str(heuristic_dir_base),
-                    "HEURISTIC_DIR_PATH": "heuristics",
-                    "TAR2BIDS_DOWNLOAD_DIR": str(heuristic_dir_base),
+                    "TAR2BIDS_DOWNLOAD_DIR": str(tar2bids_dir),
                 },
             )
             with app.test_client() as testing_client:
