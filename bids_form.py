@@ -15,7 +15,6 @@ from autobidsportal.models import (
     User,
     db,
 )
-from autobidsportal.tasks import update_heuristics
 
 app = create_app()
 
