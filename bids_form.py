@@ -52,15 +52,6 @@ def check_pis():
 
 
 @app.cli.command()
-def run_update_heuristics():
-    """Clone the heuristic repo if it doesn't exist, then pull from it.
-
-    The point of this wrapper function is to expose the task to the CLI.
-    """
-    update_heuristics()
-
-
-@app.cli.command()
 def run_all_cfmm2tar():
     """Run cfmm2tar on all active studies.
 
