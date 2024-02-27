@@ -1,0 +1,34 @@
+from cfmm_base import create_key
+from cfmm_base import infotodict as cfmminfodict
+
+"""
+This is a default heuristic, using cfmm_base.py as a starting point.
+Check out cfmm_base.py to see what scans are already mapped:
+https://github.com/khanlab/tar2bids/blob/master/heuristics/cfmm_base.py
+"""
+
+def infotodict(seqinfo):
+    """
+    Heuristic evaluator for determining which runs belong where allowed template 
+    fields follow python string module:
+
+        item: index within category
+        subject: participant id
+        seqitem: run number during scanning
+        subindex: sub index within group
+
+    Example
+    =======
+
+    info = cfmmtoinfodict(seqinfo)
+    info[task] = []
+
+    task = create_key(f"{bids_subject_session_dir}/func/{bids_subject_session_prefix}_task-task_run-{item:02d}")
+
+    for idx, seq in enumerate(seqinfo):
+        if (seq.dim4 > 1):
+            info[task].append({"item": seq.series_id})
+    """
+    info = cfmminfodict(seqinfo)
+
+    return info
