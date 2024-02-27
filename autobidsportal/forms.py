@@ -52,6 +52,7 @@ def get_default_bidsignore() -> str:
     ) as bidsignore_file:
         return bidsignore_file.read()
 
+
 @lru_cache
 def get_default_heuristic() -> str:
     """Read default heuristic file.

@@ -936,6 +936,7 @@ def archive_raw_data(study_id: int):
     db.session.commit()  # pyright: ignore
     _set_task_progress(100)
 
+
 def find_uncorrected_images(study_id: int):
     """Check for NIfTI images that haven't had gradcorrect applied.
 
