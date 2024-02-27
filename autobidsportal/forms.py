@@ -29,21 +29,6 @@ from wtforms.validators import (
 
 from autobidsportal.models import ExplicitPatient, GlobusUsername, Study, User
 
-DEFAULT_HEURISTICS = [
-    "cfmm_baron.py",
-    "cfmm_base.py",
-    "cfmm_bold_rest.py",
-    "cfmm_bruker.py",
-    "cfmm_PS_PRC_3T.py",
-    "clinicalDBS.py",
-    "cmrr_ANNA_OBJCAT_MTL_3T.py",
-    "EPL14A_GE_3T.py",
-    "EPL14B_3T.py",
-    "GEvSE.py",
-    "Kohler_HcECT.py",
-    "Menon_CogMS.py",
-]
-
 CHOICES_FAMILIARITY = [
     ("1", "Not familiar at all"),
     ("2", "Have heard of it"),
@@ -66,6 +51,20 @@ def get_default_bidsignore() -> str:
         encoding="utf-8",
     ) as bidsignore_file:
         return bidsignore_file.read()
+
+@lru_cache
+def get_default_heuristic() -> str:
+    """Read default heuristic file.
+
+    Returns
+    -------
+    str
+        Contents of heuristic
+    """
+    with (Path(__file__).parent / "resources" / "heuristics.py.default").open(
+        encoding="utf-8",
+    ) as heuristics_file:
+        return heuristics_file.read()
 
 
 def _gen_familiarity_field(label: str) -> SelectField:
@@ -343,7 +342,7 @@ class StudyConfigForm(FlaskForm):
     retrospective_data = BooleanField("Retrospective?")
     retrospective_start = DateField("Start Date")
     retrospective_end = DateField("End Date")
-    heuristic = SelectField("Heuristic", choices=[])
+    heuristic = TextAreaField("Custom heuristic contents")
     subj_expr = StringField("Tar2bids Patient Name Search String")
     bidsignore = TextAreaField("Custom .bidsignore contents")
     deface = BooleanField("Enable T1w image defacing?")
@@ -373,7 +372,6 @@ class StudyConfigForm(FlaskForm):
         self,
         study: Study,
         principals: list[tuple[str, str]],
-        heuristics: list[tuple[str, str]],
         users: list[User],
     ):
         """Set up form defaults given options from the DB."""
@@ -389,11 +387,11 @@ class StudyConfigForm(FlaskForm):
         if study.retrospective_data:
             self.retrospective_start.default = study.retrospective_start
             self.retrospective_end.default = study.retrospective_end
-        self.heuristic.choices = heuristics
-        if study.heuristic is None:
-            self.heuristic.default = "cfmm_base.py"
-        else:
-            self.heuristic.default = study.heuristic
+        self.heuristic.default = (
+            get_default_heuristic()
+            if study.custom_heuristic is None
+            else study.custom_heuristic
+        )
         if study.subj_expr is None:
             self.subj_expr.default = "*_{subject}"
         else:
