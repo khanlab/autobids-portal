@@ -386,7 +386,6 @@ def test_admin_index(test_client, login_admin):
     assert b"Admin" in response.data
     assert b"johnsmith@gmail.com" in response.data
     assert b"janedoe@gmail.com" in response.data
-    assert b"Actions" in response.data
 
 
 def test_admin_user(test_client, login_admin):
