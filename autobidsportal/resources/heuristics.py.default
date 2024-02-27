@@ -30,5 +30,7 @@ def infotodict(seqinfo):
             info[task].append({"item": seq.series_id})
     """
     info = cfmminfodict(seqinfo)
+    
+    # Add your custom heursitic below
 
     return info
