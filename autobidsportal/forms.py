@@ -527,7 +527,7 @@ class StudyConfigForm(FlaskForm):
         study.principal = self.pi_name.data
         study.project_name = self.project_name.data
         study.dataset_name = self.dataset_name.data
-        study.heuristic = self.heuristic.data
+        study.custom_heuristic = self.heuristic.data
         study.subj_expr = self.subj_expr.data
         study.deface = self.deface.data
         study.patient_str = self.patient_str.data
