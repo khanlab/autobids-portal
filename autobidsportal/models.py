@@ -90,7 +90,6 @@ class Task(db.Model):
     TASKS = (
         "run_cfmm2tar",
         "run_tar2bids",
-        "update_heuristics",
         "archive_raw_data",
         "gradcorrect_study",
         "archive_derivative_data",
@@ -362,11 +361,6 @@ class Study(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=False)
 
     # Study config
-    heuristic = db.Column(
-        db.String(200),
-        nullable=False,
-        default="cfmm_base.py",
-    )
     patient_str = db.Column(db.String(50), nullable=False, default="*")
     subj_expr = db.Column(db.String(50), nullable=False, default="*_{subject}")
     deface = db.Column(db.Boolean, nullable=False, default=False)
@@ -398,6 +392,8 @@ class Study(db.Model):
     globus_usernames = db.relationship("GlobusUsername", backref="study")
 
     custom_bidsignore = db.Column(db.Text, nullable=True)
+
+    custom_heuristic = db.Column(db.Text, nullable=True)
 
     def __repr__(self) -> str:
         """Generate a str representation of this study."""
@@ -482,7 +478,7 @@ class Tar2bidsOutput(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
     bids_dir = db.Column(db.String(200), index=True, nullable=True)
-    heuristic = db.Column(db.String(200), index=True)
+    heuristic = db.Column(db.Text, index=True, nullable=True)
 
     def __repr__(self) -> str:
         """Generate a str representation of this output."""
