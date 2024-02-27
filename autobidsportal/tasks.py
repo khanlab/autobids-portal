@@ -625,6 +625,7 @@ def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
         encoding="utf-8",
         buffering=1,
     ) as bidsignore, tempfile.NamedTemporaryFile(
+        suffix=".py",
         mode="w+",
         encoding="utf-8",
         buffering=1,
