@@ -482,7 +482,7 @@ class Tar2bidsOutput(db.Model):
 
     def __repr__(self) -> str:
         """Generate a str representation of this output."""
-        out_fields = (self.cfmm2tar_output_id, self.bids_dir, self.heuristic)
+        out_fields = (self.study_id, self.bids_dir, self.heuristic)
         return f"<Tar2bids {out_fields}>"
 
 
