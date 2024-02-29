@@ -15,7 +15,6 @@ To use all functionality, you will need:
 - A mail server compatible with Flask-Mail.
 - A redis server.
 - A PostgreSQL server.
-- A git repository containing custom heuristics.
 
 ## Installation instructions
 

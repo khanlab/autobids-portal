@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-import subprocess
 import tempfile
 from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime
@@ -624,10 +623,18 @@ def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
         mode="w+",
         encoding="utf-8",
         buffering=1,
-    ) as bidsignore:
+    ) as bidsignore, tempfile.NamedTemporaryFile(
+        suffix=".py",
+        mode="w+",
+        encoding="utf-8",
+        buffering=1,
+    ) as heuristic:
         app.logger.info("Running tar2bids for study %i", study.id)
         if study.custom_bidsignore is not None:
             bidsignore.write(study.custom_bidsignore)
+
+        if study.custom_heuristic is not None:
+            heuristic.write(study.custom_heuristic)
 
         for tar_out in cfmm2tar_outputs:
             with RiaDataset(
@@ -647,7 +654,11 @@ def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
                                     pathlib.Path(bids_dir) / "incoming",
                                 ),
                                 tar_files=[tar_path],
-                                heuristic=study.heuristic,
+                                heuristic=(
+                                    None
+                                    if study.custom_heuristic is None
+                                    else heuristic.name
+                                ),
                                 patient_str=study.subj_expr,
                                 temp_dir=temp_dir,
                                 bidsignore=None
@@ -723,7 +734,7 @@ def run_tar2bids(study_id: int, tar_file_ids: Sequence[int]):
                 study_id=study_id,
                 cfmm2tar_outputs=cfmm2tar_outputs,
                 bids_dir=None,
-                heuristic=study.heuristic,
+                heuristic=study.custom_heuristic,
             ),
         )
         db.session.commit()  # pyright: ignore
@@ -923,36 +934,6 @@ def archive_raw_data(study_id: int):
     # Update database
     db.session.add(archive)  # pyright: ignore
     db.session.commit()  # pyright: ignore
-    _set_task_progress(100)
-
-
-def update_heuristics():
-    """Clone the heuristic repo if it doesn't exist, then pull from it."""
-    _set_task_progress(0)
-    if subprocess.run(
-        ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "status"],
-        check=False,
-    ).returncode:
-        app.logger.info("No heuristic repo present. Cloning it...")
-        subprocess.run(
-            [
-                "git",
-                "clone",
-                app.config["HEURISTIC_GIT_URL"],
-                app.config["HEURISTIC_REPO_PATH"],
-            ],
-            check=True,
-        )
-
-    app.logger.info("Pulling heuristic repo.")
-    try:
-        subprocess.run(
-            ["git", "-C", app.config["HEURISTIC_REPO_PATH"], "pull"],
-            check=True,
-        )
-    except subprocess.CalledProcessError as err:
-        app.logger.exception("Pull from heuristic repo unsuccessful.")
-        _set_task_error(f"Uncaught exception: {err}.")
     _set_task_progress(100)
 
 

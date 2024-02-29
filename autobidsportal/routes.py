@@ -36,7 +36,6 @@ from autobidsportal.dcm4cheutils import Dcm4cheError
 from autobidsportal.dicom import get_study_records
 from autobidsportal.email import send_email
 from autobidsportal.forms import (
-    DEFAULT_HEURISTICS,
     AccessForm,
     BidsForm,
     ExcludeScansForm,
@@ -334,8 +333,7 @@ def user_list() -> str:
     Returns
     -------
     str
-        Renders main admin page with user info, available studies, and
-        heuristics
+        Renders main admin page with user info, available studies
     """
     if not current_user.admin:  # pyright: ignore
         abort(404)
@@ -351,32 +349,6 @@ def user_list() -> str:
         ria_url=ria_url,
         archive_url=archive_url,
     )
-
-
-@portal_blueprint.route("/admin/update_heuristics", methods=["POST"])
-@login_required
-def update_heuristics() -> str:
-    """Launch an update heuristics task.
-
-    Returns
-    -------
-    str
-        Renders main admin page with user info, available studies, and
-        heuristics
-    """
-    if not current_user.admin:  # pyright: ignore
-        abort(404)
-
-    Task.launch_task(
-        "update_heuristics",
-        "Manually triggered heuristic update",
-        user=current_user,  # pyright: ignore
-        timeout=1000,
-    )
-    current_app.logger.info("Update heuristic task launched.")
-    flash("Currently updating heuristics... Give it a minute or two.")
-
-    return user_list()
 
 
 @portal_blueprint.route("/admin/<int:user_id>", methods=["GET", "POST"])
@@ -637,21 +609,6 @@ def study_config(study_id: int) -> str:
         current_app.logger.info("Updated study %i config", study.id)
         db.session.commit()  # pyright: ignore
 
-    available_heuristics = sorted(
-        [
-            (str(heuristic_path), f"{heuristic_path.name} (git)")
-            for heuristic_path in (
-                Path(current_app.config["HEURISTIC_REPO_PATH"])
-                / current_app.config["HEURISTIC_DIR_PATH"]
-            ).iterdir()
-        ]
-        + [
-            (heuristic, f"{heuristic} (container)")
-            for heuristic in DEFAULT_HEURISTICS
-        ],
-        key=lambda option: option[1].lower(),
-    )
-
     principal_names = [
         p.principal_name
         for p in db.session.query(Principal).all()  # pyright: ignore
@@ -662,7 +619,6 @@ def study_config(study_id: int) -> str:
     form.defaults_from_study(
         study,
         principal_names,
-        available_heuristics,
         User.query.all(),
     )
 

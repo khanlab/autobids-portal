@@ -15,7 +15,6 @@ from autobidsportal.models import (
     User,
     db,
 )
-from autobidsportal.tasks import update_heuristics
 
 app = create_app()
 
@@ -49,15 +48,6 @@ def check_pis():
     except Dcm4cheError as err:
         print(err)
     return "Success"
-
-
-@app.cli.command()
-def run_update_heuristics():
-    """Clone the heuristic repo if it doesn't exist, then pull from it.
-
-    The point of this wrapper function is to expose the task to the CLI.
-    """
-    update_heuristics()
 
 
 @app.cli.command()
