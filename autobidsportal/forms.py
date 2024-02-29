@@ -53,21 +53,6 @@ def get_default_bidsignore() -> str:
         return bidsignore_file.read()
 
 
-@lru_cache
-def get_default_heuristic() -> str:
-    """Read default heuristic file.
-
-    Returns
-    -------
-    str
-        Contents of heuristic
-    """
-    with (Path(__file__).parent / "resources" / "heuristics.py.default").open(
-        encoding="utf-8",
-    ) as heuristics_file:
-        return heuristics_file.read()
-
-
 def _gen_familiarity_field(label: str) -> SelectField:
     """Generate familiarty selections.
 
@@ -388,11 +373,7 @@ class StudyConfigForm(FlaskForm):
         if study.retrospective_data:
             self.retrospective_start.default = study.retrospective_start
             self.retrospective_end.default = study.retrospective_end
-        self.heuristic.default = (
-            get_default_heuristic()
-            if study.custom_heuristic is None
-            else study.custom_heuristic
-        )
+        self.heuristic.default = study.heuristic
         if study.subj_expr is None:
             self.subj_expr.default = "*_{subject}"
         else:
@@ -528,7 +509,7 @@ class StudyConfigForm(FlaskForm):
         study.principal = self.pi_name.data
         study.project_name = self.project_name.data
         study.dataset_name = self.dataset_name.data
-        study.custom_heuristic = self.heuristic.data
+        study.heuristic = self.heuristic.data
         study.subj_expr = self.subj_expr.data
         study.deface = self.deface.data
         study.patient_str = self.patient_str.data
