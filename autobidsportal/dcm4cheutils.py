@@ -295,6 +295,7 @@ class Dcm4cheUtils:
             f"{self.connect}",
             "--accept-timeout",
             "10000",
+            "--relational",
             "--user",
             f"{pipes.quote(self.username)}",
             "--user-pass",
